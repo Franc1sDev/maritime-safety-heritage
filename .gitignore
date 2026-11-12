@@ -1,0 +1,8 @@
+# Local secrets - never commit
+LOCAL-DEV-CREDENTIALS.txt
+*.env
+.env*
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
