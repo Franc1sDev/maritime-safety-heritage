@@ -231,7 +231,7 @@
     document.body.classList.toggle("more", UI.more);
     document.documentElement.classList.toggle("large-text", S.prefs.largeText);
     document.body.classList.toggle("low-bw", S.prefs.lowBw);
-    $(".top").classList.toggle("solid", !(page === "home" && u));
+    $(".top").classList.toggle("solid", page !== "home");
     if (UI.justOpened) {
       UI.justOpened = false;
       $$("#rail a, #rail button.ri").forEach((el, i) => { el.style.setProperty("--n", i); el.classList.add("flash"); });
@@ -369,6 +369,12 @@
     zone.ondrop = (e) => { e.preventDefault(); zone.classList.remove("drag"); cb(e.dataTransfer.files[0]); };
   }
 
+  function slideBar() {
+    if (S.prefs.lowBw) return `<div class="slide-bar"><button class="pill" id="videoOn">${ic("play")}Light mode is on, so the sea video is hidden. Show video</button></div>`;
+    return `<div class="slide-bar"><div class="dots">${CLIPS.map((c, i) => `<button aria-label="Show clip ${i + 1}: ${esc(c.caption)}"></button>`).join("")}</div><span id="slideCap">${esc(CLIPS[UI.slide % CLIPS.length].caption)}</span></div>
+      <div class="credit">Footage: Mixkit (free licence)</div>`;
+  }
+
   /* =====================================================================
      PAGES
      ===================================================================== */
@@ -376,7 +382,7 @@
 
   /* ----- Welcome (signed in: video slideshow) / landing (signed out) ----- */
   ROUTES.home = {
-    bg: () => me() ? "video" : "life-buoy",
+    bg: "video",
     html() {
       const u = me();
       if (!u) {
@@ -388,7 +394,7 @@
             { icon: "user-plus", label: "Create account", desc: "Open a free account in under a minute.", go: "#/login?tab=up" },
             { icon: "anchor", label: "About", desc: "Who is behind the archive and why it matters.", go: "#/about" },
             { icon: "smartphone", label: "Mobile app", desc: "See the same archive on an Android or iOS phone.", go: "#/app" }
-          ])}</div>`;
+          ])}</div>${slideBar()}`;
       }
       const user = [
         { icon: "search", label: "Search", desc: "Search titles, transcripts, documents and places.", act: quickSearch, primary: true },
@@ -408,11 +414,10 @@
         <h1>${greeting()}, ${esc(u.name.split(" ")[0])}</h1>
         <p class="lede">Stories, photographs and records from Kenya's coast, lakes and rivers.</p>
         ${orbRow(u.role === "admin" ? admin : user)}
-      </div>
-      ${S.prefs.lowBw ? "" : `<div class="slide-bar"><div class="dots">${CLIPS.map((c, i) => `<button aria-label="Show clip ${i + 1}: ${esc(c.caption)}"></button>`).join("")}</div><span id="slideCap">${esc(CLIPS[UI.slide % CLIPS.length].caption)}</span></div>
-      <div class="credit">Footage: Mixkit (free licence)</div>`}`;
+      </div>${slideBar()}`;
     },
     after() {
+      const vo = $("#videoOn"); if (vo) vo.onclick = () => { S.prefs.lowBw = false; save(); render(); toast("Light mode off: video on", "play"); };
       $$(".dots button").forEach((d, i) => (d.onclick = () => { showSlide(i); startSlides(); }));
       $$(".dots button").forEach((d, k) => d.classList.toggle("on", k === UI.slide % CLIPS.length));
       cleanup.push(() => clearInterval(slideTimer));

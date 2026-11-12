@@ -8,7 +8,8 @@ The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the
 - **Round "orb" buttons inside each page** for the main options. Clicking one zooms it in and shows a short description that fades away, then the option opens. Clicking it a second time skips the wait.
 - **See more** (also round) reveals the remaining options in a left-hand rail and at the top, with a brief blue glow so you can see what appeared. The left and right margins stay empty until then.
 - **Top bar** keeps only My account and Sign out.
-- **Welcome page after sign-in** (users and admins) plays a slideshow of real sea footage behind the orbs: waves, the tide, fishermen on a boat, ferries arriving, rowing, a boat at dusk.
+- **The landing page and the welcome page after sign-in** (users and admins) play a slideshow of real sea footage behind the orbs: waves, the tide, fishermen on a boat, ferries arriving, rowing, a boat at dusk.
+- **No video?** Check Light mode. It hides video to save data and is remembered between visits. The welcome page shows a **Show video** button while it is on.
 - **Every other page** has a large icon in the background showing what the page is about.
 - **Extra details open in pop-ups** instead of cluttering the page. Examples: filters, catalogue records, locations, citations, password changes, user creation, map list.
 - **Quick search** under See more, or with **Ctrl + K** from any page.
@@ -18,7 +19,7 @@ The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the
 1. Double-click `index.html` (Chrome or Edge recommended).
 2. That's it: no installation, server or database needed.
 
-**Be online for the showcase.** The background videos, map, and fonts load from the internet. Offline, everything still works: the welcome page shows a wave icon instead of video, and the map switches to a simple offline view.
+**Be online for the showcase, with Light mode off.** The background videos, map, and fonts load from the internet. Offline, everything still works: the landing and welcome pages show a wave icon instead of video, and the map switches to a simple offline view.
 
 ## Demo accounts
 
