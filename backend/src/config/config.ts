@@ -25,6 +25,8 @@ export const config = {
   env,
   isProd,
   port: int('PORT', 4000),
+  /** Public address of the API, used to build absolute media links. Leave empty to return links relative to the API host. */
+  publicApiUrl: (process.env.PUBLIC_API_URL ?? '').replace(/\/$/, ''),
   corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((s) => s.trim()).filter(Boolean),
   db: {
     host: req('DB_HOST', 'localhost'),
@@ -56,6 +58,23 @@ export const config = {
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
     },
   },
+  cookie: {
+    // 'strict' when the website and API share a site (recommended); 'none' only if they are on different sites (requires HTTPS).
+    sameSite: (process.env.COOKIE_SAMESITE ?? 'strict') as 'strict' | 'lax' | 'none',
+    secure: (process.env.COOKIE_SECURE ?? (isProd ? 'true' : 'false')) === 'true',
+  },
+  mail: {
+    host: process.env.SMTP_HOST ?? '',
+    port: int('SMTP_PORT', 587),
+    user: process.env.SMTP_USER ?? '',
+    password: process.env.SMTP_PASSWORD ?? '',
+    from: process.env.MAIL_FROM ?? 'Maritime Safety Heritage Archive <no-reply@localhost>',
+    webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:5173',
+  },
+  allowRegistration: (process.env.ALLOW_REGISTRATION ?? 'true') === 'true',
+  /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
+  rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
+  trustProxy: (process.env.TRUST_PROXY ?? 'false') === 'true',
   security: {
     maxFailedLogins: int('MAX_FAILED_LOGINS', 5),
     lockMinutes: int('LOCK_MINUTES', 15),
