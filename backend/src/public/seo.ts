@@ -42,8 +42,8 @@ ${o.noindex ? '<meta name="robots" content="noindex">' : ''}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 Manrope,system-ui,sans-serif}
 a{color:var(--accent)}a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .wrap{max-width:46rem;margin:0 auto;padding:2rem 1rem 3rem}
-header a{color:var(--ink);text-decoration:none;font:600 1rem Sora,sans-serif}
-h1{font:600 clamp(1.6rem,4vw,2.3rem)/1.2 Sora,sans-serif;margin:2rem 0 .5rem}
+header{margin-bottom:2.5rem}header a{color:var(--ink);text-decoration:none;font:600 1rem Sora,sans-serif}
+h1{font:600 clamp(1.6rem,4vw,2.3rem)/1.2 Sora,sans-serif;margin:.25rem 0 .75rem}
 .meta{color:var(--dim);margin:0 0 1.5rem}.meta span+span:before{content:", "}
 .cta{display:inline-block;margin:1.5rem 0;padding:.75rem 1.2rem;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
 dl{display:grid;grid-template-columns:max-content 1fr;gap:.35rem 1rem;color:var(--dim)}dt{color:var(--ink)}
@@ -56,7 +56,7 @@ ${o.jsonLd ? `<script type="application/ld+json">${JSON.stringify(o.jsonLd).repl
 <header><a href="/">Maritime Safety Heritage Archive</a></header>
 <main>${o.body}</main>
 <footer>© ${year} Remembering the Waters research team. Testimonies, photographs and records are shared with the consent of their contributors.
-Reuse needs permission; cite the item identifier. <a href="/#/terms">Terms of use</a> · <a href="/#/privacy">Privacy</a></footer>
+Reuse needs permission; cite the item identifier. <a href="/#/terms">Terms and copyright</a> · <a href="/#/privacy">Privacy</a></footer>
 </div></body></html>`;
 }
 

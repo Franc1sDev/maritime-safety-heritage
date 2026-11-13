@@ -50,6 +50,10 @@
   const initials = (n) => String(n || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const me = () => API.user;
   const isAdmin = () => !!me() && me().role === "admin";
+  /** Editors and admins: catalogue, publish and review. Only admins manage people, messages and reports. */
+  const isStaff = () => !!me() && (me().role === "admin" || me().role === "editor");
+  const roleName = (r) => ({ admin: "Admin", editor: "Editor" })[r] || "Member";
+  const ADMIN_ONLY = ["users", "messages", "activity"];
   const date = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
   const dateTime = (d) => d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
   const size = (b) => b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + " KB" : (b / 1024 / 1024).toFixed(1) + " MB";
@@ -155,17 +159,19 @@
       <h4>Take part</h4>
       ${u ? L("#/submit", "hand-heart", "Share a story") : L("#/login", "log-in", "Sign in or create account")}
       ${L("#/contact", "mail", "Contact the team")}
-      ${u && u.role === "admin" ? `<h4>Admin</h4>
+      ${isStaff() ? `<h4>Research team</h4>
         ${L("#/admin", "chart-column", "Dashboard")}
         ${L("#/admin/records", "archive", "Records")}
         ${L("#/admin/upload", "upload", "Upload and catalogue")}
         ${L("#/admin/submissions", "inbox", "Submissions", n(COUNTS.pending))}
-        ${L("#/admin/users", "users", "Users and roles")}
+        ${isAdmin() ? `${L("#/admin/users", "users", "Users and roles")}
         ${L("#/admin/messages", "mail", "Messages", n(COUNTS.unread))}
-        ${L("#/admin/activity", "activity", "Reports and logs")}` : ""}
+        ${L("#/admin/activity", "activity", "Reports and logs")}` : ""}` : ""}
       <h4>About</h4>
       ${L("#/about", "anchor", "About the archive")}
       ${L("#/app", "smartphone", "Mobile app")}
+      ${L("#/privacy", "shield", "Privacy")}
+      ${L("#/terms", "scroll-text", "Terms and copyright")}
       ${u ? L("#/profile", "user", "My account") : ""}
       <h4>Display</h4>
       ${T("lt", "type", "Larger text", P.largeText)}
@@ -177,10 +183,10 @@
       <button class="pill icon-only" id="lbTop" aria-pressed="${P.lowBw}" aria-label="Light mode: no images or video" title="Light mode: no images or video">${ic("wifi-off")}</button>
       <a class="pill has-lbl" href="#/app">${ic("smartphone")}<span class="lbl">App</span></a>`;
     $("#topRight").innerHTML = u
-      ? `<a class="pill has-lbl" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">My account</span>${u.role === "admin" ? '<span class="role lbl">Admin</span>' : ""}</a>
+      ? `<a class="pill has-lbl" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">My account</span>${u.role !== "user" ? `<span class="role lbl">${roleName(u.role)}</span>` : ""}</a>
          <button class="pill has-lbl" id="logout" title="Sign out">${ic("log-out")}<span class="lbl">Sign out</span></button>`
       : (page === "login" ? "" : `<a class="pill has-lbl" href="#/login">${ic("log-in")}<span class="lbl">Sign in</span></a>`);
-    $("#tabbar").innerHTML = [["home", "house", "Home"], ["browse", "search", "Search"], ["map", "map", "Map"], ["submit", "hand-heart", "Share"], [u ? (u.role === "admin" ? "admin" : "profile") : "login", "user", u ? (u.role === "admin" ? "Admin" : "Me") : "Sign in"]]
+    $("#tabbar").innerHTML = [["home", "house", "Home"], ["browse", "search", "Search"], ["map", "map", "Map"], ["submit", "hand-heart", "Share"], [u ? (isStaff() ? "admin" : "profile") : "login", "user", u ? (isStaff() ? "Team" : "Me") : "Sign in"]]
       .map(([h, i, l]) => `<a href="#/${h}" class="${page === h ? "active" : ""}">${ic(i)}${l}</a>`).join("");
     document.body.classList.toggle("more", UI.more);
     document.documentElement.classList.toggle("large-text", P.largeText);
@@ -207,9 +213,9 @@
     toast("Signed out", "log-out"); go("#/home"); render();
   }
   async function refreshCounts() {
-    if (!isAdmin()) return;
+    if (!isStaff()) return;
     try {
-      const [s, m] = await Promise.all([API.get("/submissions", { status: "pending", pageSize: 1 }), API.get("/messages", { filter: "unread", pageSize: 1 })]);
+      const [s, m] = await Promise.all([API.get("/submissions", { status: "pending", pageSize: 1 }), isAdmin() ? API.get("/messages", { filter: "unread", pageSize: 1 }) : Promise.resolve({ unread: 0 })]);
       const changed = s.total !== COUNTS.pending || m.unread !== COUNTS.unread;
       COUNTS.pending = s.total; COUNTS.unread = m.unread;
       if (changed) renderChrome(currentPage());
@@ -259,7 +265,8 @@
   }
   const currentPage = () => parse().parts[0] || "home";
   function go(h) { location.hash = h; }
-  const PUBLIC = ["home", "about", "contact", "login", "app", "reset-password"];
+  const PUBLIC = ["home", "about", "contact", "login", "app", "reset-password", "privacy", "terms"];
+  const DEFAULT_DESC = "Archive of Kenya's maritime and inland-water safety heritage: oral histories, photographs, records and testimonies.";
   let cleanup = [], renderSeq = 0;
 
   async function render() {
@@ -269,9 +276,11 @@
     const { parts, q } = parse();
     const page = parts[0] || "home";
     if (!PUBLIC.includes(page) && !me()) { UI.afterLogin = location.hash; return go("#/login"); }
-    if (page === "admin" && !isAdmin()) { toast("That area is for the research team's admins.", "lock"); return go("#/home"); }
+    if (page === "admin" && (!isStaff() || (ADMIN_ONLY.includes(parts[1]) && !isAdmin()))) { toast("That area is for the research team.", "lock"); return go(isStaff() ? "#/admin" : "#/home"); }
     const view = ROUTES[page] || ROUTES.notfound;
     document.title = (view.title ? view.title + " | " : "") + "Maritime Safety Heritage Archive";
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute("content", view.desc || DEFAULT_DESC);
     renderChrome(page);
     setBg(typeof view.bg === "function" ? view.bg(parts, q) : view.bg);
     let data;
@@ -287,7 +296,7 @@
       }
       if (seq !== renderSeq) return; // the user moved on while this loaded
     }
-    $("#main").innerHTML = view.html(parts, q, data);
+    $("#main").innerHTML = view.html(parts, q, data) + footer();
     if (view.after) view.after(parts, q, data);
     window.scrollTo(0, 0);
     $("#main").focus({ preventScroll: true });
@@ -415,7 +424,7 @@
       return `<div class="stage welcome">
         <h1>${greeting()}, ${esc(u.name.split(" ")[0])}</h1>
         <p class="lede">Stories, photographs and records from Kenya's coast, lakes and rivers.</p>
-        ${orbRow(u.role === "admin" ? admin : user)}
+        ${orbRow(isStaff() ? admin : user)}
       </div>${slideBar()}`;
     },
     after() {
@@ -496,14 +505,14 @@
       const hasTranscript = r.transcript && r.transcript.length;
       let media = "";
       if (video) {
-        media = `<div class="media vframe"><video id="av" src="${esc(video.url)}" preload="metadata" playsinline poster="${esc(image ? image.url : art(r))}"></video>${hasTranscript ? `<div class="subs" id="subs" hidden></div>` : ""}
+        media = `<div class="media vframe"><video id="av" class="protect" src="${esc(video.url)}" preload="metadata" playsinline controlslist="nodownload" poster="${esc(image ? image.url : art(r))}"></video>${hasTranscript ? `<div class="subs" id="subs" hidden></div>` : ""}
           <div class="vbar"><button class="play" id="playBtn" aria-label="Play">${ic("play")}</button><div class="track" id="seek" role="slider" aria-label="Position" tabindex="0"><b id="prog"></b></div><span class="time" id="time">0:00</span>
           <button class="play" id="fullBtn" aria-label="Full screen">${ic("maximize")}</button></div></div>`;
       } else if (audio) {
         media = `<div class="player"><audio id="av" src="${esc(audio.url)}" preload="metadata"></audio><button class="play" id="playBtn" aria-label="Play">${ic("play")}</button>
           <div class="track" id="seek" role="slider" aria-label="Position" tabindex="0"><b id="prog"></b></div><span class="time" id="time">0:00</span></div>`;
       } else if (image) {
-        media = `<div class="media"><img class="media-img" src="${esc(image.url)}" alt="${esc(r.summary || r.title)}"><span class="watermark">${ic("life-buoy")}Remembering the Waters, ${esc(r.identifier)}</span></div>`;
+        media = `<div class="media"><img class="media-img protect" src="${esc(image.url)}" alt="${esc(r.summary || r.title)}" draggable="false"><span class="watermark">${ic("life-buoy")}Remembering the Waters, ${esc(r.identifier)}</span></div>`;
       } else if (r.format === "audio" || r.format === "video") {
         media = `<div class="panel notice">${ic("clock")}<span>The ${r.format === "audio" ? "recording" : "video"} for this item is still being prepared.${hasTranscript ? " The transcript is below." : ""}</span></div>`;
       } else if (r.format === "image") {
@@ -516,7 +525,7 @@
       const transcript = hasTranscript ? `<div class="panel transcript" aria-label="Transcript">${r.transcript.map((t) => `<p data-t="${t.startSeconds}"><span class="ts">${fmt(t.startSeconds)}</span><span>${esc(t.text)}</span></p>`).join("")}</div>` : "";
       return `<div class="stage narrow">
         <a class="pill" href="#/browse" style="margin-bottom:18px">${ic("arrow-left")}Back to the archive</a>
-        ${r.status !== "published" ? `<div class="panel row" style="margin-bottom:16px">${ic("eye")}<span>This item is <b>${esc(r.status)}</b>. Only admins can see it.</span></div>` : ""}
+        ${r.status !== "published" ? `<div class="panel row" style="margin-bottom:16px">${ic("eye")}<span>This item is <b>${esc(r.status)}</b>. Only the research team can see it.</span></div>` : ""}
         <div class="rec-head"><span class="rec-ic">${ic(TYPES[r.type].icon)}</span><div>
           <h1 style="font-size:clamp(1.6rem,3.4vw,2.3rem);margin-bottom:.3em">${esc(r.title)}</h1>
           <div class="facts"><span>${ic("tag")}${esc(r.identifier)}</span><span>${ic("map-pin")}${esc(place(r))}</span><span>${ic("calendar")}${esc(yearText(r))}</span>${r.durationSeconds ? `<span>${ic("clock")}${fmt(r.durationSeconds)}</span>` : ""}<span>${ic("eye")}${r.views.toLocaleString()} views</span></div></div></div>
@@ -528,7 +537,7 @@
           r.latitude != null && { icon: "map-pin", label: "Location", desc: "Where this happened, on the map.", act: () => locationModal(r) },
           { icon: "quote", label: "Cite", desc: "A ready-made citation for your work.", act: () => citeModal(r) },
           { icon: "share-2", label: "Share", desc: "Copies a link to this item.", act: () => copy(location.href, "Link copied") },
-          isAdmin() && { icon: "pencil", label: "Edit", desc: "Change this item's catalogue record and files.", go: "#/admin/edit/" + r.id }
+          isStaff() && { icon: "pencil", label: "Edit", desc: "Change this item's catalogue record and files.", go: "#/admin/edit/" + r.id }
         ])}
         ${r.related && r.related.length ? `<h2>Related items</h2><div class="grid g3">${r.related.map((x) => recCard(x)).join("")}</div>` : ""}
       </div>`;
@@ -757,6 +766,48 @@
     }
   };
 
+  /* ----- Privacy and terms ----- */
+  const prose = (sections) => sections.map(([h, ...ps]) => `<section class="panel prose"><h2>${h}</h2>${ps.map((p) => Array.isArray(p) ? `<ul>${p.map((li) => `<li>${li}</li>`).join("")}</ul>` : `<p>${p}</p>`).join("")}</section>`).join("");
+  ROUTES.privacy = {
+    title: "Privacy",
+    desc: "How the Maritime Safety Heritage Archive collects, protects and uses personal information.",
+    bg: "shield",
+    html() {
+      return `<div class="stage narrow">${head("Privacy", "How the archive looks after your personal information. The Remembering the Waters research team is responsible for it, under Kenya's Data Protection Act, 2019.", true)}
+        ${prose([
+          ["What we collect", ["Your account: name, email address, optional organisation, and your password, stored only as a salted hash we cannot read.", "Sign-in records: when you sign in and the network address used, kept in an audit log to protect accounts.", "What you share: stories, files and the details you add when you submit material, and messages you send through the contact form.", "Which archive items are opened, counted without storing what you searched for."]],
+          ["Why we use it", ["To let you sign in and use the archive on the website and the app.", "To review and, with your consent, add the material you share to the archive.", "To answer your messages.", "To keep the archive secure and to report on how it is used, in totals only."], "We never sell personal information or use it for advertising."],
+          ["How we protect it", ["Every connection is encrypted (HTTPS).", "Stored files are encrypted, and backups are encrypted.", "Files are only reachable through private links that expire after an hour.", "Accounts lock after repeated wrong passwords, and every staff action is logged."]],
+          ["How long we keep it", "Your account details are kept while your account is open. Sign-in records are kept for up to two years. Material accepted into the archive is kept permanently as part of Kenya's heritage record, credited as you agreed when you shared it."],
+          ["Your choices", ["See and correct your details under My account.", "Change your password, or sign out on every device.", "Close your account under My account. Your name, email and organisation are erased, and submissions still waiting for review are withdrawn and deleted.", "Ask for a copy of your information, or ask us to remove material you shared, through the contact form."]],
+          ["Contact", `Questions or requests: use the <a href="#/contact">contact form</a>. You can also complain to the Office of the Data Protection Commissioner of Kenya.`]
+        ])}</div>`;
+    }
+  };
+  ROUTES.terms = {
+    title: "Terms and copyright",
+    desc: "Terms of use and copyright for the Maritime Safety Heritage Archive.",
+    bg: "scroll-text",
+    html() {
+      return `<div class="stage narrow">${head("Terms and copyright", "The archive is open to everyone with an account. These terms protect the people whose stories it holds.", true)}
+        ${prose([
+          ["Who owns the material", `The oral histories, photographs, records and testimonies belong to their contributors and communities, and are held by the Remembering the Waters research team. The website, app and catalogue are © ${new Date().getFullYear()} Remembering the Waters.`],
+          ["What you may do", ["Read, watch and listen for personal study, teaching, research and safety work.", "Quote short passages with a citation. Every item shows a ready-made citation with its identifier, such as MSH-0001.", "Link to any item."]],
+          ["What needs permission", ["Republishing or broadcasting whole items, photographs or recordings.", "Commercial use of any kind.", "Copying the archive or downloading it in bulk, including with automated tools. Automated access is rate-limited and monitored."], `Ask through the <a href="#/contact">contact form</a>.`],
+          ["Sharing material", "When you share a story or file, you confirm you have the right to share it and the consent of the people in it. The research team reviews everything before it is published and may decline or edit the description."],
+          ["The official archive", "This is the archive's only official address. Copies elsewhere are not endorsed. If you see archive material published without permission, tell us through the contact form and we will ask for it to be removed."],
+          ["Your account", "Keep your password private. The team may suspend accounts that misuse the archive or other people's material."]
+        ])}</div>`;
+    }
+  };
+  function footer() {
+    return `<footer class="site-foot"><span>© ${new Date().getFullYear()} Remembering the Waters research team. Shared with contributors' consent; reuse needs permission.</span>
+      <span><a href="#/terms">Terms and copyright</a><a href="#/privacy">Privacy</a><a href="#/contact">Contact</a></span></footer>`;
+  }
+  // Discourage saving photos and videos with the right-click menu or by dragging.
+  document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest(".protect, .media")) e.preventDefault(); });
+  document.addEventListener("dragstart", (e) => { if (e.target.closest && e.target.closest(".protect")) e.preventDefault(); });
+
   /* ----- Sign in, create account, reset password ----- */
   ROUTES.login = {
     title: "Sign in",
@@ -845,13 +896,14 @@
       API.user = Object.assign(API.user || {}, u);
       return `<div class="stage narrow center">
         <span class="avatar" style="width:84px;height:84px;font-size:1.8rem;margin:0 auto 14px">${esc(initials(u.name))}</span>
-        ${head(esc(u.name), `${esc(u.email)}<br>${u.role === "admin" ? "Admin" : "Member"} since ${date(u.createdAt)}${u.organisation ? ", " + esc(u.organisation) : ""}`, true)}
+        ${head(esc(u.name), `${esc(u.email)}<br>${roleName(u.role)} since ${date(u.createdAt)}${u.organisation ? ", " + esc(u.organisation) : ""}`, true)}
         ${orbRow([
           { icon: "pencil", label: "Edit profile", desc: "Change your name or organisation.", act: () => editProfile(u), primary: true },
           { icon: "key-round", label: "Password", desc: "Change your password. You'll sign in again everywhere.", act: changePassword },
           { icon: "folder-open", label: "My submissions", desc: "What you've sent and its review status.", act: mySubmissions },
           { icon: "shield", label: "Sign out everywhere", desc: "Ends your sessions on every device, including this one.", act: signOutEverywhere },
-          { icon: "log-out", label: "Sign out", desc: "Signs you out on this device.", act: signOut }
+          { icon: "log-out", label: "Sign out", desc: "Signs you out on this device.", act: signOut },
+          { icon: "ban", label: "Close account", desc: "Permanently deletes your account and personal details.", act: closeAccount }
         ])}</div>`;
     }
   };
@@ -873,6 +925,17 @@
         e.preventDefault(); const btn = $("#pwbtn"); busy(btn, true, "Saving");
         try { await API.post("/auth/change-password", { currentPassword: $("#p1").value, newPassword: $("#p2").value }); API.clear(); closeModal(); toast("Password changed. Sign in with your new password.", "key-round"); go("#/login"); }
         catch (ex) { busy(btn, false); $("#pwErr").textContent = ex.message; }
+      };
+    });
+  }
+  function closeAccount() {
+    modal("ban", "Close your account?", `<p class="muted">This can't be undone. Your name, email and organisation are erased and you can't sign in again. Submissions still waiting for review are withdrawn and their files deleted. Material already accepted into the archive stays in it.</p>
+      <form id="caForm"><div class="field"><label for="cap">Your password</label><input id="cap" type="password" required autocomplete="current-password"></div>
+      <div class="err" id="caErr" role="alert"></div><div class="row"><button class="btn danger" id="caBtn">${ic("ban")}Close my account</button><button type="button" class="btn ghost" data-close>Keep my account</button></div></form>`, () => {
+      $("#caForm").onsubmit = async (e) => {
+        e.preventDefault(); const btn = $("#caBtn"); busy(btn, true, "Closing");
+        try { await API.post("/auth/delete-account", { password: $("#cap").value }); API.clear(); closeModal(); toast("Your account is closed", "ban"); go("#/home"); render(); }
+        catch (ex) { busy(btn, false); $("#caErr").textContent = ex.message; }
       };
     });
   }
@@ -918,7 +981,7 @@
     load() { return API.get("/reports/summary"); },
     html(parts, qs, s) {
       const t = s.totals;
-      COUNTS.pending = t.pendingSubmissions; COUNTS.unread = t.unreadMessages;
+      COUNTS.pending = t.pendingSubmissions; COUNTS.unread = isAdmin() ? t.unreadMessages : 0;
       return `${head("Archive dashboard", "What's happening in the archive today.", true)}
         <div class="grid g4">
           <div class="kpi"><span class="li-ic">${ic("archive")}</span><div><b>${t.published}</b><span>Published items</span></div></div>
@@ -930,10 +993,11 @@
           { icon: "archive", label: "Records", desc: "Edit, publish or unpublish items.", go: "#/admin/records" },
           { icon: "upload", label: "Upload", desc: "Add a new item and catalogue it.", go: "#/admin/upload", primary: true },
           { icon: "inbox", label: "Review", desc: "Approve or decline material sent in by the public.", go: "#/admin/submissions", badge: t.pendingSubmissions || "" },
-          { icon: "users", label: "Users", desc: "Create accounts, change roles, suspend accounts.", go: "#/admin/users" },
-          { icon: "mail", label: "Messages", desc: "Messages from the contact form.", go: "#/admin/messages", badge: t.unreadMessages || "" },
-          { icon: "activity", label: "Reports", desc: "Usage, collection health and the audit log.", go: "#/admin/activity" }
-        ])}
+          isAdmin() && { icon: "users", label: "Users", desc: "Create accounts, change roles, suspend accounts.", go: "#/admin/users" },
+          isAdmin() && { icon: "mail", label: "Messages", desc: "Messages from the contact form.", go: "#/admin/messages", badge: t.unreadMessages || "" },
+          isAdmin() && { icon: "activity", label: "Reports", desc: "Usage, collection health and the audit log.", go: "#/admin/activity" }
+        ].filter(Boolean))}
+        ${t.storageAlertBytes ? `<div class="panel row" style="margin-bottom:16px">${ic("archive")}<span>Media storage: <b>${size(t.storageBytes)}</b> used of the ${size(t.storageAlertBytes)} alert level (${Math.round((t.storageBytes / t.storageAlertBytes) * 100)}%).</span></div>` : ""}
         <div class="grid g2">
           <div class="panel"><h3>${ic("trending-up")} Item views per month</h3>${bars(s.viewsByMonth, (r) => month(r.month), (r) => r.count)}</div>
           <div class="panel"><h3>${ic("history")} Recent activity</h3>${logList(s.recentActivity.slice(0, 6))}</div>
@@ -1177,12 +1241,12 @@
     load(parts, qs) { return API.get("/users", { q: qs.get("q") || "", page: Math.max(1, +qs.get("page") || 1), pageSize: 25 }); },
     html(parts, qs, res) {
       const link = (n) => { const p = new URLSearchParams(qs); p.set("page", n); return "#/admin/users?" + p.toString(); };
-      return `${head("Users and roles", "Users search, browse, play media and share material. Admins also catalogue, publish, review and manage users.", true)}
-        ${orbRow([dash, { icon: "user-plus", label: "Create user", desc: "Add a user or admin with a one-time password.", act: createUser, primary: true }])}
+      return `${head("Users and roles", "Members search, browse, play media and share material. Editors also catalogue, publish and review. Admins also manage people, messages and reports.", true)}
+        ${orbRow([dash, { icon: "user-plus", label: "Create user", desc: "Add a member, editor or admin with a one-time password.", act: createUser, primary: true }])}
         <form class="searchbar" id="uform" role="search" style="margin-bottom:18px">${ic("search")}<label for="uq" class="sr">Find a user</label><input id="uq" value="${esc(qs.get("q") || "")}" placeholder="Name, email or organisation"><button>Find</button></form>
         <div class="panel tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Actions</th></tr></thead><tbody>
         ${res.items.map((u) => { const self = u.id === me().id; return `<tr><td><div class="row" style="flex-wrap:nowrap"><span class="avatar">${esc(initials(u.name))}</span><div><b style="color:#fff">${esc(u.name)}</b><div class="small muted">${esc(u.email)}${u.organisation ? ", " + esc(u.organisation) : ""}</div></div></div></td>
-          <td><select data-role="${u.id}" ${self ? "disabled title=\"You can't change your own role\"" : ""} aria-label="Role for ${esc(u.name)}"><option value="user" ${u.role === "user" ? "selected" : ""}>User</option><option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option></select></td>
+          <td><select data-role="${u.id}" ${self ? "disabled title=\"You can't change your own role\"" : ""} aria-label="Role for ${esc(u.name)}">${["user", "editor", "admin"].map((r) => `<option value="${r}" ${u.role === r ? "selected" : ""}>${roleName(r)}</option>`).join("")}</select></td>
           <td>${status(u.status)}</td><td class="small">${u.lastLoginAt ? dateTime(u.lastLoginAt) : "Never"}</td>
           <td><div class="actions"><button class="btn ghost sm" data-reset="${u.id}">${ic("key-round")}Reset password</button>${self ? "" : `<button class="btn ${u.status === "active" ? "danger" : ""} sm" data-susp="${u.id}" data-to="${u.status === "active" ? "suspended" : "active"}">${ic(u.status === "active" ? "ban" : "circle-check")}${u.status === "active" ? "Suspend" : "Reactivate"}</button>`}</div></td></tr>`; }).join("")}
         </tbody></table></div>${pager(res.page, res.pages, link)}`;
@@ -1213,7 +1277,7 @@
   function createUser() {
     modal("user-plus", "Create user", `<form id="nuForm"><div class="field"><label for="nn">Name</label><input id="nn" required minlength="2" maxlength="120"></div><div class="field"><label for="ne">Email</label><input id="ne" type="email" required></div>
       <div class="field"><label for="nor">Organisation (optional)</label><input id="nor" maxlength="160"></div>
-      <div class="field"><label>Role</label><div class="seg"><input type="radio" name="nr" id="nr1" value="user" checked><label for="nr1">${ic("user")}User</label><input type="radio" name="nr" id="nr2" value="admin"><label for="nr2">${ic("user-round-cog")}Admin</label></div></div>
+      <div class="field"><label>Role</label><div class="seg"><input type="radio" name="nr" id="nr1" value="user" checked><label for="nr1">${ic("user")}Member</label><input type="radio" name="nr" id="nr3" value="editor"><label for="nr3">${ic("pencil")}Editor</label><input type="radio" name="nr" id="nr2" value="admin"><label for="nr2">${ic("user-round-cog")}Admin</label></div></div>
       <div class="err" id="nuerr"></div><button class="btn" id="nubtn">${ic("user-plus")}Create user</button></form>`, () => {
       $("#nuForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#nubtn"); busy(btn, true, "Creating");
