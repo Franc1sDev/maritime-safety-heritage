@@ -11,11 +11,13 @@ const pg = new EmbeddedPostgres({ databaseDir: dir, user: 'postgres', password: 
 
 let code = 1;
 try {
+  console.log('Starting a temporary PostgreSQL server (first run can take a minute)...');
   await pg.initialise();
   await pg.start();
   await pg.createDatabase('msh_test');
+  console.log('Database ready; running tests.');
   code = await new Promise((resolve) => {
-    const jest = spawn(process.execPath, ['node_modules/jest/bin/jest.js', '--runInBand', ...process.argv.slice(2)], {
+    const jest = spawn(process.execPath, ['node_modules/jest/bin/jest.js', '--runInBand', '--forceExit', ...process.argv.slice(2)], {
       stdio: 'inherit', env: { ...process.env, DB_PORT: String(port), DB_PASSWORD: 'test-password', DB_NAME: 'msh_test' },
     });
     jest.on('exit', (c) => resolve(c ?? 1));
