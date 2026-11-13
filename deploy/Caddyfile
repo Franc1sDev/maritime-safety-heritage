@@ -1,0 +1,34 @@
+# HTTPS with automatic certificates (Let's Encrypt or ZeroSSL). A paid certificate can be used instead:
+# put the files in ./certs and replace the "tls" line with:  tls /certs/archive.crt /certs/archive.key
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# Long-lived caching for website files; the API sets its own caching.
+	@static path /assets/*
+	header @static Cache-Control "public, max-age=86400"
+
+	# Bigger uploads (media up to 500 MB) and slow connections.
+	request_body {
+		max_size 520MB
+	}
+
+	reverse_proxy api:4000 {
+		header_up X-Forwarded-Proto {scheme}
+		transport http {
+			read_timeout 15m
+			write_timeout 15m
+		}
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 20MiB
+			roll_keep 10
+		}
+	}
+}
+
+# Send www and any alternative domains to the one official address (helps search engines and stops copies).
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}

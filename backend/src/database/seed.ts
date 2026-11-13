@@ -31,9 +31,9 @@ export async function seed(ds: DataSource, opts = { sample: config.seed.sampleDa
   }
   const users = ds.getRepository(User);
 
-  // First admin account
+  // First admin account, only while the archive has no admin at all (so restarts never need the seed password again).
   const adminEmail = config.seed.adminEmail.trim().toLowerCase();
-  if (!(await users.findOneBy({ email: adminEmail }))) {
+  if (!(await users.countBy({ role: 'admin' })) && !(await users.findOneBy({ email: adminEmail }))) {
     const pw = config.seed.adminPassword;
     if (!PASSWORD_RULE.test(pw) || pw.startsWith('change-me')) {
       throw new Error('Set SEED_ADMIN_PASSWORD in .env (8+ characters, letters and numbers) before seeding.');

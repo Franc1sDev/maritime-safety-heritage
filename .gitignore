@@ -3,6 +3,7 @@ LOCAL-DEV-CREDENTIALS.txt
 *.env
 .env*
 !.env.example
+!.env.production.example
 # OS / editor
 .DS_Store
 Thumbs.db
@@ -18,3 +19,5 @@ mobile-app/android/local.properties
 
 # ...except the published prototype download
 !downloads/*.apk
+deploy/backups/
+deploy/.env

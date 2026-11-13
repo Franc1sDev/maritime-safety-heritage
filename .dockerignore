@@ -1,0 +1,15 @@
+**/node_modules
+**/.env
+**/.demo-db
+**/storage
+**/logs
+backend/dist
+mobile-app
+prototype
+downloads
+assets
+_archive
+.git
+*.apk
+*.jks
+deploy/backups

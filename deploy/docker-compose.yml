@@ -1,0 +1,76 @@
+# Production stack for one server (for example a 2 vCPU / 4 GB cloud VM).
+#   cp .env.production.example .env   then fill it in
+#   docker compose up -d --build
+# Caddy gets and renews the HTTPS certificate automatically for SITE_DOMAIN.
+name: maritime-heritage
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: maritime_heritage
+      POSTGRES_USER: maritime
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes: [ "db:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U maritime -d maritime_heritage" ]
+      interval: 10s
+      retries: 10
+
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    volumes: [ "clamav:/var/lib/clamav" ]
+
+  api:
+    build: { context: .., dockerfile: Dockerfile }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: maritime
+      DB_NAME: maritime_heritage
+      CLAMAV_HOST: clamav
+      SITE_URL: https://${SITE_DOMAIN}
+      WEB_BASE_URL: https://${SITE_DOMAIN}
+      COOKIE_SECURE: "true"
+    volumes: [ "media:/data/storage" ]
+    depends_on:
+      db: { condition: service_healthy }
+      clamav: { condition: service_started }
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports: [ "80:80", "443:443", "443:443/udp" ]
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [ api ]
+
+  backup:
+    build: ./backup
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PGHOST: db
+      PGUSER: maritime
+      PGDATABASE: maritime_heritage
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - media:/data/storage:ro
+      - ./backups:/backups
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  db:
+  media:
+  clamav:
+  caddy_data:
+  caddy_config:
