@@ -808,7 +808,7 @@ Future<List<LocalFile>> pickFiles(BuildContext context, {bool multiple = true}) 
         final x = await picker.pickVideo(source: ImageSource.camera);
         return x == null ? [] : [await fromX(x)];
       case 2:
-        final xs = multiple ? await picker.pickMultipleMedia() : [if (await picker.pickMedia() case final x?) x];
+        final xs = multiple ? await picker.pickMultipleMedia() : [?await picker.pickMedia()];
         return [for (final x in xs) await fromX(x)];
       default:
         final r = await FilePicker.platform.pickFiles(allowMultiple: multiple, type: FileType.custom, allowedExtensions: _allowedExt);

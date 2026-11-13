@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'main.dart';
-import 'state.dart';
 import 'ui.dart';
 
 /// Video background, or the wave icon when Light mode is on.
