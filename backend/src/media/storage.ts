@@ -41,6 +41,8 @@ export class S3Storage implements Storage {
   private readonly s3 = new S3Client({
     region: config.storage.s3.region, endpoint: config.storage.s3.endpoint || undefined, forcePathStyle: !!config.storage.s3.endpoint,
     credentials: { accessKeyId: config.storage.s3.accessKeyId, secretAccessKey: config.storage.s3.secretAccessKey },
+    // Backblaze B2, R2 and others don't accept every newer AWS checksum header; only send checksums when required.
+    requestChecksumCalculation: 'WHEN_REQUIRED', responseChecksumValidation: 'WHEN_REQUIRED',
   });
   private readonly bucket = config.storage.s3.bucket;
   async putFile(key: string, localPath: string, mimeType: string) {
