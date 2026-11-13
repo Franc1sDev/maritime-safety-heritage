@@ -2,6 +2,7 @@
 LOCAL-DEV-CREDENTIALS.txt
 *.env
 .env*
+!.env.example
 # OS / editor
 .DS_Store
 Thumbs.db
