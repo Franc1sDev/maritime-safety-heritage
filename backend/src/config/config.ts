@@ -10,6 +10,23 @@ const int = (name: string, fallback: number) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+// Hosts such as Render, Neon and Supabase give the database as one connection string; split it into the DB_* settings.
+if (process.env.DATABASE_URL) {
+  const u = new URL(process.env.DATABASE_URL);
+  process.env.DB_HOST ??= u.hostname;
+  process.env.DB_PORT ??= u.port || '5432';
+  process.env.DB_USER ??= decodeURIComponent(u.username);
+  process.env.DB_PASSWORD ??= decodeURIComponent(u.password);
+  process.env.DB_NAME ??= u.pathname.replace(/^\//, '');
+  const mode = u.searchParams.get('sslmode');
+  if (mode && mode !== 'disable') process.env.DB_SSL ??= 'true';
+}
+// Render tells the app its public address; use it when SITE_URL and WEB_BASE_URL are not set.
+if (process.env.RENDER_EXTERNAL_URL) {
+  process.env.SITE_URL ??= process.env.RENDER_EXTERNAL_URL;
+  process.env.WEB_BASE_URL ??= process.env.RENDER_EXTERNAL_URL;
+}
+
 const env = process.env.NODE_ENV ?? 'development';
 const isProd = env === 'production';
 

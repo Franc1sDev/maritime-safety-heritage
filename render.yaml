@@ -1,0 +1,66 @@
+# Free test hosting on Render (https://render.com): the API and website in one Docker service.
+# The database is on Neon (free PostgreSQL) and media files on Backblaze B2 (free 10 GB, S3-compatible).
+# Render: New, Blueprint, pick this repository. Fill in the values marked sync: false when asked.
+services:
+  - type: web
+    name: maritime-heritage
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      # PostgreSQL connection string from Neon (Connection details, with ?sslmode=require)
+      - key: DATABASE_URL
+        sync: false
+      # Secrets: generated once by Render. Copy MEDIA_ENCRYPTION_KEY into a password manager.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: MEDIA_SIGNING_SECRET
+        generateValue: true
+      - key: MEDIA_ENCRYPTION_KEY
+        generateValue: true
+      # Media on Backblaze B2 (S3-compatible). Endpoint looks like https://s3.eu-central-003.backblazeb2.com
+      - key: STORAGE_DRIVER
+        value: s3
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: MAX_UPLOAD_MB
+        value: "200"
+      # Email for password resets and review results (for example Gmail with an app password)
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # First admin account, created on the first start only
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      # Sample (placeholder) records so the test site is not empty; set to false before real use
+      - key: SEED_SAMPLE_DATA
+        value: "true"
+      # The free plan has 512 MB of memory, too little for the ClamAV virus scanner (it needs a paid server)
+      - key: CLAMAV_REQUIRED
+        value: "false"
