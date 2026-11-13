@@ -54,7 +54,12 @@
     "rootDir": ".",
     "testRegex": "test/.*\\.e2e-spec\\.ts$",
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "isolatedModules": true
+        }
+      ]
     },
     "moduleFileExtensions": [
       "ts",
