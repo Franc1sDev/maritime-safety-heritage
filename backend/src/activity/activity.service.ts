@@ -25,7 +25,7 @@ export class ActivityService {
       await this.repo.insert({
         actorId: e.actor?.id || null, actorName: (e.actor?.name || 'Visitor').slice(0, 120), action: e.action,
         entityType: e.entityType ?? '', entityId: e.entityId ?? '', summary: (e.summary ?? '').slice(0, 400),
-        details: e.details ?? {}, ip: e.ip ?? '',
+        details: (e.details ?? {}) as never, ip: e.ip ?? '',
       });
     } catch (err) {
       this.log.error(`Could not write activity "${e.action}": ${(err as Error).message}`);

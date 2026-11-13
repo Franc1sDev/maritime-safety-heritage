@@ -15,7 +15,7 @@ export function configureApp(app: INestApplication) {
     crossOriginResourcePolicy: { policy: 'same-site' },
   }));
   app.enableCors({
-    origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
+    origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Client'],
