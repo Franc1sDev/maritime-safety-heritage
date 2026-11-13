@@ -1,6 +1,8 @@
-# Maritime Safety Heritage Archive: API
+# Maritime Safety Heritage Archive: API and website
 
 The secure backend shared by the website and the mobile app. It runs on NestJS (Node.js) with PostgreSQL. The data model follows [`docs/METADATA.md`](../docs/METADATA.md).
+
+The API also serves the website (in [`../web`](../web)) from the same address. Open http://localhost:4000/ for the website and http://localhost:4000/api/docs for the API docs.
 
 ## Run it on Windows
 
@@ -11,8 +13,10 @@ You need Node.js 22 or later and PostgreSQL (16, 17 or 18).
    - creates a `maritime` database account and the `maritime_heritage` database;
    - writes `.env` with new random secrets;
    - creates the tables and loads the sample content.
-2. Double-click **`2-START-API.bat`**. The API runs on http://localhost:4000/api/v1, and the interactive API docs open at http://localhost:4000/api/docs.
+2. Double-click **`2-START-API.bat`**. The website opens at http://localhost:4000/. The API is at http://localhost:4000/api/v1, with interactive docs at http://localhost:4000/api/docs.
 3. Double-click **`3-RUN-TESTS.bat`** to run the automated tests. They use a temporary database, so your data is not touched.
+
+**No PostgreSQL, or setup failing?** Double-click **`4-TRY-WITH-DEMO-DATABASE.bat`**. It runs the website and API with a private database it manages itself (kept in `.demo-db`), loaded with the sample content.
 
 Local demo accounts: `researcher@demo.ke` / `demo1234` and `admin@demo.ke` / `admin1234`. Demo accounts are never created when `NODE_ENV=production`.
 
@@ -24,7 +28,8 @@ Local demo accounts: `researcher@demo.ke` / `demo1234` and `admin@demo.ke` / `ad
 | `npm start` | Run the compiled API |
 | `npm run migrate` | Apply new SQL migrations from `src/database/migrations` |
 | `npm run seed` | Create the first admin and, if enabled, the sample content |
-| `npm test` | 28 end-to-end tests against a throwaway PostgreSQL |
+| `npm test` | 31 end-to-end tests against a throwaway PostgreSQL |
+| `npm run demo` | Website and API with a private, self-managed PostgreSQL and sample content |
 | `npm run lint` | Type-check everything |
 
 ## What the API covers

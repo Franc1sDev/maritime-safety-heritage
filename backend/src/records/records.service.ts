@@ -61,7 +61,7 @@ export class RecordsService {
     if (ts) {
       qb.andWhere(`r.search @@ ${ts.sql}`, { tsq: ts.value });
       qb.addSelect(`ts_rank_cd(r.search, ${ts.sql})`, 'rank');
-      qb.addSelect(`ts_headline('simple', r.summary || ' ' || coalesce(r.body, '') || ' ' || r.search_text, ${ts.sql},
+      qb.addSelect(`ts_headline('simple', r.summary || ' ' || coalesce(r.body, '') || ' ' || coalesce((SELECT string_agg(t.text, ' ' ORDER BY t.position) FROM transcript_segments t WHERE t.record_id = r.id), ''), ${ts.sql},
         'StartSel=${MARK_START}, StopSel=${MARK_END}, MaxFragments=2, MaxWords=22, MinWords=8, FragmentDelimiter=" … "')`, 'snippet');
     }
     const sort = q.sort ?? (ts ? 'relevance' : 'added');
@@ -90,6 +90,31 @@ export class RecordsService {
       waterBody: r.waterBody?.name ?? null, latitude: r.latitude, longitude: r.longitude, status: r.status }));
   }
 
+  /** Values to offer in the search filters, from published items only. */
+  async facets() {
+    const q = (sql: string) => this.ds.query(sql);
+    const [counties, decades, years] = await Promise.all([
+      q(`SELECT county AS value, count(*)::int AS count FROM records WHERE status = 'published' AND deleted_at IS NULL AND county <> '' GROUP BY county ORDER BY county`),
+      q(`SELECT (year / 10) * 10 AS value, count(*)::int AS count FROM records WHERE status = 'published' AND deleted_at IS NULL AND year IS NOT NULL GROUP BY 1 ORDER BY 1`),
+      q(`SELECT min(year) AS min, max(year) AS max FROM records WHERE status = 'published' AND deleted_at IS NULL`),
+    ]);
+    return { counties, decades, years: years[0] };
+  }
+
+  /** Up to 3 published items sharing a subject or water body, most shared subjects first. */
+  private async related(r: ArchiveRecord) {
+    const rows: Array<{ id: string }> = await this.ds.query(
+      `SELECT r.id FROM records r
+       LEFT JOIN record_subjects rs ON rs.record_id = r.id AND rs.subject_id = ANY($2::int[])
+       WHERE r.status = 'published' AND r.deleted_at IS NULL AND r.id <> $1
+       GROUP BY r.id HAVING count(rs.subject_id) > 0 OR bool_or(r.water_body_id = $3)
+       ORDER BY count(rs.subject_id) DESC, r.views DESC LIMIT 3`,
+      [r.id, (r.subjects ?? []).map((s) => s.id), r.waterBodyId ?? -1]);
+    if (!rows.length) return [];
+    const found = await this.records.find({ where: rows.map((x) => ({ id: x.id })) });
+    return rows.map((x) => found.find((f) => f.id === x.id)).filter((f): f is ArchiveRecord => !!f).map((f) => this.summary(f));
+  }
+
   private async load(idOrIdentifier: string, withDeleted = false) {
     const where = UUID.test(idOrIdentifier) ? { id: idOrIdentifier } : { identifier: idOrIdentifier.toUpperCase() };
     const r = await this.records.findOne({ where, relations: { transcript: true }, order: { transcript: { position: 'ASC' } }, withDeleted });
@@ -107,7 +132,7 @@ export class RecordsService {
   async detail(idOrIdentifier: string, user: AuthUser, countView = true) {
     const r = await this.load(idOrIdentifier);
     if (r.status !== 'published' && user.role !== 'admin') throw new NotFoundException('That archive item does not exist.');
-    if (countView && r.status === 'published') {
+    if (countView && r.status === 'published' && user.role !== 'admin') {
       await this.records.increment({ id: r.id }, 'views', 1);
       await this.views.insert({ recordId: r.id, userId: user.id });
       r.views += 1;
@@ -118,6 +143,7 @@ export class RecordsService {
       language: r.language, rights: r.rights, consent: r.consent,
       transcript: r.transcript.map((t) => ({ startSeconds: t.startSeconds, text: t.text })),
       media: media.map((m) => this.media.describe(m)), citation: this.citation(r),
+      related: await this.related(r),
     };
   }
 

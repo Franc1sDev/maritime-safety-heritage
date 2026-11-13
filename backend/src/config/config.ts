@@ -27,7 +27,7 @@ export const config = {
   port: int('PORT', 4000),
   /** Public address of the API, used to build absolute media links. Leave empty to return links relative to the API host. */
   publicApiUrl: (process.env.PUBLIC_API_URL ?? '').replace(/\/$/, ''),
-  corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(',').map((s) => s.trim()).filter(Boolean),
+  corsOrigins: (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
   db: {
     host: req('DB_HOST', 'localhost'),
     port: int('DB_PORT', 5432),
@@ -69,11 +69,13 @@ export const config = {
     user: process.env.SMTP_USER ?? '',
     password: process.env.SMTP_PASSWORD ?? '',
     from: process.env.MAIL_FROM ?? 'Maritime Safety Heritage Archive <no-reply@localhost>',
-    webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:5173',
+    webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:4000',
   },
   allowRegistration: (process.env.ALLOW_REGISTRATION ?? 'true') === 'true',
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
+  /** Folder with the website, served from the same address as the API. Empty string turns it off. */
+  webDir: process.env.WEB_DIR ?? require('path').resolve(__dirname, '../../../web'),
   trustProxy: (process.env.TRUST_PROXY ?? 'false') === 'true',
   security: {
     maxFailedLogins: int('MAX_FAILED_LOGINS', 5),

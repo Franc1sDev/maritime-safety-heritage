@@ -12,7 +12,8 @@
     "seed": "node dist/database/seed.js",
     "test": "node test/run-e2e.mjs",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "setup-db": "node dist/database/migrate.js && node dist/database/seed.js"
+    "setup-db": "node dist/database/migrate.js && node dist/database/seed.js",
+    "demo": "node scripts/demo.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",

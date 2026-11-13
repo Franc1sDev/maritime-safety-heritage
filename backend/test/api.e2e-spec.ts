@@ -56,6 +56,14 @@ afterAll(async () => {
 });
 
 describe('basics and security headers', () => {
+  it('serves the website from the same address, with a strict content security policy', async () => {
+    const r = await request(http).get('/').expect(200);
+    expect(r.text).toContain('Maritime Safety Heritage Archive');
+    expect(r.headers['content-security-policy']).toMatch(/script-src 'self'/);
+    expect(r.headers['x-frame-options']).toBe('SAMEORIGIN');
+    await request(http).get('/assets/app.js').expect(200);
+  });
+
   it('reports health without signing in', async () => {
     const r = await request(http).get('/api/v1/health').expect(200);
     expect(r.body.database).toBe('ok');
@@ -183,6 +191,22 @@ describe('archive', () => {
     expect(r.body.citation).toContain('MSH-0001');
     const again = await request(http).get('/api/v1/records/MSH-0001').set(bearer(user)).expect(200);
     expect(again.body.views).toBe(r.body.views + 1);
+  });
+
+  it('offers search filters and related items', async () => {
+    const f = await request(http).get('/api/v1/records/facets').set(bearer(user)).expect(200);
+    expect(f.body.counties.map((c: { value: string }) => c.value)).toContain('Mombasa');
+    expect(f.body.decades.length).toBeGreaterThan(2);
+    const r = await request(http).get('/api/v1/records/MSH-0001').set(bearer(user)).expect(200);
+    expect(r.body.related.length).toBeGreaterThan(0);
+    expect(r.body.related.map((x: { identifier: string }) => x.identifier)).not.toContain('MSH-0001');
+  });
+
+  it('does not count views by admins', async () => {
+    const admin2 = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    const a = await request(http).get('/api/v1/records/MSH-0002').set(bearer(admin2)).expect(200);
+    const b = await request(http).get('/api/v1/records/MSH-0002').set(bearer(admin2)).expect(200);
+    expect(b.body.views).toBe(a.body.views);
   });
 
   it('returns map points', async () => {

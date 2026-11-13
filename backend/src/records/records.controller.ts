@@ -15,6 +15,9 @@ export class RecordsController {
   @Get('map') @ApiOperation({ summary: 'Items with a location, for the incident map' })
   map(@CurrentUser() me: AuthUser) { return this.records.mapPoints(me); }
 
+  @Get('facets') @ApiOperation({ summary: 'Counties and decades to offer as search filters' })
+  facets() { return this.records.facets(); }
+
   @Roles('admin') @Get('deleted') @ApiOperation({ summary: 'Deleted items that can be restored' })
   deleted() { return this.records.deleted(); }
 

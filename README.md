@@ -1,4 +1,17 @@
-# Maritime Safety Heritage Archive: Clickable Prototype (v0.2)
+# Maritime Safety Heritage Archive
+
+| Part | Folder | Status |
+|---|---|---|
+| Secure API (NestJS + PostgreSQL) | [`backend/`](backend/README.md) | Phase 1, built and tested |
+| Full website | [`web/`](web/README.md) | Phase 2, built and tested; served by the API |
+| Android and iOS app (Flutter) | [`mobile-app/`](mobile-app/) | Prototype now; phase 3 connects it to the API |
+| Metadata schema | [`docs/METADATA.md`](docs/METADATA.md) | |
+
+To run the full website on Windows, open `backend` and double-click `1-SETUP.bat`, then `2-START-API.bat`. You can also double-click `4-TRY-WITH-DEMO-DATABASE.bat`, which needs no PostgreSQL setup. Then go to http://localhost:4000/.
+
+---
+
+# Clickable prototype (v0.2)
 
 **Open it in any browser:** https://franc1sdev.github.io/maritime-safety-heritage/
 
