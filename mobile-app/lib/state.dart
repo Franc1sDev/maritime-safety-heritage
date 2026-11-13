@@ -146,6 +146,9 @@ class AppUser {
       : id = _s(j['id']), name = _s(j['name']), email = _s(j['email']), role = _s(j['role'], 'user'), status = _s(j['status'], 'active'),
         organisation = _s(j['organisation']), lastLoginAt = _dt(j['lastLoginAt']), createdAt = _dt(j['createdAt']);
   bool get isAdmin => role == 'admin';
+  /// Editors and admins catalogue, publish and review. Only admins manage people, messages and reports.
+  bool get isStaff => role == 'admin' || role == 'editor';
+  String get roleName => role == 'admin' ? 'Admin' : role == 'editor' ? 'Editor' : 'Member';
   String get first => name.split(' ').first;
   String get initials => name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(2).map((w) => w[0]).join().toUpperCase();
 }
@@ -206,6 +209,7 @@ class AppState extends ChangeNotifier {
   int pending = 0, unread = 0;
 
   bool get isAdmin => me?.isAdmin ?? false;
+  bool get isStaff => me?.isStaff ?? false;
   bool get hasServer => server.isNotEmpty;
 
   Future<void> load() async {
@@ -288,12 +292,14 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refreshCounts() async {
-    if (!isAdmin) return;
+    if (!isStaff) return;
     try {
       final s = await api.get('/submissions', {'status': 'pending', 'pageSize': 1}) as Map<String, dynamic>;
-      final m = await api.get('/messages', {'filter': 'unread', 'pageSize': 1}) as Map<String, dynamic>;
       pending = _i(s['total']);
-      unread = _i(m['unread']);
+      if (isAdmin) {
+        final m = await api.get('/messages', {'filter': 'unread', 'pageSize': 1}) as Map<String, dynamic>;
+        unread = _i(m['unread']);
+      }
       notifyListeners();
     } catch (_) {}
   }

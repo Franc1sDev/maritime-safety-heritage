@@ -68,7 +68,7 @@ class AppPage extends StatelessWidget {
           if (u != null) ...[
             Tooltip(message: 'My account', child: InkWell(
               customBorder: const CircleBorder(),
-              onTap: () => u.isAdmin ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4),
+              onTap: () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4),
               child: CircleAvatar(radius: 17, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
             )),
             IconButton(tooltip: 'Sign out', icon: const Icon(Icons.logout_rounded), onPressed: () => confirmSignOut(context)),
@@ -104,7 +104,7 @@ class Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final admin = s.isAdmin;
+    final admin = s.isStaff;
     return ValueListenableBuilder<int>(
       valueListenable: Nav.tab,
       builder: (context, i, _) => Scaffold(
@@ -127,7 +127,7 @@ class Shell extends StatelessWidget {
             NavigationDestination(
                 icon: Badge(isLabelVisible: admin && s.pending > 0, label: Text('${s.pending}'),
                     child: Icon(admin ? Icons.insert_chart_outlined_rounded : Icons.person_outline_rounded)),
-                label: admin ? 'Admin' : 'Me'),
+                label: admin ? 'Team' : 'Me'),
           ],
         ),
       ),
@@ -209,19 +209,23 @@ class _MoreDrawerState extends State<MoreDrawer> with SingleTickerProviderStateM
           item(Icons.login_rounded, 'Sign in or create account', () => push(context, const SignInScreen())),
         ],
         item(Icons.mail_outline_rounded, 'Contact the team', () => push(context, const ContactScreen())),
-        if (u != null && u.isAdmin) ...[
-          head('Admin'),
+        if (u != null && u.isStaff) ...[
+          head('Research team'),
           item(Icons.insert_chart_outlined_rounded, 'Dashboard', () => Nav.goTab(context, 4)),
           item(Icons.inventory_2_outlined, 'Records', () => push(context, const RecordsAdminScreen())),
           item(Icons.upload_rounded, 'Upload and catalogue', () => push(context, const RecordFormScreen())),
           item(Icons.inbox_outlined, 'Submissions', () => push(context, const SubmissionsScreen()), trailing: badge(s.pending)),
-          item(Icons.group_outlined, 'Users and roles', () => push(context, const UsersScreen())),
-          item(Icons.mail_outline_rounded, 'Messages', () => push(context, const MessagesScreen()), trailing: badge(s.unread)),
-          item(Icons.monitor_heart_outlined, 'Reports and logs', () => push(context, const ReportsScreen())),
+          if (u.isAdmin) ...[
+            item(Icons.group_outlined, 'Users and roles', () => push(context, const UsersScreen())),
+            item(Icons.mail_outline_rounded, 'Messages', () => push(context, const MessagesScreen()), trailing: badge(s.unread)),
+            item(Icons.monitor_heart_outlined, 'Reports and logs', () => push(context, const ReportsScreen())),
+          ],
         ],
         head('About'),
         item(Icons.anchor_rounded, 'About the archive', () => push(context, const AboutScreen())),
-        if (u != null) item(Icons.person_outline_rounded, 'My account', () => u.isAdmin ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4)),
+        item(Icons.shield_outlined, 'Privacy', () => openExternal(context, '${s.server}/#/privacy')),
+        item(Icons.gavel_rounded, 'Terms and copyright', () => openExternal(context, '${s.server}/#/terms')),
+        if (u != null) item(Icons.person_outline_rounded, 'My account', () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4)),
         head('Display'),
         item(Icons.text_fields_rounded, 'Larger text', s.toggleLargeText, trailing: onOff(s.largeText)),
         item(Icons.wifi_off_rounded, 'Light mode: no video or pictures', s.toggleLowBw, trailing: onOff(s.lowBw)),

@@ -93,9 +93,9 @@ class DashboardScreen extends StatelessWidget {
                 OrbItem(Icons.inventory_2_outlined, 'Records', 'Edit, publish or unpublish items.', () => push(context, const RecordsAdminScreen())),
                 OrbItem(Icons.upload_rounded, 'Upload', 'Add a new item and catalogue it.', () => push(context, const RecordFormScreen()), primary: true),
                 OrbItem(Icons.inbox_outlined, 'Review', 'Approve or decline material sent in by the public.', () async { await push(context, const SubmissionsScreen()); reload(); }, badge: (t['pendingSubmissions'] as num).toInt()),
-                OrbItem(Icons.group_outlined, 'Users', 'Create accounts, change roles, suspend accounts.', () => push(context, const UsersScreen())),
-                OrbItem(Icons.mail_outline_rounded, 'Messages', 'Messages from the contact form.', () async { await push(context, const MessagesScreen()); reload(); }, badge: (t['unreadMessages'] as num).toInt()),
-                OrbItem(Icons.monitor_heart_outlined, 'Reports', 'Usage, collection health and the audit log.', () => push(context, const ReportsScreen())),
+                if (s.isAdmin) OrbItem(Icons.group_outlined, 'Users', 'Create accounts, change roles, suspend accounts.', () => push(context, const UsersScreen())),
+                if (s.isAdmin) OrbItem(Icons.mail_outline_rounded, 'Messages', 'Messages from the contact form.', () async { await push(context, const MessagesScreen()); reload(); }, badge: (t['unreadMessages'] as num).toInt()),
+                if (s.isAdmin) OrbItem(Icons.monitor_heart_outlined, 'Reports', 'Usage, collection health and the audit log.', () => push(context, const ReportsScreen())),
               ], size: 64),
               Glass(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _title(Icons.trending_up_rounded, 'Item views per month'),
@@ -696,8 +696,10 @@ class _UsersScreenState extends State<UsersScreen> {
             Text(u.name, style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Colors.white)),
             Text('${u.email}, ${u.role}, ${u.status}', style: const TextStyle(color: C.muted)),
             const SizedBox(height: 10),
-            if (!self) ListTile(leading: const Icon(Icons.manage_accounts_outlined), title: Text(u.isAdmin ? 'Make a normal user' : 'Make an admin'),
-                onTap: () { Navigator.pop(ctx); _patch(u, {'role': u.isAdmin ? 'user' : 'admin'}, 'Role changed. Their sessions were ended so it takes effect now.'); }),
+            if (!self)
+              for (final r in const [('user', 'Make a member', 'Search, browse, play and share'), ('editor', 'Make an editor', 'Also catalogue, publish and review'), ('admin', 'Make an admin', 'Also manage people, messages and reports')])
+                if (r.$1 != u.role) ListTile(leading: const Icon(Icons.manage_accounts_outlined), title: Text(r.$2), subtitle: Text(r.$3, style: const TextStyle(color: C.muted)),
+                    onTap: () { Navigator.pop(ctx); _patch(u, {'role': r.$1}, 'Role changed. Their sessions were ended so it takes effect now.'); }),
             if (!self) ListTile(leading: Icon(u.status == 'active' ? Icons.block_rounded : Icons.check_circle_outline_rounded), title: Text(u.status == 'active' ? 'Suspend' : 'Reactivate'),
                 onTap: () { Navigator.pop(ctx); _patch(u, {'status': u.status == 'active' ? 'suspended' : 'active'}, u.status == 'active' ? 'Account suspended and signed out' : 'Account reactivated'); }),
             ListTile(leading: const Icon(Icons.key_outlined), title: const Text('Reset password'), onTap: () async {
@@ -727,7 +729,7 @@ class _UsersScreenState extends State<UsersScreen> {
             const SizedBox(height: 10),
             TextField(controller: org, decoration: const InputDecoration(labelText: 'Organisation (optional)')),
             const SizedBox(height: 12),
-            SegmentedButton<String>(segments: const [ButtonSegment(value: 'user', label: Text('User')), ButtonSegment(value: 'admin', label: Text('Admin'))],
+            SegmentedButton<String>(segments: const [ButtonSegment(value: 'user', label: Text('Member')), ButtonSegment(value: 'editor', label: Text('Editor')), ButtonSegment(value: 'admin', label: Text('Admin'))],
                 selected: {role}, showSelectedIcon: false, onSelectionChanged: (v) => set(() => role = v.first)),
             if (err != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(err!, style: const TextStyle(color: C.danger))),
           ])),
@@ -754,7 +756,7 @@ class _UsersScreenState extends State<UsersScreen> {
       body: Column(children: [
         Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 6), child: Column(children: [
           const PageTitle('Users and roles'),
-          OrbRow([_dash(context), OrbItem(Icons.person_add_alt_rounded, 'Create user', 'Add a user or admin with a one-time password.', _create, primary: true)], size: 56),
+          OrbRow([_dash(context), OrbItem(Icons.person_add_alt_rounded, 'Create user', 'Add a member, editor or admin with a one-time password.', _create, primary: true)], size: 56),
           TextField(controller: _q, textInputAction: TextInputAction.search, onSubmitted: (_) => _refresh(),
               decoration: InputDecoration(hintText: 'Name, email or organisation', prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward_rounded), tooltip: 'Find', onPressed: _refresh))),
@@ -766,7 +768,7 @@ class _UsersScreenState extends State<UsersScreen> {
           item: (u) => ListTile(
             leading: CircleAvatar(backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
             title: Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            subtitle: Text('${u.email}\n${u.isAdmin ? 'Admin' : 'User'}, last sign-in ${u.lastLoginAt == null ? 'never' : fmtDate(u.lastLoginAt)}', style: const TextStyle(color: C.muted)),
+            subtitle: Text('${u.email}\n${u.roleName}, last sign-in ${u.lastLoginAt == null ? 'never' : fmtDate(u.lastLoginAt)}', style: const TextStyle(color: C.muted)),
             isThreeLine: true,
             trailing: StatusChip(u.status),
             onTap: () => _actions(u),

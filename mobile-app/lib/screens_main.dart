@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final u = s.me!;
-    final orbs = u.isAdmin
+    final orbs = u.isStaff
         ? [
             OrbItem(Icons.insert_chart_outlined_rounded, 'Dashboard', 'Usage, collection health and recent activity.', () => Nav.goTab(context, 4), primary: true),
             OrbItem(Icons.inbox_outlined, 'Review', 'Approve or decline material sent in by the public.', () => push(context, const SubmissionsScreen()), badge: s.pending),
@@ -529,7 +529,7 @@ class _RecordViewState extends State<_RecordView> {
           if (r.status != 'published')
             Padding(padding: const EdgeInsets.only(bottom: 12), child: Glass(child: Row(children: [
               const Icon(Icons.visibility_outlined, color: C.sky), const SizedBox(width: 10),
-              Expanded(child: Text('This item is ${r.status}. Only admins can see it.')),
+              Expanded(child: Text('This item is ${r.status}. Only the research team can see it.')),
             ]))),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             CircleIcon(types[r.type]!.icon, size: 56),
@@ -572,7 +572,7 @@ class _RecordViewState extends State<_RecordView> {
             OrbItem(Icons.info_outline_rounded, 'Details', 'The full catalogue record: people, language, consent and rights.', () => _details(context, r), primary: !canPlay),
             if (r.hasLocation) OrbItem(Icons.place_outlined, 'Location', 'Where this happened, on the map.', () => _location(context, r)),
             OrbItem(Icons.format_quote_rounded, 'Cite', 'A ready-made citation for your work.', () => _cite(context, r)),
-            if (s.isAdmin) OrbItem(Icons.edit_outlined, 'Edit', "Change this item's catalogue record and files.", () async {
+            if (s.isStaff) OrbItem(Icons.edit_outlined, 'Edit', "Change this item's catalogue record and files.", () async {
               await push(context, RecordFormScreen(id: r.id));
               widget.reload();
             }),
@@ -981,14 +981,22 @@ class AccountScreen extends StatelessWidget {
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 40), children: [
         Center(child: CircleAvatar(radius: 44, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white)))),
         const SizedBox(height: 14),
-        PageTitle(u.name, sub: '${u.email}\n${u.isAdmin ? 'Admin' : 'Member'} since ${fmtDate(u.createdAt)}${u.organisation.isNotEmpty ? ', ${u.organisation}' : ''}'),
+        PageTitle(u.name, sub: '${u.email}\n${u.roleName} since ${fmtDate(u.createdAt)}${u.organisation.isNotEmpty ? ', ${u.organisation}' : ''}'),
         OrbRow([
           OrbItem(Icons.edit_outlined, 'Edit profile', 'Change your name or organisation.', () => _edit(context), primary: true),
           OrbItem(Icons.key_outlined, 'Password', "Change your password. You'll sign in again everywhere.", () => _password(context)),
           OrbItem(Icons.folder_open_outlined, 'My submissions', "What you've sent and its review status.", () => mySubmissions(context)),
           OrbItem(Icons.shield_outlined, 'Sign out everywhere', 'Ends your sessions on every device, including this one.', () => confirmSignOut(context, everywhere: true)),
           OrbItem(Icons.logout_rounded, 'Sign out', 'Signs you out on this phone.', () => confirmSignOut(context)),
+          OrbItem(Icons.no_accounts_outlined, 'Close account', 'Permanently deletes your account and personal details.', () => _closeAccount(context)),
         ]),
+        const SizedBox(height: 8),
+        Center(child: Wrap(spacing: 8, children: [
+          TextButton(onPressed: () => openExternal(context, '${s.server}/#/privacy'), child: const Text('Privacy')),
+          TextButton(onPressed: () => openExternal(context, '${s.server}/#/terms'), child: const Text('Terms and copyright')),
+        ])),
+        Text('© ${DateTime.now().year} Remembering the Waters research team. Shared with contributors\' consent; reuse needs permission.',
+            textAlign: TextAlign.center, style: const TextStyle(color: C.muted, fontSize: 12)),
       ]),
     );
   }
@@ -1016,6 +1024,43 @@ class AccountScreen extends StatelessWidget {
             if (context.mounted) toast(context, 'Profile saved');
           } catch (e) { set(() => err = errText(e)); }
         }, child: const Text('Save profile')),
+      ],
+    )));
+  }
+
+  void _closeAccount(BuildContext context) {
+    final s = AppScope.read(context);
+    final pw = TextEditingController();
+    String? err;
+    var busy = false;
+    showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, set) => AlertDialog(
+      icon: const CircleIcon(Icons.no_accounts_outlined, size: 52),
+      title: const Text('Close your account?'),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Text("This can't be undone. Your name, email and organisation are erased and you can't sign in again. "
+            'Submissions still waiting for review are withdrawn and their files deleted. Material already accepted into the archive stays in it.'),
+        const SizedBox(height: 12),
+        TextField(controller: pw, obscureText: true, autofillHints: const [AutofillHints.password], decoration: InputDecoration(labelText: 'Your password', errorText: err)),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Keep my account')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: C.danger),
+          onPressed: busy ? null : () async {
+            set(() { busy = true; err = null; });
+            try {
+              await s.api.post('/auth/delete-account', {'password': pw.text});
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                toast(context, 'Your account is closed', Icons.no_accounts_outlined);
+                Navigator.of(context).popUntil((r) => r.isFirst);
+              }
+              Nav.tab.value = 0;
+              await s.forgetSession();
+            } catch (e) { set(() { busy = false; err = errText(e); }); }
+          },
+          child: const Text('Close my account'),
+        ),
       ],
     )));
   }

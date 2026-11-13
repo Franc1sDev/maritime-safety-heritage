@@ -39,8 +39,15 @@ jobs:
       - run: flutter test
       - name: Build APK (test build, debug-signed; the release key stays on the PC)
         run: flutter build apk --release --dart-define=API_URL=${{ vars.API_URL || '' }}
+      - name: Build the Google Play bundle
+        run: flutter build appbundle --release --dart-define=API_URL=${{ vars.API_URL || '' }}
       - uses: actions/upload-artifact@v4
-        with: { name: maritime-heritage-android, path: mobile-app/build/app/outputs/flutter-apk/app-release.apk, retention-days: 14 }
+        with:
+          name: maritime-heritage-android
+          retention-days: 14
+          path: |
+            mobile-app/build/app/outputs/flutter-apk/app-release.apk
+            mobile-app/build/app/outputs/bundle/release/app-release.aab
 
   ios:
     name: iOS app (unsigned build)
