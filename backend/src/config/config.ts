@@ -11,8 +11,11 @@ const int = (name: string, fallback: number) => {
 };
 
 // Hosts such as Render, Neon and Supabase give the database as one connection string; split it into the DB_* settings.
-if (process.env.DATABASE_URL) {
-  const u = new URL(process.env.DATABASE_URL);
+// Accepts the bare link or a pasted snippet such as  psql 'postgresql://…'  or  DATABASE_URL="postgresql://…".
+const dbUrl = (process.env.DATABASE_URL ?? '').match(/postgres(?:ql)?:\/\/[^\s'"]+/)?.[0];
+if (process.env.DATABASE_URL && !dbUrl) throw new Error('DATABASE_URL is set but contains no postgresql:// link.');
+if (dbUrl) {
+  const u = new URL(dbUrl);
   process.env.DB_HOST ??= u.hostname;
   process.env.DB_PORT ??= u.port || '5432';
   process.env.DB_USER ??= decodeURIComponent(u.username);

@@ -1,3 +1,4 @@
+import { config } from '../config/config';
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { DataSource } from 'typeorm';
@@ -28,7 +29,8 @@ if (require.main === module) {
   AppDataSource.initialize()
     .then((ds) => runMigrations(ds).then(() => ds.destroy()))
     .catch((e) => {
-      console.error('Migration failed:', e.message);
+      const parts = [e.message, e.code, ...(e.errors ?? []).map((x: Error & { code?: string }) => `${x.code ?? ''} ${x.message}`)].filter(Boolean);
+      console.error(`Migration failed (database ${config.db.host}:${config.db.port}/${config.db.name}, ssl ${config.db.ssl}):`, parts.join(' | '));
       process.exit(1);
     });
 }
