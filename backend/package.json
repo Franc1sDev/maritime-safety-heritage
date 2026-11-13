@@ -10,7 +10,7 @@
     "start:dev": "ts-node -r tsconfig-paths/register src/main.ts",
     "migrate": "node dist/database/migrate.js",
     "seed": "node dist/database/seed.js",
-    "test": "jest --runInBand",
+    "test": "node test/run-e2e.mjs",
     "lint": "tsc --noEmit -p tsconfig.json",
     "setup-db": "node dist/database/migrate.js && node dist/database/seed.js"
   },

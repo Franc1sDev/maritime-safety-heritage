@@ -8,19 +8,15 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import request from 'supertest';
 
-const PORT = 15432 + Math.floor(Math.random() * 1000);
-const dataDir = mkdtempSync(join(tmpdir(), 'msh-pg-'));
+// The database itself is started by test/run-e2e.mjs, which passes DB_PORT.
+if (!process.env.DB_PORT) throw new Error('Run the tests with "npm test", which starts a temporary database.');
 const storageDir = mkdtempSync(join(tmpdir(), 'msh-storage-'));
 Object.assign(process.env, {
-  NODE_ENV: 'test', DB_HOST: 'localhost', DB_PORT: String(PORT), DB_USER: 'postgres', DB_PASSWORD: 'test-password', DB_NAME: 'msh_test',
+  NODE_ENV: 'test', DB_HOST: 'localhost', DB_USER: 'postgres',
   STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: storageDir, SEED_ADMIN_EMAIL: 'admin@demo.ke', SEED_ADMIN_PASSWORD: 'admin1234',
   SEED_SAMPLE_DATA: 'true', RATE_LIMIT_SCALE: '50', CORS_ORIGINS: 'http://localhost:5173', MAX_FAILED_LOGINS: '5',
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const EmbeddedPostgres = require('embedded-postgres').default;
-
-let pg: any;
 let app: INestApplication;
 let http: any;
 let mail: { outbox: Map<string, { subject: string; text: string }> };
@@ -34,11 +30,6 @@ async function login(email: string, password: string, app = true) {
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
 
 beforeAll(async () => {
-  pg = new EmbeddedPostgres({ databaseDir: dataDir, user: 'postgres', password: 'test-password', port: PORT, persistent: false, onLog: () => undefined });
-  await pg.initialise();
-  await pg.start();
-  await pg.createDatabase('msh_test');
-
   const { AppDataSource } = await import('../src/database/data-source');
   const { runMigrations } = await import('../src/database/migrate');
   const { seed } = await import('../src/database/seed');
@@ -61,8 +52,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.close();
-  await pg?.stop();
-  rmSync(dataDir, { recursive: true, force: true });
   rmSync(storageDir, { recursive: true, force: true });
 });
 
