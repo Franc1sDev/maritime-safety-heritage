@@ -812,7 +812,9 @@
         <div class="panel" style="max-width:380px"><h3>What the app does</h3><ul class="feature-list">
           ${[["log-in", "Sign in with the same account as the website"], ["search", "Search, browse and filter"], ["map", "Incident map with GPS \"near me\" (full build)"], ["headphones", "Play oral histories and read transcripts"], ["camera", "Share stories and photos from the phone camera (full build)"], ["inbox", "Admins can review submissions on the go"]]
             .map(([i, t]) => `<li><span class="li-ic">${ic(i)}</span>${t}</li>`).join("")}</ul>
-          <p class="hint">Store-ready for Google Play and the Apple App Store in the full build.</p></div></div>
+          <p class="hint">Store-ready for Google Play and the Apple App Store in the full build.</p>
+          <a class="btn" href="downloads/Maritime-Heritage-prototype.apk" download>${ic("download")}Download the Android app (53 MB)</a>
+          <p class="hint">Open the file on an Android phone and allow installing from this source when asked.</p></div></div>
         <div class="orbs">${seeMoreOrb(0)}</div></div>`;
     }
   };

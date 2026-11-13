@@ -14,3 +14,6 @@ mobile-app/android/key.properties
 mobile-app/android/local.properties
 *.jks
 *.apk
+
+# ...except the published prototype download
+!downloads/*.apk

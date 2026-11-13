@@ -2,7 +2,7 @@
 
 The mobile version of the Maritime Safety Heritage Archive prototype: the same screens, round options, sea video welcome page, incident map, sample content and admin tools as the website prototype, rebuilt as a native Flutter app.
 
-**Install on an Android phone:** download the APK from this repository's **Releases** page, open it on the phone and allow installing from this source when asked.
+**Install on an Android phone:** download https://franc1sdev.github.io/maritime-safety-heritage/downloads/Maritime-Heritage-prototype.apk on the phone, open it and allow installing from this source when asked.
 
 Sample content only. Data is stored on the phone; the full build connects to the archive's secure API.
 

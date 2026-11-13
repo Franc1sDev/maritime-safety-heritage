@@ -2,7 +2,7 @@
 
 **Open it in any browser:** https://franc1sdev.github.io/maritime-safety-heritage/
 
-**Android app prototype:** see [`mobile-app/`](mobile-app/) and download the APK from the **Releases** page.
+**Android app prototype:** download https://franc1sdev.github.io/maritime-safety-heritage/downloads/Maritime-Heritage-prototype.apk (source in [`mobile-app/`](mobile-app/)).
 
 The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the finished website and hybrid app will look and behave, using **sample content only**.
 
