@@ -1,5 +1,9 @@
 # Maritime Safety Heritage Archive: Clickable Prototype (v0.2)
 
+**Open it in any browser:** https://franc1sdev.github.io/maritime-safety-heritage/
+
+**Android app prototype:** see [`mobile-app/`](mobile-app/) and download the APK from the **Releases** page.
+
 The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the finished website and hybrid app will look and behave, using **sample content only**.
 
 ## What's new in v0.2
@@ -16,8 +20,8 @@ The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the
 
 ## How to open it
 
-1. Double-click `index.html` (Chrome or Edge recommended).
-2. That's it: no installation, server or database needed.
+- **Online:** https://franc1sdev.github.io/maritime-safety-heritage/
+- **Offline copy:** double-click `index.html` (Chrome or Edge recommended). No installation, server or database needed.
 
 **Be online for the showcase, with Light mode off.** The background videos, map, and fonts load from the internet. Offline, everything still works: the landing and welcome pages show a wave icon instead of video, and the map switches to a simple offline view.
 

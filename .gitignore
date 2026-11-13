@@ -6,3 +6,11 @@ LOCAL-DEV-CREDENTIALS.txt
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Flutter app: build output and signing secrets
+mobile-app/build/
+mobile-app/.dart_tool/
+mobile-app/android/key.properties
+mobile-app/android/local.properties
+*.jks
+*.apk
