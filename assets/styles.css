@@ -127,7 +127,7 @@ main { position: relative; z-index: 10; min-height: 100vh; padding: calc(var(--h
 .welcome h1 { font-size: clamp(2.2rem, 5.4vw, 4.2rem); max-width: 16ch; margin-bottom: .25em; text-shadow: 0 2px 30px rgba(0, 0, 0, .5); }
 .welcome .lede { font-size: 1.12rem; color: #d6e4fb; max-width: 52ch; margin: 0 auto; text-shadow: 0 1px 12px rgba(0, 0, 0, .6); }
 .welcome .orbs { margin-top: 40px; }
-.slide-bar { position: fixed; left: 24px; bottom: 26px; z-index: 30; display: flex; align-items: center; gap: 14px; color: #d6e4fb; font-size: .85rem; }
+.slide-bar { position: fixed; left: 24px; bottom: 26px; z-index: 30; display: flex; align-items: center; gap: 14px; color: #d6e4fb; font-size: .85rem; padding: 7px 14px; border-radius: 99px; background: rgba(2, 6, 14, .45); backdrop-filter: blur(8px); }
 body.more .slide-bar { left: calc(var(--rail) + 24px); }
 .dots { display: flex; gap: 6px; }
 .dots button { width: 9px; height: 9px; border-radius: 99px; border: 0; padding: 0; background: rgba(255, 255, 255, .4); cursor: pointer; transition: width .3s, background .3s; }
@@ -373,7 +373,9 @@ html.app-mode .tabbar { display: flex; position: fixed; left: 0; right: 0; botto
   .orb-label { cursor: pointer; font-size: .78rem; }
   .orb-desc { width: 190px; }
   .welcome h1 { font-size: 2.1rem; }
-  .slide-bar { left: 14px; bottom: 34px; }
+  .slide-bar { left: 50%; transform: translateX(-50%); bottom: 14px; }
+  #slideCap { display: none; }
+  .welcome { padding-bottom: 40px; }
   .credit { display: none; }
   .player { flex-wrap: wrap; }
   dl.meta-list { grid-template-columns: 26px 96px 1fr; }
