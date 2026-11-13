@@ -1,17 +1,38 @@
 # Maritime Safety Heritage Archive
 
-| Part | Folder | Status |
-|---|---|---|
-| Secure API (NestJS + PostgreSQL) | [`backend/`](backend/README.md) | Phase 1, built and tested |
-| Full website | [`web/`](web/README.md) | Phase 2, built and tested; served by the API |
-| Android and iOS app (Flutter) | [`mobile-app/`](mobile-app/) | Prototype now; phase 3 connects it to the API |
-| Metadata schema | [`docs/METADATA.md`](docs/METADATA.md) | |
+Kenya's open-access digital archive of maritime and inland-water safety heritage, built for the Remembering the Waters research team: oral histories, photographs, historical records and testimonies, searchable on the web and on an Android and iOS app.
 
-To run the full website on Windows, open `backend` and double-click `1-SETUP.bat`, then `2-START-API.bat`. You can also double-click `4-TRY-WITH-DEMO-DATABASE.bat`, which needs no PostgreSQL setup. Then go to http://localhost:4000/.
+| Part | Folder |
+|---|---|
+| Secure API (NestJS + PostgreSQL): accounts, roles, full-text search, map, media, submissions, reports | [`backend/`](backend/README.md) |
+| Website, served by the API at the same address | [`web/`](web/README.md) |
+| Android and iOS app (Flutter), using the same API | [`mobile-app/`](mobile-app/README.md) |
+| Production hosting: Docker, automatic HTTPS, virus scanning, encrypted backups | [`deploy/`](deploy/), [`Dockerfile`](Dockerfile) |
+
+## Documentation
+
+| For | Read |
+|---|---|
+| Everyone who uses the archive | [User guide](docs/USER-GUIDE.md) |
+| Editors and admins | [Research team guide](docs/ADMIN-GUIDE.md), [Metadata schema](docs/METADATA.md) |
+| Whoever hosts it | [Deployment](docs/DEPLOYMENT.md), [Security](docs/SECURITY.md) |
+| Publishing the app | [Store release](docs/STORE-RELEASE.md) |
+| Launch and handover | [Handover](docs/HANDOVER.md), [Accessibility](docs/ACCESSIBILITY.md) |
+
+## Try it on Windows
+
+Open `backend` and double-click `4-TRY-WITH-DEMO-DATABASE.bat`. It needs no PostgreSQL setup. Then go to http://localhost:4000/ and sign in with `researcher@demo.ke` / `demo1234` or `admin@demo.ke` / `admin1234`. These demo accounts exist only outside production.
+
+Every push runs the checks in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+- the API's 40 end-to-end tests;
+- the Android APK and Google Play bundle;
+- the unsigned iOS build;
+- the production server image.
 
 ---
 
-# Clickable prototype (v0.2)
+# Clickable prototype (v0.2, phase 1)
 
 **Open it in any browser:** https://franc1sdev.github.io/maritime-safety-heritage/
 

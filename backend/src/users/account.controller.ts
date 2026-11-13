@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsString, MaxLength } from 'class-validator';
 import type { Response } from 'express';
 import { randomBytes } from 'crypto';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ActivityService } from '../activity/activity.service';
 import { REFRESH_COOKIE } from '../auth/auth.controller';
 import { AuthService } from '../auth/auth.service';
@@ -30,6 +30,7 @@ export class AccountController {
     private readonly auth: AuthService,
     private readonly media: MediaService,
     private readonly activity: ActivityService,
+    private readonly ds: DataSource,
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Submission) private readonly submissions: Repository<Submission>,
     @InjectRepository(MediaFile) private readonly files: Repository<MediaFile>,
@@ -54,6 +55,9 @@ export class AccountController {
       passwordHash: await hashPassword(randomBytes(32).toString('hex')), failedLogins: 0, lockedUntil: null,
     });
     await this.auth.revokeAll(user.id);
+    // Past audit entries keep what happened but no longer name the person.
+    await this.ds.query(`UPDATE activity_log SET actor_name = CASE WHEN actor_id = $1 THEN 'Deleted account' ELSE actor_name END,
+        summary = replace(summary, $2, 'Deleted account') WHERE actor_id = $1 OR entity_id = $3`, [user.id, user.name, user.id]);
     await this.activity.record({ actor: { id: user.id, name: 'Deleted account' }, action: 'user.delete_self', entityType: 'user', entityId: user.id,
       summary: `An account closed itself; ${pending.length} pending submission(s) withdrawn`, ip: meta.ip });
     res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth', httpOnly: true, sameSite: config.cookie.sameSite, secure: config.cookie.secure });

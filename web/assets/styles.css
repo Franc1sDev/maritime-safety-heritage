@@ -423,3 +423,7 @@ textarea.mono { font-family: "Courier New", monospace; font-size: .92rem; min-he
 img.protect, video.protect { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 @media (max-width: 640px) { .site-foot { padding-bottom: 96px; } }
 .prose > :last-child { margin-bottom: 0; }
+@media (pointer: coarse) { .btn.sm, .pill { min-height: 44px; } .pill.icon-only { min-width: 44px; } }
+/* Hidden option descriptions near the screen edge must not make the page scroll sideways on small phones. */
+html, body { overflow-x: clip; }
+@media (max-width: 400px) { .orb-desc { width: min(170px, 52vw); } }

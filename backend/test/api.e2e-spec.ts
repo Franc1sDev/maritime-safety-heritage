@@ -431,6 +431,8 @@ describe('closing an account', () => {
     expect(s.body.files ?? []).toHaveLength(0);
     const users = await request(http).get('/api/v1/users').query({ q: 'leaving' }).set(bearer(admin)).expect(200);
     expect(users.body.items).toHaveLength(0);
+    const log = await request(http).get('/api/v1/reports/activity').set(bearer(admin)).query({ pageSize: 100 }).expect(200);
+    expect(JSON.stringify(log.body.items)).not.toContain('Leaving Person');
   });
 
   it('will not let the only admin close their account', async () => {

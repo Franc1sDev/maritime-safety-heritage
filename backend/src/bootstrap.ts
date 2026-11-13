@@ -12,7 +12,7 @@ import { registerPublicPages } from './public/seo';
 export function configureApp(app: INestApplication) {
   const express = app as NestExpressApplication;
   express.disable('x-powered-by');
-  if (config.trustProxy) express.set('trust proxy', 1);
+  if (config.trustProxy) express.set('trust proxy', config.trustProxy);
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {

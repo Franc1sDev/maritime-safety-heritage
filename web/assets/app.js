@@ -305,8 +305,10 @@
   window.addEventListener("hashchange", render);
 
   /* ---------- Popups ---------- */
+  let returnFocus = null;
   function modal(icon, title, inner, after, wide) {
-    closeModal();
+    if (!$("#modalBg")) returnFocus = document.activeElement;
+    closeModal(true);
     const bg = document.createElement("div");
     bg.className = "modal-bg"; bg.id = "modalBg";
     bg.innerHTML = `<div class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
@@ -317,19 +319,35 @@
     if (after) after(bg);
     const f = bg.querySelector(".modal input:not([type=checkbox]), .modal textarea, .modal select"); if (f) f.focus(); else bg.querySelector(".modal-x").focus();
   }
-  function closeModal() { const m = $("#modalBg"); if (m) m.remove(); }
+  function closeModal(keepFocus) {
+    const m = $("#modalBg"); if (!m) return;
+    m.remove();
+    if (!keepFocus && returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
+  }
   function sheet(title, inner, after) {
     closeSheet();
     const wrap = document.createElement("div"); wrap.id = "sheetWrap";
+    returnFocus = document.activeElement;
     wrap.innerHTML = `<div class="sheet-bg" data-close-sheet></div><aside class="sheet" role="dialog" aria-label="${esc(title)}"><div class="row" style="margin-bottom:12px"><h2 style="margin:0">${esc(title)}</h2><span class="spacer"></span><button class="pill icon-only" data-close-sheet aria-label="Close">${ic("x")}</button></div>${inner}</aside>`;
     document.body.appendChild(wrap);
     wrap.addEventListener("click", (e) => { if (e.target.closest("[data-close-sheet]")) closeSheet(); });
     if (after) after(wrap);
+    const first = wrap.querySelector("aside button, aside a, aside input"); if (first) first.focus();
   }
-  function closeSheet() { const s = $("#sheetWrap"); if (s) s.remove(); }
+  function closeSheet() { const s = $("#sheetWrap"); if (s) { s.remove(); if (returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true }); } }
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { if (pendingOrb) cancelOrb(); else if ($("#modalBg")) closeModal(); else if ($("#sheetWrap")) closeSheet(); else if (UI.more) toggleMore(false); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && me()) { e.preventDefault(); quickSearch(); }
+    // Keep keyboard focus inside an open pop-up.
+    const box = $("#modalBg .modal") || $("#sheetWrap .sheet");
+    if (e.key === "Tab" && box) {
+      const items = $$('a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])', box).filter((x) => x.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   });
   function quickSearch() {
     if (!me()) return go("#/login");
@@ -625,7 +643,7 @@
     load() { return API.get("/records/map"); },
     html(parts, qs) {
       const t = qs.get("type") || "";
-      return `<div class="mapwrap"><div id="bigmap" role="region" aria-label="Map of archive items"></div></div>
+      return `<h1 class="sr">Incident map</h1><div class="mapwrap"><div id="bigmap" role="region" aria-label="Map of archive items"></div></div>
         ${orbRow([
           { icon: "layers", label: "Everything", desc: "Show every item on the map.", go: "#/map", on: !t },
           ...Object.keys(TYPES).map((k) => ({ icon: TYPES[k].icon, label: TYPES[k].plural, desc: `Show only ${TYPES[k].plural.toLowerCase()}.`, go: "#/map?type=" + k, on: t === k })),
@@ -953,7 +971,7 @@
       return `<div class="stage">${head("The same archive, in your pocket", "One app for Android and iOS phones and tablets, using the same secure accounts and archive as this website. Try it inside the phone.", true)}
         <div class="app-stage"><div class="phone"><iframe src="index.html?app=1#/home" title="Mobile app preview"></iframe></div>
         <div class="panel" style="max-width:380px"><h3>What the app does</h3><ul class="feature-list">
-          ${[["log-in", "Sign in with the same account as the website"], ["search", "Search, browse and filter"], ["map", "Incident map with \"near me\""], ["headphones", "Play oral histories and read transcripts"], ["camera", "Share stories and photos straight from the phone camera"], ["inbox", "Admins can review submissions on the go"]]
+          ${[["log-in", "Sign in with the same account as the website"], ["search", "Search, browse and filter"], ["map", "Incident map"], ["headphones", "Play oral histories and read transcripts"], ["camera", "Share stories and photos straight from the phone camera"], ["inbox", "The research team can review submissions on the go"]]
             .map(([i, t]) => `<li><span class="li-ic">${ic(i)}</span>${t}</li>`).join("")}</ul>
           <p class="hint">The store versions for Google Play and the App Store follow this website.</p></div></div>
         <div class="orbs">${seeMoreOrb(0)}</div></div>`;
