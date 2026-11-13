@@ -24,7 +24,7 @@ Widget _bars(List<MapEntry<String, int>> rows) {
       Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
         Text('${v.value}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
         const SizedBox(height: 4),
-        Container(height: math.max(2, 110 * v.value / maxV), margin: const EdgeInsets.symmetric(horizontal: 3),
+        Container(height: math.max(2.0, 110 * v.value / maxV), margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: const BoxDecoration(borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
                 gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.blue2, C.blue]))),
         const SizedBox(height: 4),
