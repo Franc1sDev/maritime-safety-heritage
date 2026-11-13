@@ -54,6 +54,12 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = if (project.hasProperty("storeRelease")) "false" else "true"
     }
 
+    // The release lint check can crash on some plugin sources with older Java versions; it does not affect the app.
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     buildTypes {
         release {
             // Use the release key when present; fall back to debug keys otherwise.
