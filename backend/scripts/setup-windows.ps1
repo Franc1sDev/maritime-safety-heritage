@@ -57,6 +57,12 @@ try {
       return @{ ok = ($code -eq 0); out = ($out | Out-String).Trim() }
     }
     $t = Psql 'postgres' 'select 1'
+    if (-not $t.ok -and $t.out -match 'password authentication failed') {
+      Write-Host 'The saved postgres password was not accepted. Type the current one (nothing shows while you type).' -ForegroundColor Yellow
+      $s = Read-Host -AsSecureString 'postgres password'
+      $env:PGPASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
+      $t = Psql 'postgres' 'select 1'
+    }
     if (-not $t.ok) { Fail "Could not sign in to PostgreSQL as postgres: $($t.out)" }
 
     $appPw = RandomText 32
