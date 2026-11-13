@@ -525,7 +525,7 @@ class _SeaVideoBgState extends State<SeaVideoBg> {
   }
 }
 
-/// Generated placeholder artwork standing in for real archive media.
+/// Generated artwork shown where an item has no picture yet.
 class SeaArt extends StatelessWidget {
   final Rec rec;
   final bool label;
@@ -539,7 +539,7 @@ class _SeaArtPainter extends CustomPainter {
   final bool label;
   _SeaArtPainter(this.rec, this.label);
 
-  int get _seed { var h = 0; for (final c in (rec.id + rec.title).codeUnits) { h = (h * 31 + c) & 0x7fffffff; } return h; }
+  int get _seed { var h = 0; for (final c in (rec.identifier + rec.title).codeUnits) { h = (h * 31 + c) & 0x7fffffff; } return h; }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -570,17 +570,13 @@ class _SeaArtPainter extends CustomPainter {
       canvas.translate(x, y);
       canvas.scale(sc);
       canvas.drawPath(Path()..moveTo(-60, 0)..lineTo(60, 0)..lineTo(42, 18)..lineTo(-44, 18)..close(), Paint()..color = pal[0]);
-      if (rec.scene == 'harbour' && i == 0) {
-        canvas.drawRect(const Rect.fromLTWH(-20, -34, 40, 34), Paint()..color = pal[0]);
-      } else {
-        canvas.drawPath(Path()..moveTo(0, -70)..lineTo(0, 0)..lineTo(36, 0)..close(), Paint()..color = pal[2].withValues(alpha: .85));
-        canvas.drawRect(const Rect.fromLTWH(-2, -72, 3, 72), Paint()..color = pal[0]);
-      }
+      canvas.drawPath(Path()..moveTo(0, -70)..lineTo(0, 0)..lineTo(36, 0)..close(), Paint()..color = pal[2].withValues(alpha: .85));
+      canvas.drawRect(const Rect.fromLTWH(-2, -72, 3, 72), Paint()..color = pal[0]);
       canvas.restore();
     }
     if (label) {
       final tp = TextPainter(
-        text: TextSpan(text: '${rec.type == 'photo' ? 'SAMPLE PHOTOGRAPH' : types[rec.type]!.label.toUpperCase()}  ${rec.id}',
+        text: TextSpan(text: '${types[rec.type]!.label.toUpperCase()}  ${rec.identifier}',
             style: TextStyle(color: Colors.white.withValues(alpha: .5), fontSize: math.max(8, 14 * k), letterSpacing: 2)),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: w);
@@ -590,4 +586,128 @@ class _SeaArtPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SeaArtPainter old) => old.rec.id != rec.id;
+}
+
+
+// ---------------------------------------------------------------------------
+// Loading from the API
+// ---------------------------------------------------------------------------
+class LoadingView extends StatelessWidget {
+  final String text;
+  const LoadingView({super.key, this.text = 'Loading'});
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(width: 38, height: 38, child: CircularProgressIndicator(strokeWidth: 3, color: C.blue2)),
+          const SizedBox(height: 14),
+          Text(text, style: const TextStyle(color: C.muted)),
+        ]),
+      );
+}
+
+class ErrorPanel extends StatelessWidget {
+  final Object error;
+  final VoidCallback onRetry;
+  const ErrorPanel(this.error, this.onRetry, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    final notFound = error is ApiError && (error as ApiError).status == 404;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Glass(child: Column(children: [
+        Icon(notFound ? Icons.explore_outlined : Icons.wifi_off_rounded, size: 42, color: C.sky),
+        const SizedBox(height: 8),
+        Text(notFound ? "This isn't available" : "This page couldn't load", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        const SizedBox(height: 4),
+        Text('$error', textAlign: TextAlign.center, style: const TextStyle(color: C.muted)),
+        const SizedBox(height: 12),
+        FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded), label: const Text('Try again')),
+      ])),
+    );
+  }
+}
+
+/// Loads data once, shows a spinner and a retry panel, and rebuilds when reload() is called.
+class Loaded<T> extends StatefulWidget {
+  final Future<T> Function() load;
+  final Widget Function(BuildContext context, T data, Future<void> Function() reload) builder;
+  const Loaded({super.key, required this.load, required this.builder});
+  @override
+  State<Loaded<T>> createState() => _LoadedState<T>();
+}
+
+class _LoadedState<T> extends State<Loaded<T>> {
+  late Future<T> _f = widget.load();
+  Future<void> _reload() async {
+    final f = widget.load();
+    setState(() => _f = f);
+    try { await f; } catch (_) {}
+  }
+  @override
+  Widget build(BuildContext context) => FutureBuilder<T>(
+        future: _f,
+        builder: (context, snap) {
+          if (snap.hasError) return ErrorPanel(snap.error!, _reload);
+          if (!snap.hasData) return const Center(child: LoadingView());
+          return widget.builder(context, snap.data as T, _reload);
+        },
+      );
+}
+
+/// Text with the API's search highlights (between ⟦ and ⟧) shown in blue.
+class MarkedText extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final int? maxLines;
+  const MarkedText(this.text, {super.key, required this.style, this.maxLines});
+  @override
+  Widget build(BuildContext context) {
+    final spans = <TextSpan>[];
+    final re = RegExp('⟦(.*?)⟧');
+    var last = 0;
+    for (final m in re.allMatches(text)) {
+      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
+      spans.add(TextSpan(text: m.group(1), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, backgroundColor: Color(0x551E6BFF))));
+      last = m.end;
+    }
+    if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
+    return Text.rich(TextSpan(style: style, children: spans), maxLines: maxLines, overflow: maxLines == null ? null : TextOverflow.ellipsis);
+  }
+}
+
+String errText(Object e) => e is ApiError ? e.message : 'Something went wrong. Try again.';
+
+/// A dialog with a text field, for notes and short answers. Returns null when cancelled.
+Future<String?> askText(BuildContext context, {required String title, required IconData icon, String label = '', String initial = '',
+    String action = 'Save', int lines = 1, String? Function(String)? check}) {
+  final c = TextEditingController(text: initial);
+  String? err;
+  return showDialog<String>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, set) => AlertDialog(
+        icon: CircleIcon(icon, size: 52),
+        title: Text(title),
+        content: TextField(controller: c, autofocus: true, minLines: lines, maxLines: lines == 1 ? 1 : lines + 3,
+            decoration: InputDecoration(labelText: label, errorText: err, alignLabelWithHint: lines > 1)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: () {
+            final e = check?.call(c.text.trim());
+            if (e != null) { set(() => err = e); return; }
+            Navigator.pop(ctx, c.text.trim());
+          }, child: Text(action)),
+        ],
+      )));
+}
+
+Future<bool> confirm(BuildContext context, {required String title, required String body, required String action, IconData icon = Icons.help_outline_rounded, bool danger = false}) async {
+  final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+        icon: CircleIcon(icon, size: 52),
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(style: danger ? FilledButton.styleFrom(backgroundColor: C.danger) : null, onPressed: () => Navigator.pop(ctx, true), child: Text(action)),
+        ],
+      ));
+  return ok ?? false;
 }

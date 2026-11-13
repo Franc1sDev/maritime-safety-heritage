@@ -7,14 +7,14 @@ import 'screens_public.dart';
 import 'state.dart';
 import 'ui.dart';
 
-/// Maritime Safety Heritage Archive: Android app prototype.
-/// Sample content only. The full build connects to the archive's secure API.
+/// Maritime Safety Heritage Archive: the Android and iOS app.
+/// Uses the same secure API, accounts and archive as the website.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light));
   final state = AppState();
-  await state.load();
   runApp(AppScope(state: state, child: const HeritageApp()));
+  await state.load();
 }
 
 class HeritageApp extends StatelessWidget {
@@ -31,7 +31,9 @@ class HeritageApp extends StatelessWidget {
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(s.largeText ? 1.15 : 1)),
         child: child!,
       ),
-      home: s.me == null ? const LandingScreen() : const Shell(),
+      home: !s.ready
+          ? const Scaffold(body: Center(child: LoadingView(text: 'Opening the archive')))
+          : s.me == null ? const LandingScreen() : const Shell(),
     );
   }
 }
@@ -84,12 +86,14 @@ class AppPage extends StatelessWidget {
   }
 }
 
-void confirmSignOut(BuildContext context) {
+Future<void> confirmSignOut(BuildContext context, {bool everywhere = false}) async {
   final s = AppScope.read(context);
-  toast(context, 'Signed out', Icons.logout_rounded);
+  if (everywhere && !await confirm(context, title: 'Sign out everywhere?', body: "You'll be signed out on every phone and computer, including this one.", action: 'Sign out everywhere', icon: Icons.shield_outlined)) return;
+  if (!context.mounted) return;
+  toast(context, everywhere ? 'Signed out on every device' : 'Signed out', Icons.logout_rounded);
   Navigator.of(context).popUntil((r) => r.isFirst);
-  s.signOut();
   Nav.tab.value = 0;
+  await s.signOut(everywhere: everywhere);
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +125,7 @@ class Shell extends StatelessWidget {
             const NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map_rounded), label: 'Map'),
             const NavigationDestination(icon: Icon(Icons.volunteer_activism_outlined), selectedIcon: Icon(Icons.volunteer_activism), label: 'Share'),
             NavigationDestination(
-                icon: Badge(isLabelVisible: admin && s.pending.isNotEmpty, label: Text('${s.pending.length}'),
+                icon: Badge(isLabelVisible: admin && s.pending > 0, label: Text('${s.pending}'),
                     child: Icon(admin ? Icons.insert_chart_outlined_rounded : Icons.person_outline_rounded)),
                 label: admin ? 'Admin' : 'Me'),
           ],
@@ -210,9 +214,9 @@ class _MoreDrawerState extends State<MoreDrawer> with SingleTickerProviderStateM
           item(Icons.insert_chart_outlined_rounded, 'Dashboard', () => Nav.goTab(context, 4)),
           item(Icons.inventory_2_outlined, 'Records', () => push(context, const RecordsAdminScreen())),
           item(Icons.upload_rounded, 'Upload and catalogue', () => push(context, const RecordFormScreen())),
-          item(Icons.inbox_outlined, 'Submissions', () => push(context, const SubmissionsScreen()), trailing: badge(s.pending.length)),
+          item(Icons.inbox_outlined, 'Submissions', () => push(context, const SubmissionsScreen()), trailing: badge(s.pending)),
           item(Icons.group_outlined, 'Users and roles', () => push(context, const UsersScreen())),
-          item(Icons.mail_outline_rounded, 'Messages', () => push(context, const MessagesScreen()), trailing: badge(s.unread.length)),
+          item(Icons.mail_outline_rounded, 'Messages', () => push(context, const MessagesScreen()), trailing: badge(s.unread)),
           item(Icons.monitor_heart_outlined, 'Reports and logs', () => push(context, const ReportsScreen())),
         ],
         head('About'),
@@ -220,12 +224,10 @@ class _MoreDrawerState extends State<MoreDrawer> with SingleTickerProviderStateM
         if (u != null) item(Icons.person_outline_rounded, 'My account', () => u.isAdmin ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4)),
         head('Display'),
         item(Icons.text_fields_rounded, 'Larger text', s.toggleLargeText, trailing: onOff(s.largeText)),
-        item(Icons.wifi_off_rounded, 'Light mode: no video', s.toggleLowBw, trailing: onOff(s.lowBw)),
-        head('Prototype'),
-        item(Icons.restart_alt_rounded, 'Reset demo data', () {
-          s.resetDemo();
-          Nav.tab.value = 0;
-        }),
+        item(Icons.wifi_off_rounded, 'Light mode: no video or pictures', s.toggleLowBw, trailing: onOff(s.lowBw)),
+        head('Connection'),
+        item(Icons.dns_outlined, 'Server address', () => changeServer(context),
+            trailing: Text(Uri.tryParse(s.server)?.host ?? '', style: const TextStyle(color: C.muted, fontSize: 12))),
       ])),
     );
   }

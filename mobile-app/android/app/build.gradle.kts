@@ -49,6 +49,9 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Plain http is allowed only for testing against a computer on the local network.
+        // Store builds pass -PstoreRelease=true so the app talks to the server over https only.
+        manifestPlaceholders["usesCleartextTraffic"] = if (project.hasProperty("storeRelease")) "false" else "true"
     }
 
     buildTypes {
