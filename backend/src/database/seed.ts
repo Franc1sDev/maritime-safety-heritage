@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { DataSource, In } from 'typeorm';
@@ -34,12 +35,15 @@ export async function seed(ds: DataSource, opts = { sample: config.seed.sampleDa
   // First admin account, only while the archive has no admin at all (so restarts never need the seed password again).
   const adminEmail = config.seed.adminEmail.trim().toLowerCase();
   if (!(await users.countBy({ role: 'admin' })) && !(await users.findOneBy({ email: adminEmail }))) {
-    const pw = config.seed.adminPassword;
+    let pw = config.seed.adminPassword;
+    // With no seed password (hosted setups), the admin gets a random one and sets their own with "Forgot your password?".
+    const viaEmail = !pw && config.isProd;
+    if (viaEmail) pw = `${randomBytes(24).toString('base64url')}a1`;
     if (!PASSWORD_RULE.test(pw) || pw.startsWith('change-me')) {
       throw new Error('Set SEED_ADMIN_PASSWORD in .env (8+ characters, letters and numbers) before seeding.');
     }
     await users.save(users.create({ name: 'Archive administrator', email: adminEmail, passwordHash: await hashPassword(pw), role: 'admin', organisation: 'Remembering the Waters' }));
-    log(`Created admin account ${adminEmail}`);
+    log(viaEmail ? `Created admin account ${adminEmail}. Set its password with "Forgot your password?" on the sign-in page.` : `Created admin account ${adminEmail}`);
   }
 
   if (!opts.sample) return;
