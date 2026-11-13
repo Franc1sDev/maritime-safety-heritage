@@ -5,7 +5,8 @@
 #  4. Builds the API, creates the tables and loads the sample content
 # Safe to run again: it keeps an existing .env and database. Log: backend\logs\setup.log
 
-$ErrorActionPreference = 'Stop'
+# Continue: npm and psql write progress to stderr, which must not count as a failure. Exit codes are checked instead.
+$ErrorActionPreference = 'Continue'
 $backend = Split-Path -Parent $PSScriptRoot
 $project = Split-Path -Parent $backend
 Set-Location $backend
