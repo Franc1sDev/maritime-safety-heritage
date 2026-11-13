@@ -6,7 +6,7 @@ import { AuthUser, RequestMeta } from '../common/decorators';
 import { MailService } from '../common/mail.service';
 import { pageOf } from '../common/pagination';
 import { buildSearchText } from '../common/search-text';
-import { ArchiveRecord, MediaFile, RecordFormat, Submission } from '../database/entities';
+import { ArchiveRecord, MediaFile, RecordFormat, Submission, isStaff } from '../database/entities';
 import { MediaService } from '../media/media.service';
 import { TYPE_LABELS, VocabService } from '../vocab/vocab.service';
 import { SubmissionInputDto, SubmissionQuery } from './submission.dto';
@@ -78,8 +78,8 @@ export class SubmissionsService {
 
   async get(id: string, user: AuthUser) {
     const s = await this.subs.findOne({ where: { id }, relations: { submittedBy: true } });
-    if (!s || (user.role !== 'admin' && s.submittedById !== user.id)) throw new NotFoundException('That submission does not exist.');
-    return this.view(s, user.role === 'admin');
+    if (!s || (!isStaff(user.role) && s.submittedById !== user.id)) throw new NotFoundException('That submission does not exist.');
+    return this.view(s, isStaff(user.role));
   }
 
   private async pending(id: string) {

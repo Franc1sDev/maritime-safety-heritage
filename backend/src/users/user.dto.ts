@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
 import { PASSWORD_RULE, PASSWORD_RULE_TEXT } from '../common/crypto';
 import { PageQuery } from '../common/pagination';
-import { User } from '../database/entities';
+import { Role, User } from '../database/entities';
 
 const trim = () => Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
 const lower = () => Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value));
@@ -42,19 +42,19 @@ export class UpdateProfileDto {
 
 export class CreateUserDto extends EmailField {
   @ApiProperty() @trim() @IsString() @Length(2, 120) name: string;
-  @ApiProperty({ enum: ['user', 'admin'] }) @IsIn(['user', 'admin']) role: 'user' | 'admin';
+  @ApiProperty({ enum: ['user', 'editor', 'admin'] }) @IsIn(['user', 'editor', 'admin']) role: Role;
   @ApiPropertyOptional() @IsOptional() @trim() @IsString() @MaxLength(160) organisation?: string;
 }
 
 export class UpdateUserDto extends UpdateProfileDto {
-  @ApiPropertyOptional({ enum: ['user', 'admin'] }) @IsOptional() @IsIn(['user', 'admin']) role?: 'user' | 'admin';
+  @ApiPropertyOptional({ enum: ['user', 'editor', 'admin'] }) @IsOptional() @IsIn(['user', 'editor', 'admin']) role?: Role;
   @ApiPropertyOptional({ enum: ['active', 'suspended'] }) @IsOptional() @IsIn(['active', 'suspended']) status?: 'active' | 'suspended';
 }
 
 export class UserQuery extends PageQuery {
   @ApiPropertyOptional() @IsOptional() @trim() @IsString() @MaxLength(100) q?: string;
-  @ApiPropertyOptional({ enum: ['user', 'admin'] }) @IsOptional() @IsIn(['user', 'admin']) role?: 'user' | 'admin';
-  @ApiPropertyOptional({ enum: ['active', 'suspended'] }) @IsOptional() @IsIn(['active', 'suspended']) status?: 'active' | 'suspended';
+  @ApiPropertyOptional({ enum: ['user', 'editor', 'admin'] }) @IsOptional() @IsIn(['user', 'editor', 'admin']) role?: Role;
+  @ApiPropertyOptional({ enum: ['active', 'suspended', 'deleted'] }) @IsOptional() @IsIn(['active', 'suspended', 'deleted']) status?: 'active' | 'suspended' | 'deleted';
 }
 
 export const publicUser = (u: User) => ({

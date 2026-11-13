@@ -25,6 +25,7 @@ if (!existsSync(secretsFile)) {
   writeFileSync(secretsFile, JSON.stringify({ db: r(), access: r(), refresh: r(), media: r() }));
 }
 const s = JSON.parse(readFileSync(secretsFile, 'utf8'));
+if (!s.enc) { s.enc = randomBytes(36).toString('base64url'); writeFileSync(secretsFile, JSON.stringify(s)); }
 const pg = new EmbeddedPostgres({ databaseDir: join(dir, 'data'), user: 'postgres', password: s.db, port, persistent: true, onLog: () => {} });
 
 if (fresh) { log('Creating the demo database (first run takes a minute)...'); await pg.initialise(); }
@@ -34,7 +35,7 @@ log('Database running. Preparing tables and sample content...');
 
 const env = {
   ...process.env, NODE_ENV: 'development', DB_HOST: 'localhost', DB_PORT: String(port), DB_USER: 'postgres', DB_PASSWORD: s.db, DB_NAME: 'maritime_demo',
-  JWT_ACCESS_SECRET: s.access, JWT_REFRESH_SECRET: s.refresh, MEDIA_SIGNING_SECRET: s.media, STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: join(dir, 'storage'),
+  JWT_ACCESS_SECRET: s.access, JWT_REFRESH_SECRET: s.refresh, MEDIA_SIGNING_SECRET: s.media, MEDIA_ENCRYPTION_KEY: s.enc, STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: join(dir, 'storage'),
   SEED_ADMIN_EMAIL: 'admin@demo.ke', SEED_ADMIN_PASSWORD: 'admin1234', SEED_SAMPLE_DATA: 'true', PORT: process.env.PORT || '4000',
 };
 const run = (file) => new Promise((res, rej) => spawn(process.execPath, [join(root, 'dist', file)], { stdio: 'inherit', env }).on('exit', (c) => (c ? rej(new Error(file + ' failed')) : res())));

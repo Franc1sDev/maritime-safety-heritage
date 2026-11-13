@@ -83,7 +83,7 @@ try {
     $text = Get-Content (Join-Path $backend '.env.example') -Raw
     $set = @{
       'DB_USER' = 'maritime'; 'DB_PASSWORD' = $appPw; 'DB_NAME' = 'maritime_heritage'
-      'JWT_ACCESS_SECRET' = (RandomText 48); 'JWT_REFRESH_SECRET' = (RandomText 48); 'MEDIA_SIGNING_SECRET' = (RandomText 48)
+      'JWT_ACCESS_SECRET' = (RandomText 48); 'JWT_REFRESH_SECRET' = (RandomText 48); 'MEDIA_SIGNING_SECRET' = (RandomText 48); 'MEDIA_ENCRYPTION_KEY' = (RandomText 48)
       'SEED_ADMIN_EMAIL' = 'admin@demo.ke'; 'SEED_ADMIN_PASSWORD' = 'admin1234'
       'CORS_ORIGINS' = 'http://localhost:5173,http://localhost:8080,http://127.0.0.1:5500'
     }

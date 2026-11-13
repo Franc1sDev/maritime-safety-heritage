@@ -6,7 +6,7 @@ import { AuthUser, RequestMeta } from '../common/decorators';
 import { pageOf } from '../common/pagination';
 import { buildSearchText } from '../common/search-text';
 import { config } from '../config/config';
-import { ArchiveRecord, RecordView, TranscriptSegment } from '../database/entities';
+import { ArchiveRecord, RecordView, TranscriptSegment, isStaff } from '../database/entities';
 import { MediaService } from '../media/media.service';
 import { TYPE_LABELS, VocabService } from '../vocab/vocab.service';
 import { RecordInputDto, RecordQuery, RecordUpdateDto } from './record.dto';
@@ -46,8 +46,8 @@ export class RecordsService {
 
   async search(q: RecordQuery, user: AuthUser) {
     const qb = this.records.createQueryBuilder('r').select('r.id');
-    if (user.role === 'admin' && q.status) qb.andWhere('r.status = :status', { status: q.status });
-    else if (user.role !== 'admin') qb.andWhere(`r.status = 'published'`);
+    if (isStaff(user.role) && q.status) qb.andWhere('r.status = :status', { status: q.status });
+    else if (!isStaff(user.role)) qb.andWhere(`r.status = 'published'`);
     if (q.type?.length) qb.andWhere('r.type IN (:...types)', { types: q.type });
     if (q.format?.length) qb.andWhere('r.format IN (:...formats)', { formats: q.format });
     if (q.waterBodyId) qb.andWhere('r.waterBodyId = :wb', { wb: q.waterBodyId });
@@ -84,7 +84,7 @@ export class RecordsService {
   async mapPoints(user: AuthUser) {
     const qb = this.records.createQueryBuilder('r').leftJoinAndSelect('r.waterBody', 'wb')
       .where('r.latitude IS NOT NULL AND r.longitude IS NOT NULL');
-    if (user.role !== 'admin') qb.andWhere(`r.status = 'published'`);
+    if (!isStaff(user.role)) qb.andWhere(`r.status = 'published'`);
     const rows = await qb.orderBy('r.year', 'ASC', 'NULLS LAST').getMany();
     return rows.map((r) => ({ id: r.id, identifier: r.identifier, title: r.title, type: r.type, year: r.year, place: r.place, county: r.county,
       waterBody: r.waterBody?.name ?? null, latitude: r.latitude, longitude: r.longitude, status: r.status }));
@@ -131,8 +131,8 @@ export class RecordsService {
 
   async detail(idOrIdentifier: string, user: AuthUser, countView = true) {
     const r = await this.load(idOrIdentifier);
-    if (r.status !== 'published' && user.role !== 'admin') throw new NotFoundException('That archive item does not exist.');
-    if (countView && r.status === 'published' && user.role !== 'admin') {
+    if (r.status !== 'published' && !isStaff(user.role)) throw new NotFoundException('That archive item does not exist.');
+    if (countView && r.status === 'published' && !isStaff(user.role)) {
       await this.records.increment({ id: r.id }, 'views', 1);
       await this.views.insert({ recordId: r.id, userId: user.id });
       r.views += 1;

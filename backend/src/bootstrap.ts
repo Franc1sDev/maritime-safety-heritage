@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { join } from 'path';
 import { ErrorsFilter } from './common/errors.filter';
 import { config } from './config/config';
+import { registerPublicPages } from './public/seo';
 
 /** Security and request handling shared by the server and the automated tests. */
 export function configureApp(app: INestApplication) {
@@ -44,6 +45,8 @@ export function configureApp(app: INestApplication) {
     maxAge: 600,
   });
   app.setGlobalPrefix('api/v1');
+  // Search-engine pages and the start page come before the static files, so they win for "/".
+  registerPublicPages(app);
   // The website lives in ../web and is served from the same address, so its sign-in cookie stays first-party.
   if (config.webDir && existsSync(join(config.webDir, 'index.html'))) {
     express.useStaticAssets(config.webDir, { index: 'index.html', maxAge: config.isProd ? '1h' : 0, dotfiles: 'ignore' });

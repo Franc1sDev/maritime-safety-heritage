@@ -3,8 +3,11 @@ import {
   OneToMany, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn,
 } from 'typeorm';
 
-export type Role = 'user' | 'admin';
-export type UserStatus = 'active' | 'suspended';
+export type Role = 'user' | 'editor' | 'admin';
+export type UserStatus = 'active' | 'suspended' | 'deleted';
+export const ROLES_ALL: Role[] = ['user', 'editor', 'admin'];
+/** Editors and admins can see drafts and catalogue content. */
+export const isStaff = (role?: string) => role === 'admin' || role === 'editor';
 export type RecordType = 'oral' | 'photo' | 'record' | 'testimony';
 export type RecordFormat = 'audio' | 'video' | 'image' | 'document' | 'text';
 export type RecordStatus = 'draft' | 'published' | 'unpublished';
@@ -28,6 +31,7 @@ export class User {
   @Column({ default: 0, select: false }) failedLogins: number;
   @Column({ type: 'timestamptz', nullable: true, select: false }) lockedUntil: Date | null;
   @Column({ type: 'timestamptz', nullable: true }) lastLoginAt: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) deletedAt: Date | null;
   @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
   @UpdateDateColumn({ type: 'timestamptz' }) updatedAt: Date;
 }
@@ -137,6 +141,8 @@ export class MediaFile {
   @Column() mimeType: string;
   @Column({ type: 'bigint', transformer: { to: (v: number) => v, from: (v: string) => Number(v) } }) sizeBytes: number;
   @Column() sha256: string;
+  /** Stored encrypted (AES-256-CTR); sizeBytes and sha256 describe the original file. */
+  @Column({ default: false }) encrypted: boolean;
   @Column({ type: 'uuid', nullable: true }) uploadedById: string | null;
   @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
 }

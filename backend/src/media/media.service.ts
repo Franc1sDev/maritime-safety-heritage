@@ -1,13 +1,16 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { createReadStream, promises as fs } from 'fs';
+import { Readable } from 'stream';
 import { Repository } from 'typeorm';
 import { AuthUser } from '../common/decorators';
 import { config } from '../config/config';
-import { ArchiveRecord, MediaFile, Submission } from '../database/entities';
+import { ArchiveRecord, MediaFile, Submission, isStaff } from '../database/entities';
+import { decryptStream, encryptFile, IV_BYTES, readAll, storedRange } from './encryption';
 import { detectFile } from './file-type';
 import { Storage, STORAGE } from './storage';
+import { scanFile } from './virus-scan';
 
 export interface IngestTarget { recordId?: string; submissionId?: string; role?: MediaFile['role']; uploadedById: string; prefix: 'records' | 'submissions' }
 
@@ -30,20 +33,57 @@ export class MediaService {
 
   /** Checks the file's real type, stores it with a SHA-256 checksum, and always removes the temporary upload. */
   async ingest(file: Express.Multer.File, t: IngestTarget): Promise<MediaFile> {
+    let encPath = '';
     try {
       const type = await detectFile(file.path);
       if (!type) throw new BadRequestException(`"${safeName(file.originalname)}" is not a supported file. Use audio, video, images, PDF or plain text.`);
+      await this.scan(file);
       const sha256 = await sha256File(file.path);
       const now = new Date();
-      const key = `${t.prefix}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}.${type.ext}`;
-      await this.storage.putFile(key, file.path, type.mime);
+      const key = `${t.prefix}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}.${type.ext}${config.media.encryptAtRest ? '.enc' : ''}`;
+      if (config.media.encryptAtRest) {
+        encPath = `${file.path}.enc`;
+        await encryptFile(file.path, encPath);
+        await this.storage.putFile(key, encPath, 'application/octet-stream');
+      } else {
+        await this.storage.putFile(key, file.path, type.mime);
+      }
       return await this.media.save(this.media.create({
-        recordId: t.recordId ?? null, submissionId: t.submissionId ?? null, role: t.role ?? 'original', storageKey: key,
+        recordId: t.recordId ?? null, submissionId: t.submissionId ?? null, role: t.role ?? 'original', storageKey: key, encrypted: config.media.encryptAtRest,
         originalName: safeName(file.originalname), mimeType: type.mime, sizeBytes: file.size, sha256, uploadedById: t.uploadedById,
       }));
     } finally {
       await fs.rm(file.path, { force: true }).catch(() => undefined);
+      if (encPath) await fs.rm(encPath, { force: true }).catch(() => undefined);
     }
+  }
+
+  /** Virus check. Infected files are refused; if the scanner is required but unavailable, uploads are refused too. */
+  private async scan(file: Express.Multer.File) {
+    const r = await scanFile(file.path);
+    if (r.clean === false) {
+      this.log.warn(`Refused "${safeName(file.originalname)}": ${r.signature}`);
+      throw new BadRequestException(`"${safeName(file.originalname)}" was refused because the virus scanner found a threat (${r.signature}).`);
+    }
+    if (r.clean === null && config.clamav.required) {
+      this.log.error(`Virus scanner unavailable: ${r.error}`);
+      throw new ServiceUnavailableException('Uploads are paused because the virus scanner is not available. Try again later or tell the archive team.');
+    }
+  }
+
+  /** Size of the original file and a readable stream of it (or of a byte range), decrypting if needed. */
+  async open(m: MediaFile, range?: { start: number; end: number }) {
+    if (!m.encrypted) return this.storage.read(m.storageKey, range);
+    const size = (await this.storage.size(m.storageKey)) - IV_BYTES;
+    if (size <= 0) return { stream: Readable.from([]), size: 0 };
+    const iv = await readAll((await this.storage.read(m.storageKey, { start: 0, end: IV_BYTES - 1 })).stream);
+    const r = storedRange(range?.start ?? 0, range?.end ?? size - 1);
+    const { stream } = await this.storage.read(m.storageKey, { start: r.start, end: r.end });
+    return { stream: stream.pipe(decryptStream(iv, r.block, r.skip)), size };
+  }
+
+  async sizeOf(m: MediaFile) {
+    return m.encrypted ? (await this.storage.size(m.storageKey)) - IV_BYTES : this.storage.size(m.storageKey);
   }
 
   async discard(files: Express.Multer.File[] = []) {
@@ -70,7 +110,7 @@ export class MediaService {
   async getAccessible(id: string, user: AuthUser): Promise<MediaFile> {
     const m = await this.media.findOneBy({ id });
     if (!m) throw new NotFoundException('That file does not exist.');
-    if (user.role === 'admin') return m;
+    if (isStaff(user.role)) return m;
     if (m.recordId) {
       const r = await this.records.findOneBy({ id: m.recordId });
       if (r?.status === 'published') return m;

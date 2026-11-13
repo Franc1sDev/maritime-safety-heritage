@@ -30,6 +30,7 @@ export class UsersService {
     if (q.q) qb.andWhere(new Brackets((b) => b.where('u.name ILIKE :q', { q: `%${q.q}%` }).orWhere('u.email ILIKE :q').orWhere('u.organisation ILIKE :q')));
     if (q.role) qb.andWhere('u.role = :role', { role: q.role });
     if (q.status) qb.andWhere('u.status = :status', { status: q.status });
+    else qb.andWhere(`u.status <> 'deleted'`);
     const [rows, total] = await qb.getManyAndCount();
     return pageOf(rows.map(publicUser), total, q);
   }
@@ -44,13 +45,13 @@ export class UsersService {
 
   private async get(id: string) {
     const u = await this.users.findOneBy({ id });
-    if (!u) throw new NotFoundException('That account does not exist.');
+    if (!u || u.status === 'deleted') throw new NotFoundException('That account does not exist.');
     return u;
   }
 
   async update(id: string, dto: UpdateUserDto, actor: AuthUser, meta: RequestMeta) {
     const user = await this.get(id);
-    const losingAdmin = user.role === 'admin' && user.status === 'active' && (dto.role === 'user' || dto.status === 'suspended');
+    const losingAdmin = user.role === 'admin' && user.status === 'active' && ((dto.role !== undefined && dto.role !== 'admin') || dto.status === 'suspended');
     if (losingAdmin) {
       if (id === actor.id) throw new BadRequestException('You cannot remove your own admin access or suspend yourself. Ask another admin.');
       const admins = await this.users.countBy({ role: 'admin', status: 'active' });

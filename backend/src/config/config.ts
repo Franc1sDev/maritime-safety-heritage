@@ -46,6 +46,22 @@ export const config = {
     signingSecret: secret('MEDIA_SIGNING_SECRET'),
     linkTtlSeconds: int('MEDIA_LINK_TTL_SECONDS', 3600),
     maxUploadMb: int('MAX_UPLOAD_MB', 500),
+    /** Key for encrypting stored files. Keep it safe and backed up: without it, encrypted files cannot be read. */
+    encryptionKey: secret('MEDIA_ENCRYPTION_KEY'),
+    encryptAtRest: (process.env.MEDIA_ENCRYPT_AT_REST ?? 'true') === 'true',
+  },
+  /** ClamAV virus scanning of every upload. Set CLAMAV_HOST to turn it on. */
+  clamav: {
+    host: process.env.CLAMAV_HOST ?? '',
+    port: int('CLAMAV_PORT', 3310),
+    timeoutMs: int('CLAMAV_TIMEOUT_MS', 60000),
+    /** When true, uploads are refused if the scanner cannot be reached. */
+    required: (process.env.CLAMAV_REQUIRED ?? (isProd ? 'true' : 'false')) === 'true',
+  },
+  /** Storage and uptime alerts go to these addresses. */
+  alerts: {
+    emails: (process.env.ALERT_EMAILS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    storageGb: int('STORAGE_ALERT_GB', 0),
   },
   storage: {
     driver: (process.env.STORAGE_DRIVER ?? 'local') as 'local' | 's3',
@@ -71,6 +87,10 @@ export const config = {
     from: process.env.MAIL_FROM ?? 'Maritime Safety Heritage Archive <no-reply@localhost>',
     webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:4000',
   },
+  /** The archive's official public address (no trailing slash), used for canonical links, the sitemap and emails. */
+  siteUrl: (process.env.SITE_URL ?? process.env.WEB_BASE_URL ?? 'http://localhost:4000').replace(/\/$/, ''),
+  /** Public catalogue pages (/items) with titles and summaries, so search engines can find the archive. */
+  publicPreviews: (process.env.PUBLIC_PREVIEWS ?? 'true') === 'true',
   allowRegistration: (process.env.ALLOW_REGISTRATION ?? 'true') === 'true',
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),

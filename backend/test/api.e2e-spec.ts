@@ -357,3 +357,116 @@ describe('messages, users and reports', () => {
     expect(csv.text).toContain('MSH-0001');
   });
 });
+
+describe('encryption at rest and malware scanning', () => {
+  it('stores files encrypted and still serves exact bytes and ranges', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('fs');
+    const admin = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    const list = await request(http).get('/api/v1/records').set(bearer(admin)).expect(200);
+    const body = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(5000, 'x'), Buffer.from('the end\n')]);
+    const up = await request(http).post(`/api/v1/records/${list.body.items[0].id}/media`).set(bearer(admin)).attach('file', body, 'long.pdf').expect(201);
+    const walk = (d: string): string[] => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
+    const stored = walk(storageDir).filter((f) => f.endsWith('.pdf.enc')).map((f) => readFileSync(f));
+    expect(stored.some((b) => b.length === body.length + 16)).toBe(true);
+    expect(stored.every((b) => !b.includes(Buffer.from('%PDF')))).toBe(true);
+    const bin = (res: any, cb: any) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); };
+    const full = await request(http).get(up.body.url).buffer(true).parse(bin).expect(200);
+    expect(Buffer.compare(full.body, body)).toBe(0);
+    for (const [a, b] of [[0, 0], [5, 40], [17, 4100], [body.length - 8, body.length - 1]]) {
+      const part = await request(http).get(up.body.url).set('Range', `bytes=${a}-${b}`).buffer(true).parse(bin).expect(206);
+      expect(Buffer.compare(part.body, body.subarray(a, b + 1))).toBe(0);
+    }
+    const tail = await request(http).get(up.body.url).set('Range', 'bytes=-8').buffer(true).parse(bin).expect(206);
+    expect(tail.body.toString()).toBe('the end\n');
+  });
+
+  it('works out counter-mode positions correctly, including carries', async () => {
+    const { ivAt } = await import('../src/media/encryption');
+    const iv = Buffer.alloc(16, 0xff);
+    expect(ivAt(iv, 1).equals(Buffer.alloc(16, 0))).toBe(true);
+    const z = Buffer.alloc(16, 0);
+    expect(ivAt(z, 257).subarray(14).toString('hex')).toBe('0101');
+  });
+});
+
+describe('editors', () => {
+  let admin: string, editor: string;
+  beforeAll(async () => {
+    admin = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    const c = await request(http).post('/api/v1/users').set(bearer(admin)).send({ name: 'Archive Editor', email: 'editor@test.ke', role: 'editor' }).expect(201);
+    editor = (await login('editor@test.ke', c.body.temporaryPassword)).body.accessToken;
+  });
+
+  it('can catalogue, publish and review, and see drafts', async () => {
+    const r = await request(http).post('/api/v1/records').set(bearer(editor))
+      .send({ type: 'record', format: 'document', title: 'Harbour notice, 1974', summary: 'A notice about lifejackets.', rights: 'Remembering the Waters', consent: 'Public record' }).expect(201);
+    await request(http).post(`/api/v1/records/${r.body.id}/publish`).set(bearer(editor)).expect(200);
+    await request(http).get('/api/v1/records').query({ status: 'draft' }).set(bearer(editor)).expect(200);
+    await request(http).get('/api/v1/submissions').set(bearer(editor)).expect(200);
+    await request(http).get('/api/v1/reports/summary').set(bearer(editor)).expect(200);
+  });
+
+  it('cannot manage people, messages, the audit log or exports', async () => {
+    await request(http).get('/api/v1/users').set(bearer(editor)).expect(403);
+    await request(http).get('/api/v1/messages').set(bearer(editor)).expect(403);
+    await request(http).get('/api/v1/reports/activity').set(bearer(editor)).expect(403);
+    await request(http).get('/api/v1/reports/export').set(bearer(editor)).expect(403);
+  });
+});
+
+describe('closing an account', () => {
+  it('needs the password, erases personal details, withdraws pending submissions and blocks sign-in', async () => {
+    const reg = await request(http).post('/api/v1/auth/register').set('X-Client', 'app').send({ name: 'Leaving Person', email: 'leaving@test.ke', password: 'leaving123' }).expect(201);
+    const t = reg.body.accessToken;
+    const sub = await request(http).post('/api/v1/submissions').set(bearer(t))
+      .field('type', 'photo').field('title', 'A boat').field('description', 'A boat on Lake Victoria in 1980.').field('consentConfirmed', 'true')
+      .attach('files', PNG, 'boat.png').expect(201);
+    await request(http).post('/api/v1/auth/delete-account').set(bearer(t)).send({ password: 'wrong-pass1' }).expect(403);
+    await request(http).post('/api/v1/auth/delete-account').set(bearer(t)).send({ password: 'leaving123' }).expect(204);
+    expect((await login('leaving@test.ke', 'leaving123')).status).toBe(401);
+    await request(http).post('/api/v1/auth/refresh').set('X-Client', 'app').send({ refreshToken: reg.body.refreshToken }).expect(401);
+    const admin = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    const s = await request(http).get(`/api/v1/submissions/${sub.body.id}`).set(bearer(admin)).expect(200);
+    expect(s.body.status).toBe('rejected');
+    expect(s.body.files ?? []).toHaveLength(0);
+    const users = await request(http).get('/api/v1/users').query({ q: 'leaving' }).set(bearer(admin)).expect(200);
+    expect(users.body.items).toHaveLength(0);
+  });
+
+  it('will not let the only admin close their account', async () => {
+    const admin = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    const others = await request(http).get('/api/v1/users').query({ role: 'admin', status: 'active' }).set(bearer(admin)).expect(200);
+    const me = await request(http).get('/api/v1/auth/me').set(bearer(admin)).expect(200);
+    for (const u of others.body.items) if (u.id !== me.body.id) await request(http).patch(`/api/v1/users/${u.id}`).set(bearer(admin)).send({ role: 'editor' }).expect(200);
+    await request(http).post('/api/v1/auth/delete-account').set(bearer(admin)).send({ password: 'admin1234' }).expect(400);
+  });
+});
+
+describe('search engines', () => {
+  it('serves robots.txt and a sitemap listing published items', async () => {
+    const robots = await request(http).get('/robots.txt').expect(200);
+    expect(robots.text).toMatch(/Sitemap: .*\/sitemap\.xml/);
+    expect(robots.text).toMatch(/Disallow: \/api\//);
+    const map = await request(http).get('/sitemap.xml').expect(200);
+    expect(map.headers['content-type']).toMatch(/xml/);
+    expect(map.text).toContain('/items/MSH-0001');
+  });
+
+  it('shows a public catalogue page with summary only, canonical link and structured data', async () => {
+    const r = await request(http).get('/items/msh-0001').expect(200);
+    expect(r.text).toMatch(/<link rel="canonical" href="[^"]*\/items\/MSH-0001">/);
+    expect(r.text).toContain('application/ld+json');
+    expect(r.text).toMatch(/©/);
+    expect(r.text).not.toContain('/api/v1/media/file/');
+    await request(http).get('/items/MSH-9999').expect(404);
+    await request(http).get('/items/../../etc').expect(404);
+    const list = await request(http).get('/items').expect(200);
+    expect(list.text).toContain('/items/MSH-0001');
+  });
+
+  it('fills the canonical address into the start page', async () => {
+    const r = await request(http).get('/').expect(200);
+    expect(r.text).not.toContain('__SITE_URL__');
+    expect(r.text).toMatch(/rel="canonical" href="http/);
+  });
+});

@@ -21,18 +21,18 @@ export class SubmissionsController {
   @Get('mine') @ApiOperation({ summary: 'Your submissions and their status' })
   mine(@CurrentUser() me: AuthUser, @Query() q: SubmissionQuery) { return this.subs.mine(me, q); }
 
-  @Roles('admin') @Get() @ApiOperation({ summary: 'Review queue (pending first)' })
+  @Roles('admin', 'editor') @Get() @ApiOperation({ summary: 'Review queue (pending first)' })
   list(@Query() q: SubmissionQuery) { return this.subs.list(q); }
 
   @Get(':id') @ApiOperation({ summary: 'One submission (yours, or any for admins)' })
   get(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.subs.get(id, me); }
 
-  @Roles('admin') @Post(':id/approve') @HttpCode(200) @ApiOperation({ summary: 'Accept and create a draft archive item' })
+  @Roles('admin', 'editor') @Post(':id/approve') @HttpCode(200) @ApiOperation({ summary: 'Accept and create a draft archive item' })
   approve(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReviewDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) {
     return this.subs.approve(id, dto.reviewNote, me, meta);
   }
 
-  @Roles('admin') @Post(':id/reject') @HttpCode(200) @ApiOperation({ summary: 'Decline with a note to the contributor' })
+  @Roles('admin', 'editor') @Post(':id/reject') @HttpCode(200) @ApiOperation({ summary: 'Decline with a note to the contributor' })
   reject(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RejectDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) {
     return this.subs.reject(id, dto.reviewNote, me, meta);
   }

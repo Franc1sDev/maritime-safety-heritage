@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Injectable, Module, Query, Res } from '@nestjs/common';
+import { Controller, Get, Header, Injectable, Logger, Module, OnApplicationBootstrap, OnApplicationShutdown, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
@@ -6,7 +6,10 @@ import type { Response } from 'express';
 import { DataSource, Repository } from 'typeorm';
 import { Roles } from '../common/decorators';
 import { PageQuery, pageOf } from '../common/pagination';
+import { MailService } from '../common/mail.service';
+import { config } from '../config/config';
 import { Activity } from '../database/entities';
+import { AuthModule } from '../auth/auth.module';
 
 class ActivityQuery extends PageQuery {
   @ApiPropertyOptional({ description: 'Action prefix, for example "login" or "record"' }) @IsOptional() @IsString() @MaxLength(40) action?: string;
@@ -38,7 +41,7 @@ export class ReportsService {
            (SELECT count(*) FROM records WHERE deleted_at IS NULL)::int AS records,
            (SELECT count(*) FROM records WHERE status = 'published' AND deleted_at IS NULL)::int AS published,
            (SELECT count(*) FROM records WHERE status = 'draft' AND deleted_at IS NULL)::int AS drafts,
-           (SELECT count(*) FROM users)::int AS users,
+           (SELECT count(*) FROM users WHERE status <> 'deleted')::int AS users,
            (SELECT count(*) FROM users WHERE last_login_at > now() - interval '30 days')::int AS active_users_30d,
            (SELECT count(*) FROM submissions WHERE status = 'pending')::int AS pending_submissions,
            (SELECT count(*) FROM messages WHERE NOT read)::int AS unread_messages,
@@ -62,6 +65,7 @@ export class ReportsService {
       totals: {
         records: t.records, published: t.published, drafts: t.drafts, users: t.users, activeUsers30d: t.active_users_30d,
         pendingSubmissions: t.pending_submissions, unreadMessages: t.unread_messages, totalViews: t.total_views, storageBytes: Number(t.storage_bytes),
+        storageAlertBytes: config.alerts.storageGb ? config.alerts.storageGb * 1024 ** 3 : null,
       },
       byType, byWaterBody: byWater, byStatus, topRecords, viewsByMonth, submissionsByMonth, recentActivity: recent,
     };
@@ -97,7 +101,7 @@ export class ReportsService {
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
-  @Get('summary') @ApiOperation({ summary: 'Dashboard figures and charts' })
+  @Roles('admin', 'editor') @Get('summary') @ApiOperation({ summary: 'Dashboard figures and charts' })
   summary() { return this.reports.summary(); }
 
   @Get('activity') @ApiOperation({ summary: 'Audit log of sign-ins and admin actions' })
@@ -113,5 +117,44 @@ export class ReportsController {
   }
 }
 
-@Module({ imports: [TypeOrmModule.forFeature([Activity])], controllers: [ReportsController], providers: [ReportsService] })
+/**
+ * Checks media storage once a day and emails ALERT_EMAILS when use passes 80% of STORAGE_ALERT_GB,
+ * so the team can add space or move masters to an archive tier well before any limit.
+ */
+@Injectable()
+export class StorageMonitor implements OnApplicationBootstrap, OnApplicationShutdown {
+  private readonly log = new Logger('StorageMonitor');
+  private timer: NodeJS.Timeout | null = null;
+  private lastAlertDay = '';
+  constructor(private readonly ds: DataSource, private readonly mail: MailService) {}
+
+  onApplicationBootstrap() {
+    if (!config.alerts.storageGb) return;
+    this.timer = setInterval(() => void this.check(), 6 * 3600_000);
+    this.timer.unref();
+    setTimeout(() => void this.check(), 60_000).unref();
+  }
+  onApplicationShutdown() { if (this.timer) clearInterval(this.timer); }
+
+  async check(): Promise<{ usedBytes: number; limitBytes: number; percent: number } | null> {
+    if (!config.alerts.storageGb) return null;
+    const [{ used }] = await this.ds.query(`SELECT coalesce(sum(size_bytes), 0)::bigint AS used FROM media_files`);
+    const usedBytes = Number(used), limitBytes = config.alerts.storageGb * 1024 ** 3;
+    const percent = Math.round((usedBytes / limitBytes) * 100);
+    const today = new Date().toISOString().slice(0, 10);
+    if (percent >= 80 && this.lastAlertDay !== today) {
+      this.lastAlertDay = today;
+      const gb = (usedBytes / 1024 ** 3).toFixed(1);
+      this.log.warn(`Media storage at ${percent}% (${gb} GB of ${config.alerts.storageGb} GB)`);
+      for (const to of config.alerts.emails) {
+        await this.mail.send(to, `Archive storage at ${percent}%`,
+          `The Maritime Safety Heritage Archive is using ${gb} GB of the ${config.alerts.storageGb} GB storage alert level (${percent}%).\n\n` +
+          `Add space with the storage provider, or move older master files to the archive tier. Then raise STORAGE_ALERT_GB in the server settings.\n`);
+      }
+    }
+    return { usedBytes, limitBytes, percent };
+  }
+}
+
+@Module({ imports: [AuthModule, TypeOrmModule.forFeature([Activity])], controllers: [ReportsController], providers: [ReportsService, StorageMonitor] })
 export class ReportsModule {}

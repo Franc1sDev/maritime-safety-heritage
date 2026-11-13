@@ -27,7 +27,7 @@ export class MediaController {
     @InjectRepository(ArchiveRecord) private readonly records: Repository<ArchiveRecord>,
   ) {}
 
-  @ApiBearerAuth() @Roles('admin') @UploadLimit() @Post('records/:id/media')
+  @ApiBearerAuth() @Roles('admin', 'editor') @UploadLimit() @Post('records/:id/media')
   @UseInterceptors(FileInterceptor('file', uploadOptions(1)))
   @ApiConsumes('multipart/form-data') @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' }, role: { type: 'string' } } } })
   @ApiOperation({ summary: 'Attach a file to an archive item' })
@@ -48,7 +48,7 @@ export class MediaController {
     return this.media.describe(await this.media.getAccessible(id, me));
   }
 
-  @ApiBearerAuth() @Roles('admin') @Delete('media/:id') @HttpCode(204) @ApiOperation({ summary: 'Delete a file' })
+  @ApiBearerAuth() @Roles('admin', 'editor') @Delete('media/:id') @HttpCode(204) @ApiOperation({ summary: 'Delete a file' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) {
     const m = await this.media.remove(id);
     await this.activity.record({ actor: me, action: 'media.delete', entityType: 'media', entityId: id, summary: `Deleted "${m.originalName}"`, details: { recordId: m.recordId, submissionId: m.submissionId }, ip: meta.ip });
@@ -61,7 +61,7 @@ export class MediaController {
     if (!this.media.verifySignature(id, Number(exp), sig)) throw new ForbiddenException('This link has expired. Open the item again to get a new one.');
     const m = await this.media.findById(id);
     if (!m) throw new NotFoundException('That file does not exist.');
-    const size = await this.media.storage.size(m.storageKey);
+    const size = await this.media.sizeOf(m);
     res.setHeader('Content-Type', m.mimeType);
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'private, max-age=600');
@@ -81,13 +81,13 @@ export class MediaController {
         res.end();
         return;
       }
-      const { stream } = await this.media.storage.read(m.storageKey, { start, end });
+      const { stream } = await this.media.open(m, { start, end });
       res.status(206).setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
       res.setHeader('Content-Length', String(end - start + 1));
       stream.pipe(res);
       return;
     }
-    const { stream } = await this.media.storage.read(m.storageKey);
+    const { stream } = await this.media.open(m);
     res.setHeader('Content-Length', String(size));
     stream.pipe(res);
   }
