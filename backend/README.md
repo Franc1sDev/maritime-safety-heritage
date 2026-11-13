@@ -28,7 +28,7 @@ Local demo accounts: `researcher@demo.ke` / `demo1234` and `admin@demo.ke` / `ad
 | `npm start` | Run the compiled API |
 | `npm run migrate` | Apply new SQL migrations from `src/database/migrations` |
 | `npm run seed` | Create the first admin and, if enabled, the sample content |
-| `npm test` | 31 end-to-end tests against a throwaway PostgreSQL |
+| `npm test` | 40 end-to-end tests against a throwaway PostgreSQL |
 | `npm run demo` | Website and API with a private, self-managed PostgreSQL and sample content |
 | `npm run lint` | Type-check everything |
 
@@ -36,16 +36,17 @@ Local demo accounts: `researcher@demo.ke` / `demo1234` and `admin@demo.ke` / `ad
 
 | Area | Endpoints (all under `/api/v1`) | Who |
 |---|---|---|
-| Account | `auth/register`, `auth/login`, `auth/refresh`, `auth/logout`, `auth/logout-all`, `auth/me`, `auth/change-password`, `auth/forgot-password`, `auth/reset-password` | Everyone |
+| Account | `auth/register`, `auth/login`, `auth/refresh`, `auth/logout`, `auth/logout-all`, `auth/me`, `auth/change-password`, `auth/forgot-password`, `auth/reset-password`, `auth/delete-account` | Everyone |
 | Archive | `GET records` (full-text search, filters, sorting, pages), `GET records/map`, `GET records/:id` (by id or `MSH-0001`) | Signed in |
-| Cataloguing | `POST records`, `PATCH records/:id`, `publish`, `unpublish`, `DELETE`, `restore`, `GET records/deleted` | Admin |
-| Files | `POST records/:id/media`, `GET media/:id/link`, `DELETE media/:id`, `GET media/file/:id` (signed link, supports seeking) | Admin / signed in |
-| Vocabularies | `GET vocab`; `POST/PATCH/DELETE vocab/subjects` | Signed in / admin |
-| Submissions | `POST submissions` (up to 5 files), `GET submissions/mine`, `GET submissions`, `approve`, `reject` | Signed in / admin |
+| Cataloguing | `POST records`, `PATCH records/:id`, `publish`, `unpublish`, `DELETE`, `restore`, `GET records/deleted` | Editor, admin |
+| Files | `POST records/:id/media`, `GET media/:id/link`, `DELETE media/:id`, `GET media/file/:id` (signed link, supports seeking) | Editor, admin / signed in |
+| Vocabularies | `GET vocab`; `POST/PATCH/DELETE vocab/subjects` | Signed in / editor, admin |
+| Submissions | `POST submissions` (up to 5 files), `GET submissions/mine`, `GET submissions`, `approve`, `reject` | Signed in / editor, admin |
 | Contact | `POST messages` (no sign-in); `GET/PATCH/DELETE messages` | Everyone / admin |
 | Users | `GET/POST users`, `PATCH users/:id`, `POST users/:id/reset-password` | Admin |
-| Reports | `reports/summary`, `reports/activity`, `reports/export?kind=records\|submissions\|activity` (CSV) | Admin |
+| Reports | `reports/summary` (editors too), `reports/activity`, `reports/export?kind=records\|submissions\|activity` (CSV) | Admin |
 | Health | `GET health` | Everyone |
+| Search engines (no `/api/v1` prefix) | `GET /robots.txt`, `GET /sitemap.xml`, `GET /items`, `GET /items/MSH-0001` (title and summary only) | Everyone |
 
 ## Security
 
@@ -57,6 +58,7 @@ Local demo accounts: `researcher@demo.ke` / `demo1234` and `admin@demo.ke` / `ad
 - **Access control:** every route needs sign-in unless it is marked public. Roles are checked on each request, and suspensions and role changes take effect immediately.
 - **Input:** every request body and query is validated, and unknown fields are rejected. All database access uses parameters, never string-built SQL.
 - **Files:**
+  - Scanned for viruses with ClamAV (`CLAMAV_HOST`) and encrypted at rest with AES-256 (`MEDIA_ENCRYPTION_KEY`).
   - Type is checked from the file's bytes, not its name.
   - Files are stored under random names with a SHA-256 checksum, and never public.
   - They are served only through signed links that expire after an hour, with `nosniff` and a sandboxing CSP.
