@@ -35,9 +35,9 @@
 
   /* ---------- Display preferences (this browser only) ---------- */
   const PREF_KEY = "msh-prefs";
-  const P = (() => { try { return Object.assign({ largeText: false, lowBw: false }, JSON.parse(localStorage.getItem(PREF_KEY) || "{}")); } catch (e) { return { largeText: false, lowBw: false }; } })();
+  const P = (() => { try { return Object.assign({ largeText: false, lowBw: false, hints: true }, JSON.parse(localStorage.getItem(PREF_KEY) || "{}")); } catch (e) { return { largeText: false, lowBw: false, hints: true }; } })();
   const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(P)); } catch (e) {} };
-  const UI = { more: false, justOpened: false, slide: 0, afterLogin: null };
+  const UI = { slide: 0, afterLogin: null };
   const COUNTS = { pending: 0, unread: 0 };
   let VOCAB = null, FACETS = null;
 
@@ -101,23 +101,216 @@
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
 
-  /* ---------- Orbs ---------- */
+  /* =====================================================================
+     NAVIGATION: everything is a round "orb" inside the page.
+     - Welcome page: every option orbits the centre of the page (one or two rings, never scrolls).
+     - Other pages: the same orbs fly to a dock on the left, and the dock lights up to show where they went.
+     - Pointing at an orb zooms it in; its neighbours make way and fade into the background.
+     - A guide watches what you are doing and points to the next thing to press.
+     ===================================================================== */
   let ACTS = {}, actN = 0, pendingOrb = null;
   function cancelOrb() { if (pendingOrb) { clearTimeout(pendingOrb._t); pendingOrb.classList.remove("zoom"); pendingOrb.parentElement.classList.remove("show"); pendingOrb = null; } }
+  function actKey(fn) { const k = "a" + (++actN); ACTS[k] = fn; return k; }
   function orb(o) {
     let data = "";
     if (o.go) data = `data-go="${esc(o.go)}"`;
-    if (o.act) { const k = "a" + (++actN); ACTS[k] = o.act; data = `data-act="${k}"`; }
+    if (o.act) data = `data-act="${actKey(o.act)}"`;
     const cls = ["orb", o.primary ? "primary" : "", o.on ? "on" : "", o.ghost ? "ghost" : ""].join(" ");
-    return `<div class="orb-wrap" style="--n:${o.n || 0}">
-      <button class="${cls}" ${data} data-desc="${esc(o.desc || "")}" aria-label="${esc(o.label)}${o.desc ? ": " + esc(o.desc) : ""}" ${o.id ? `id="${o.id}"` : ""}>${ic(o.icon)}${o.badge ? `<span class="badge-n">${esc(o.badge)}</span>` : ""}</button>
+    return `<div class="orb-wrap" style="--n:${o.n || 0}" ${o.key ? `data-key="${esc(o.key)}"` : ""}>
+      <button class="${cls}" ${data} data-desc="${esc(o.desc || "")}" aria-label="${esc(o.label)}${o.desc ? ": " + esc(o.desc) : ""}" ${o.id ? `id="${o.id}"` : ""}><span class="halo" aria-hidden="true"></span>${ic(o.icon)}${o.badge ? `<span class="badge-n">${esc(o.badge)}</span>` : ""}</button>
       <span class="orb-label">${esc(o.label)}</span>
       <span class="orb-desc" role="status">${esc(o.desc || "")}</span></div>`;
   }
-  const MORE_DESC = ["Shows every other option on the left and at the top.", "Hides the extra options on the left and top."];
-  const seeMoreOrb = (n) => orb({ icon: "ellipsis", label: UI.more ? "See less" : "See more", desc: MORE_DESC[UI.more ? 1 : 0], act: () => toggleMore(), ghost: true, n });
-  function orbRow(list, extra = "") { list = list.filter(Boolean); return `<div class="orbs ${extra}">${list.map((o, i) => orb(Object.assign({ n: i }, o))).join("")}${seeMoreOrb(list.length)}</div>`; }
+  function orbRow(list, extra = "") { list = list.filter(Boolean); return `<div class="orbs magnify ${extra}">${list.map((o, i) => orb(Object.assign({ n: i }, o))).join("")}</div>`; }
 
+  /** The main menu: what this person can do, in the order they are most likely to want it. */
+  function navItems() {
+    const u = me(), staff = isStaff(), admin = isAdmin();
+    const L = [];
+    const add = (key, icon, label, desc, target, extra = {}) => L.push(Object.assign({ key, icon, label, desc }, typeof target === "function" ? { act: target } : { go: target }, extra));
+    if (!u) {
+      add("login", "log-in", "Sign in", "Sign in with your own account to explore the archive.", "#/login", { primary: true });
+      add("signup", "user-plus", "Create account", "Open a free account in under a minute.", "#/login?tab=up");
+    } else {
+      add("search", "search", "Search", "Search titles, transcripts, documents and places.", () => quickSearch(), { primary: !staff });
+      add("browse", "layout-grid", "Browse", "Explore every item, filtered by type, water and decade.", "#/browse");
+      add("map", "map", "Incident map", "See where each story happened, from Likoni to Lake Turkana.", "#/map");
+      add("listen", "headphones", "Listen", "Play oral histories in the voices of those who lived them.", "#/browse?type=oral");
+      add("submit", "hand-heart", "Share a story", "Send a recording, photo or document to the research team.", "#/submit");
+      if (staff) {
+        add("admin", "chart-column", "Dashboard", "Usage, collection health and recent activity.", "#/admin", { primary: true });
+        add("records", "archive", "Records", "Edit, publish, unpublish or restore catalogue records.", "#/admin/records");
+        add("upload", "upload", "Upload", "Add a new item and catalogue its metadata.", "#/admin/upload");
+        add("review", "inbox", "Review", "Approve or decline material sent in by the public.", "#/admin/submissions", { badge: COUNTS.pending || "" });
+      }
+      if (admin) {
+        add("users", "users", "Users", "Create accounts, change roles, suspend accounts.", "#/admin/users");
+        add("messages", "mail", "Messages", "Messages from the contact form.", "#/admin/messages", { badge: COUNTS.unread || "" });
+        add("reports", "activity", "Reports", "Usage, the audit log and CSV exports.", "#/admin/activity");
+      }
+    }
+    add("about", "anchor", "About", "Who is behind the archive, the app, privacy and terms.", "#/about");
+    add("contact", "mail", "Contact", "Send a message to the research team.", "#/contact");
+    if (!u) add("app", "smartphone", "Mobile app", "The same archive on an Android or iOS phone.", "#/app");
+    add("display", "sliders-horizontal", "Display", "Larger text, light mode for slow connections, and the helper hints.", () => displayOptions());
+    return L;
+  }
+  /** Which menu orb belongs to the page you are on. */
+  function navKeyFor(parts, q) {
+    const p = parts[0] || "home";
+    if (p === "browse") return q && q.get("type") === "oral" ? "listen" : "browse";
+    if (p === "admin") return ({ "": "admin", records: "records", upload: "upload", edit: "records", submissions: "review", users: "users", messages: "messages", activity: "reports" })[parts[1] || ""] || "admin";
+    if (p === "login") return q && q.get("tab") === "up" ? "signup" : "login";
+    if (["privacy", "terms", "app"].includes(p)) return p === "app" && !me() ? "app" : "about";
+    return p;
+  }
+
+  /* ----- Orbit (welcome page, and the menu on phones) ----- */
+  function orbitHtml(center, opts = {}) {
+    const items = navItems();
+    return `<div class="orbit ${opts.overlay ? "overlay" : ""}" id="${opts.id || "orbit"}" data-count="${items.length}">
+      <div class="orbit-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="orbit-center">${center}</div>
+      ${items.map((o, i) => orb(Object.assign({ n: i }, o))).join("")}</div>`;
+  }
+  function layoutOrbit(el) {
+    if (!el) return;
+    const wraps = $$(":scope > .orb-wrap", el), n = wraps.length;
+    const W = el.clientWidth, H = el.clientHeight, small = Math.min(W, H) < 620;
+    let s = small ? 60 : Math.min(92, Math.max(66, Math.min(W, H) / 8));
+    const labelH = 34, cx = W / 2, cy = H / 2;
+    const perim = (a, b) => Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+    let rx = Math.max(80, W / 2 - s * 0.75 - 46), ry = Math.max(80, H / 2 - s / 2 - labelH);
+    let cap = Math.floor(perim(rx, ry) / (s + (small ? 30 : 48)));
+    let rings;
+    if (n <= cap) rings = [[rx, ry, n]];
+    else {
+      s = Math.max(52, s * 0.86);
+      cap = Math.floor(perim(rx, ry) / (s + (small ? 24 : 40)));
+      const outer = Math.min(n, Math.max(Math.ceil(n * 0.62), cap));
+      rings = [[rx, ry, outer], [rx * 0.6, ry * 0.6, n - outer]];
+    }
+    let k = 0;
+    // Spaced evenly along the ring's length (not by angle), so tall or wide rings never bunch up.
+    const along = (a, b, count, offset) => {
+      const N = 720, pts = [], len = [0];
+      for (let i = 0; i <= N; i++) { const t = -Math.PI / 2 + (i / N) * 2 * Math.PI; pts.push([a * Math.cos(t), b * Math.sin(t)]); if (i) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])); }
+      const total = len[N], out = [];
+      for (let j = 0; j < count; j++) { const want = ((j + offset) / count) * total; let i = 0; while (i < N && len[i] < want) i++; out.push(pts[i]); }
+      return out;
+    };
+    rings.forEach(([a, b, count], r) => {
+      const pts = along(a, b, count, r ? 0.5 : 0);
+      for (let j = 0; j < count; j++, k++) {
+        const x = cx + pts[j][0], y = cy + pts[j][1];
+        const w = wraps[k];
+        w.style.left = x + "px"; w.style.top = y + "px";
+        w.style.setProperty("--fx", (cx - x) + "px"); w.style.setProperty("--fy", (cy - y) + "px");
+      }
+    });
+    const inner = rings[rings.length - 1];
+    el.style.setProperty("--s", s + "px");
+    el.style.setProperty("--cw", Math.max(180, inner[0] * (rings.length > 1 ? 1.2 : 1.3)) + "px");
+    el.style.setProperty("--ch", Math.max(150, inner[1] * (rings.length > 1 ? 1.2 : 1.35)) + "px");
+    const ringEls = $$(".orbit-rings i", el);
+    rings.forEach(([a, b], i) => { if (ringEls[i]) { ringEls[i].style.width = 2 * a + "px"; ringEls[i].style.height = 2 * b + "px"; } });
+    for (let i = rings.length; i < ringEls.length; i++) ringEls[i].style.width = ringEls[i].style.height = (i === 2 ? 0 : 0) + "px";
+    if (ringEls[2]) { ringEls[2].style.width = 2 * rx * 1.12 + "px"; ringEls[2].style.height = 2 * ry * 1.12 + "px"; }
+  }
+  window.addEventListener("resize", () => { $$(".orbit").forEach(layoutOrbit); placeCoach(); });
+
+  /* ----- Dock (every page except the welcome page) ----- */
+  function renderDock(parts, q) {
+    const dock = $("#dock");
+    const page = parts[0] || "home";
+    const show = page !== "home";
+    document.body.classList.toggle("has-dock", show);
+    if (!show) { dock.innerHTML = ""; dock.hidden = true; return; }
+    dock.hidden = false;
+    const cur = navKeyFor(parts, q);
+    const items = navItems();
+    dock.innerHTML = `<button class="dock-orb hub" data-key="home" aria-label="Welcome page: every option around the centre"><span class="dock-ic">${ic("compass")}</span><span class="dock-tip">All options</span></button>
+      ${items.map((o, i) => `<button class="dock-orb ${o.key === cur ? "here" : ""} ${o.primary ? "primary" : ""}" data-key="${o.key}" style="--n:${i}" ${o.go ? `data-go="${esc(o.go)}"` : `data-act="${actKey(o.act)}"`} aria-label="${esc(o.label)}${o.key === cur ? " (you are here)" : ""}" ${o.key === cur ? 'aria-current="page"' : ""}><span class="dock-ic">${ic(o.icon)}</span>${o.badge ? `<span class="badge-n">${esc(o.badge)}</span>` : ""}<span class="dock-tip">${esc(o.label)}</span></button>`).join("")}
+      <button class="dock-fab" aria-label="Open the menu" data-act="${actKey(() => openMenuOverlay())}"><span class="dock-ic">${ic("compass")}</span><span>Menu</span></button>`;
+    const avail = window.innerHeight - 64 - 36, per = avail / (items.length + 1);
+    dock.style.setProperty("--d", Math.max(30, Math.min(48, per - 8)) + "px");
+    flyIn(dock, ".dock-orb");
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".dock-orb, .dock-fab");
+    if (!b) return;
+    b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+    if (b.classList.contains("hub")) { captureFly("#dock .dock-orb"); return go("#/home"); }
+    if (b.dataset.go) { if (location.hash === b.dataset.go) render(); else go(b.dataset.go); }
+    else if (b.dataset.act && ACTS[b.dataset.act]) ACTS[b.dataset.act](b);
+  });
+
+  /* ----- Flying between the orbit and the dock (FLIP animation) ----- */
+  let FLY = null;
+  function captureFly(sel) {
+    if (REDUCED) return;
+    FLY = { at: Date.now(), rects: {} };
+    $$(sel).forEach((el) => { const k = el.dataset.key || (el.closest("[data-key]") || {}).dataset?.key; if (k) FLY.rects[k] = (el.querySelector(".orb") || el).getBoundingClientRect(); });
+  }
+  function flyIn(container, sel) {
+    if (!FLY || Date.now() - FLY.at > 2500) return;
+    const rects = FLY.rects; FLY = null;
+    let moved = 0;
+    $$(sel, container).forEach((el, i) => {
+      const k = el.dataset.key, from = rects[k];
+      const target = el.querySelector(".orb") || el;
+      if (!from) return;
+      const to = target.getBoundingClientRect();
+      if (!to.width) return;
+      target.style.transition = "none";
+      target.style.transform = `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${from.width / to.width})`;
+      target.style.zIndex = 5;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        target.style.transition = `transform .85s cubic-bezier(.34, 1.4, .5, 1) ${i * 28}ms`;
+        target.style.transform = "";
+        setTimeout(() => { target.style.transition = ""; target.style.zIndex = ""; }, 950 + i * 28);
+      }));
+      moved++;
+    });
+    if (moved && container.classList.contains("orbit")) container.classList.add("flown");
+    if (moved && container.id === "dock") {
+      setTimeout(() => {
+        container.classList.remove("landed"); void container.offsetWidth; container.classList.add("landed");
+        let seen = 0; try { seen = +sessionStorage.getItem("msh-dock-tip") || 0; } catch (e) {}
+        if (seen < 2) {
+          try { sessionStorage.setItem("msh-dock-tip", seen + 1); } catch (e) {}
+          bubble(container, "Your menu moved here. Point at it to see each option, or press the compass to bring everything back to the centre.");
+        }
+      }, 900);
+    }
+  }
+  function bubble(anchor, text) {
+    const r = anchor.getBoundingClientRect();
+    const b = document.createElement("div");
+    b.className = "hint-bubble"; b.setAttribute("role", "status"); b.textContent = text;
+    b.style.left = r.right + 16 + "px"; b.style.top = Math.max(80, r.top + r.height / 2 - 40) + "px";
+    document.body.appendChild(b);
+    setTimeout(() => b.classList.add("out"), 5200);
+    setTimeout(() => b.remove(), 5800);
+  }
+
+  /* ----- Phones: the dock folds into one round "Menu" button that opens the orbit over the page ----- */
+  function openMenuOverlay() {
+    closeMenuOverlay();
+    const parts = parse().parts;
+    const wrap = document.createElement("div");
+    wrap.className = "menu-overlay"; wrap.id = "menuOverlay";
+    wrap.innerHTML = orbitHtml(`<p class="orbit-kicker">Where to next?</p><button class="pill" id="menuClose">${ic("x")}Close</button>`, { overlay: true, id: "menuOrbit" });
+    document.body.appendChild(wrap);
+    const cur = navKeyFor(parts, parse().q);
+    const here = $(`#menuOrbit .orb-wrap[data-key="${cur}"] .orb`); if (here) here.classList.add("on");
+    layoutOrbit($("#menuOrbit"));
+    $("#menuClose").onclick = closeMenuOverlay;
+    wrap.addEventListener("click", (e) => { if (e.target === wrap) closeMenuOverlay(); });
+  }
+  function closeMenuOverlay() { const m = $("#menuOverlay"); if (m) m.remove(); }
+
+  /* ----- Orb clicks: first press zooms in and explains, then it goes ----- */
   document.addEventListener("click", (e) => {
     let b = e.target.closest(".orb");
     if (!b) { const lab = e.target.closest(".orb-label"); if (lab) b = lab.parentElement.querySelector(".orb"); }
@@ -126,90 +319,215 @@
     const run = () => {
       clearTimeout(b._t); pendingOrb = null;
       setTimeout(() => { b.classList.remove("zoom"); wrap.classList.remove("show"); }, 60);
+      if (b.closest(".orbit") && b.dataset.go) captureFly(".orbit .orb-wrap");
+      if (b.closest(".menu-overlay")) closeMenuOverlay();
       if (b.dataset.go) { if (location.hash === b.dataset.go) render(); else go(b.dataset.go); }
       else if (b.dataset.act && ACTS[b.dataset.act]) ACTS[b.dataset.act](b);
     };
     if (b.classList.contains("zoom") || !b.dataset.desc) return run();
     $$(".orb.zoom").forEach((x) => { x.classList.remove("zoom"); x.parentElement.classList.remove("show"); clearTimeout(x._t); });
-    const life = REDUCED ? 500 : 1500;
+    const life = REDUCED ? 500 : 1300;
     wrap.style.setProperty("--life", life + "ms");
     b.classList.add("zoom"); wrap.classList.remove("show"); void wrap.offsetWidth; wrap.classList.add("show");
+    ripple(b);
     pendingOrb = b; b._t = setTimeout(run, life - 150);
   });
-
-  /* ---------- See more: left rail + top extras ---------- */
-  function toggleMore(force) {
-    UI.more = typeof force === "boolean" ? force : !UI.more;
-    UI.justOpened = UI.more;
-    renderChrome(currentPage());
-    $$(".orb.ghost").forEach((b) => { b.parentElement.querySelector(".orb-label").textContent = UI.more ? "See less" : "See more"; b.dataset.desc = MORE_DESC[UI.more ? 1 : 0]; b.parentElement.querySelector(".orb-desc").textContent = b.dataset.desc; });
+  function ripple(el) {
+    if (REDUCED) return;
+    const r = document.createElement("span"); r.className = "ripple"; el.appendChild(r);
+    setTimeout(() => r.remove(), 800);
   }
-  function renderChrome(page) {
-    const u = me();
-    const cur = location.hash || "#/home";
-    const L = (h, i, l, extra = "") => `<a href="${h}" class="${cur === h ? "active" : ""}"><span class="ri-ic">${ic(i)}</span><span>${l}</span>${extra}</a>`;
-    const T = (id, i, l, pressed) => `<button class="ri" id="${id}" aria-pressed="${pressed}"><span class="ri-ic">${ic(i)}</span><span>${l}</span>${pressed ? '<span class="count">On</span>' : ""}</button>`;
-    const n = (x) => x ? `<span class="count">${x}</span>` : "";
-    $("#rail").innerHTML = `<span class="rail-title">More options</span><button class="pill icon-only rail-close" id="railClose" aria-label="Close extra options">${ic("x")}</button>
-      <h4>Explore</h4>
-      ${L("#/home", "house", "Welcome")}
-      ${u ? L("#/browse", "layout-grid", "Browse the archive") : ""}
-      ${u ? L("#/map", "map", "Incident map") : ""}
-      ${u ? Object.keys(TYPES).map((t) => L("#/browse?type=" + t, TYPES[t].icon, TYPES[t].plural)).join("") : ""}
-      <h4>Take part</h4>
-      ${u ? L("#/submit", "hand-heart", "Share a story") : L("#/login", "log-in", "Sign in or create account")}
-      ${L("#/contact", "mail", "Contact the team")}
-      ${isStaff() ? `<h4>Research team</h4>
-        ${L("#/admin", "chart-column", "Dashboard")}
-        ${L("#/admin/records", "archive", "Records")}
-        ${L("#/admin/upload", "upload", "Upload and catalogue")}
-        ${L("#/admin/submissions", "inbox", "Submissions", n(COUNTS.pending))}
-        ${isAdmin() ? `${L("#/admin/users", "users", "Users and roles")}
-        ${L("#/admin/messages", "mail", "Messages", n(COUNTS.unread))}
-        ${L("#/admin/activity", "activity", "Reports and logs")}` : ""}` : ""}
-      <h4>About</h4>
-      ${L("#/about", "anchor", "About the archive")}
-      ${L("#/app", "smartphone", "Mobile app")}
-      ${L("#/privacy", "shield", "Privacy")}
-      ${L("#/terms", "scroll-text", "Terms and copyright")}
-      ${u ? L("#/profile", "user", "My account") : ""}
-      <h4>Display</h4>
-      ${T("lt", "type", "Larger text", P.largeText)}
-      ${T("lb", "wifi-off", "Light mode: no images or video", P.lowBw)}`;
-    $("#topExtras").hidden = !UI.more;
-    $("#topExtras").innerHTML = `
-      ${u ? `<button class="pill has-lbl" id="qsBtn">${ic("search")}<span class="lbl">Quick search</span></button>` : ""}
-      <button class="pill icon-only" id="ltTop" aria-pressed="${P.largeText}" aria-label="Larger text" title="Larger text">${ic("type")}</button>
-      <button class="pill icon-only" id="lbTop" aria-pressed="${P.lowBw}" aria-label="Light mode: no images or video" title="Light mode: no images or video">${ic("wifi-off")}</button>
-      <a class="pill has-lbl" href="#/app">${ic("smartphone")}<span class="lbl">App</span></a>`;
-    $("#topRight").innerHTML = u
-      ? `<a class="pill has-lbl" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">My account</span>${u.role !== "user" ? `<span class="role lbl">${roleName(u.role)}</span>` : ""}</a>
-         <button class="pill has-lbl" id="logout" title="Sign out">${ic("log-out")}<span class="lbl">Sign out</span></button>`
-      : (page === "login" ? "" : `<a class="pill has-lbl" href="#/login">${ic("log-in")}<span class="lbl">Sign in</span></a>`);
-    $("#tabbar").innerHTML = [["home", "house", "Home"], ["browse", "search", "Search"], ["map", "map", "Map"], ["submit", "hand-heart", "Share"], [u ? (isStaff() ? "admin" : "profile") : "login", "user", u ? (isStaff() ? "Team" : "Me") : "Sign in"]]
-      .map(([h, i, l]) => `<a href="#/${h}" class="${page === h ? "active" : ""}">${ic(i)}${l}</a>`).join("");
-    document.body.classList.toggle("more", UI.more);
+
+  /* ----- Magnify: the orb you point at grows, its neighbours make way and fade back ----- */
+  function magnifySetup(group) {
+    if (group._mag) return; group._mag = true;
+    const isDock = group.id === "dock";
+    const items = () => isDock ? $$(".dock-orb", group) : $$(":scope > .orb-wrap", group);
+    let centers = null;
+    const measure = () => {
+      const gr = group.getBoundingClientRect();
+      centers = items().map((w) => {
+        const t = isDock ? w : w.querySelector(".orb");
+        const r = t.getBoundingClientRect();
+        return [w, r.left + r.width / 2 - gr.left, r.top + r.height / 2 - gr.top];
+      });
+    };
+    group.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") measure(); });
+    group.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse" || REDUCED) return;
+      if (!centers) measure();
+      const gr = group.getBoundingClientRect(), px = e.clientX - gr.left, py = e.clientY - gr.top;
+      const R = isDock ? 120 : 170;
+      let best = 0;
+      const fs = centers.map(([w, x, y]) => { const d = Math.hypot(px - x, py - y), f = Math.max(0, 1 - d / R); best = Math.max(best, f); return [w, x, y, f, d]; });
+      fs.forEach(([w, x, y, f, d]) => {
+        const m = 1 + (isDock ? 0.85 : 0.6) * f * f;
+        let gx = 0, gy = 0;
+        if (d > 8 && f > 0 && f < 0.97) {
+          const push = (isDock ? 16 : 26) * f * (1 - f) * 4 * Math.min(1, best);
+          if (isDock) gy = Math.sign(y - py) * push; else { gx = (x - px) / d * push; gy = (y - py) / d * push; }
+        }
+        w.style.setProperty("--m", m.toFixed(3));
+        w.style.setProperty("--gx", gx.toFixed(1) + "px"); w.style.setProperty("--gy", gy.toFixed(1) + "px");
+        w.classList.toggle("near", f > 0.55);
+        w.classList.toggle("recede", best > 0.6 && f < 0.35);
+      });
+    });
+    group.addEventListener("pointerleave", () => {
+      centers = null;
+      items().forEach((w) => { w.style.setProperty("--m", 1); w.style.setProperty("--gx", "0px"); w.style.setProperty("--gy", "0px"); w.classList.remove("near", "recede"); });
+    });
+  }
+  function enhance() {
+    $$(".orbs.magnify, .orbit, #dock").forEach(magnifySetup);
+  }
+
+  /* ----- Display options ----- */
+  function displayOptions() {
+    const body = () => orbRow([
+      { icon: "type", label: P.largeText ? "Larger text: on" : "Larger text", on: P.largeText, act: () => setPref("largeText", (on) => on ? "Larger text on" : "Larger text off") },
+      { icon: "wifi-off", label: P.lowBw ? "Light mode: on" : "Light mode", on: P.lowBw, act: () => setPref("lowBw", (on) => on ? "Light mode on: images and video hidden" : "Light mode off") },
+      { icon: "sparkles", label: P.hints ? "Helper hints: on" : "Helper hints: off", on: P.hints, act: () => setPref("hints", (on) => on ? "Hints on: the archive will point to what to press next" : "Hints off") }
+    ]);
+    modal("sliders-horizontal", "Display", `<p class="muted">Saved on this device only.</p>${body()}`, (m) => magnifySetup($(".orbs", m)));
+    function setPref(k, msg) {
+      P[k] = !P[k]; savePrefs(); toast(msg(P[k]), k === "lowBw" ? "wifi-off" : k === "hints" ? "sparkles" : "type");
+      closeModal(); applyPrefs();
+      if (k === "lowBw") render(); else if (k === "hints") { if (P.hints) scheduleCoach(400); else hideCoach(); }
+      displayOptions();
+    }
+  }
+  function applyPrefs() {
     document.documentElement.classList.toggle("large-text", P.largeText);
     document.body.classList.toggle("low-bw", P.lowBw);
-    $(".top").classList.toggle("solid", page !== "home");
-    if (UI.justOpened) {
-      UI.justOpened = false;
-      $$("#rail a, #rail button.ri").forEach((el, i) => { el.style.setProperty("--n", i); el.classList.add("flash"); });
-      $$("#topExtras > *").forEach((el) => el.classList.add("flash"));
-    }
-    $("#railClose").onclick = () => toggleMore(false);
-    const lo = $("#logout");
-    if (lo) lo.onclick = signOut;
-    const setPref = (k, msg) => { P[k] = !P[k]; savePrefs(); if (k === "lowBw") render(); else renderChrome(currentPage()); toast(msg(P[k]), k === "lowBw" ? "wifi-off" : "type"); };
-    [$("#lt"), $("#ltTop")].forEach((b) => b && (b.onclick = () => setPref("largeText", (on) => on ? "Larger text on" : "Larger text off")));
-    [$("#lb"), $("#lbTop")].forEach((b) => b && (b.onclick = () => setPref("lowBw", (on) => on ? "Light mode on: images and video hidden" : "Light mode off")));
-    if ($("#qsBtn")) $("#qsBtn").onclick = quickSearch;
   }
-  $("#scrim").onclick = () => toggleMore(false);
+
+  /* ----- Top right: your name (opens My account) and Sign out ----- */
+  function renderChrome(page) {
+    const u = me();
+    $("#topRight").innerHTML = u
+      ? `<a class="pill has-lbl who" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">${esc(u.name.split(" ")[0])}</span>${u.role !== "user" ? `<span class="role lbl">${roleName(u.role)}</span>` : ""}</a>
+         <button class="pill has-lbl" id="logout" title="Sign out">${ic("log-out")}<span class="lbl">Sign out</span></button>`
+      : (page === "login" ? "" : `<a class="pill has-lbl" href="#/login">${ic("log-in")}<span class="lbl">Sign in</span></a>`);
+    const lo = $("#logout"); if (lo) lo.onclick = signOut;
+    applyPrefs();
+    $(".top").classList.toggle("solid", page !== "home");
+  }
+
+  /* =====================================================================
+     GUIDE: points to the next thing to press, so nobody needs a manual.
+     It reads the page and what you have done so far, waits until you pause,
+     then shows a tapping hand, a pulsing ring and a short note.
+     ===================================================================== */
+  const SEEN = new Set();
+  let coachTimer = null, coachTarget = null, coachRaf = 0;
+  const coachEl = () => $("#coach");
+  function scheduleCoach(delay = 2600) {
+    clearTimeout(coachTimer);
+    if (!P.hints) return;
+    coachTimer = setTimeout(showCoach, delay);
+  }
+  function hideCoach() {
+    clearTimeout(coachTimer);
+    cancelAnimationFrame(coachRaf);
+    const c = coachEl(); if (c) c.classList.remove("on");
+    if (coachTarget) coachTarget.classList.remove("coach-target");
+    coachTarget = null;
+  }
+  const visible = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 60 && r.top < innerHeight && getComputedStyle(el).visibility !== "hidden"; };
+  function labelOf(field) {
+    const l = field.id && $(`label[for="${CSS.escape(field.id)}"]`);
+    return (l ? l.textContent : field.getAttribute("aria-label") || field.placeholder || "this").replace(/\s+/g, " ").trim();
+  }
+  /** Works out the most useful next step. */
+  function nextStep() {
+    const box = $("#modalBg .modal") || $("#sheetWrap .sheet") || $("#main");
+    // 1. A form in front of you: the first field still to fill in, then the button that sends it.
+    const forms = $$("form", box).filter((f) => visible(f) && !f.classList.contains("searchbar"));
+    for (const f of forms) {
+      const fields = $$("input, select, textarea", f).filter((x) => !x.disabled && x.type !== "hidden" && (x.required || x.getAttribute("aria-required") === "true"));
+      const todo = fields.find((x) => x.type === "radio" ? !$$(`input[name="${x.name}"]`, f).some((r) => r.checked) : x.type === "checkbox" ? !x.checked : !x.value.trim() || !x.checkValidity());
+      if (todo) {
+        const target = todo.type === "radio" ? todo.closest(".seg") || todo : todo.type === "checkbox" ? todo.closest("label") || todo : todo;
+        return { el: target, text: todo.value && !todo.checkValidity() ? `Check "${labelOf(todo)}": ${todo.validationMessage}` : `Next: ${todo.type === "checkbox" ? "tick" : todo.tagName === "SELECT" || todo.type === "radio" ? "choose" : "fill in"} "${labelOf(todo)}"` };
+      }
+      const send = $("button:not([type=button]), button[type=submit]", f);
+      if (send && fields.length) return { el: send, text: `All filled in. Press "${send.textContent.trim()}" to finish.` };
+    }
+    // 2. What this page is for.
+    const { parts, q } = parse();
+    const page = parts[0] || "home";
+    const pick = (sel, text) => { const el = typeof sel === "string" ? $(sel) : sel; return visible(el) ? { el, text } : null; };
+    const orbFor = (key) => $(`.orbit .orb-wrap[data-key="${key}"] .orb`);
+    let s = null;
+    if (page === "home") {
+      if (!me()) s = pick(orbFor("login"), "Start here: sign in, or create a free account next to it.");
+      else if (isStaff() && COUNTS.pending) s = pick(orbFor("review"), `${COUNTS.pending} submission${COUNTS.pending === 1 ? " is" : "s are"} waiting for your review.`);
+      else {
+        const k = ["browse", "map", "listen", "submit"].find((x) => !SEEN.has(x)) || "search";
+        s = pick(orbFor(k), { browse: "Try this first: browse everything in the archive.", map: "Next, see where each story happened on the map.", listen: "Listen to oral histories in people's own voices.", submit: "Have a story or photo? Share it with the research team.", search: "Search for a place, a year or a word someone said." }[k]);
+      }
+    } else if (page === "browse") {
+      if (!q.get("q") && !SEEN.has("searched")) s = pick("#q", "Type a place, a year or a word, then press Search.");
+      else s = pick(".grid .card", "Open an item to read, listen or watch.");
+    } else if (page === "record") {
+      s = pick("#playBtn", "Press play. The transcript follows along as people speak.") || pick("#orbPlay", "Press play to listen.") || pick(".orbs .orb.primary", "See the full catalogue details here.");
+    } else if (page === "map") {
+      s = pick(".leaflet-marker-icon", "Each pin is a story. Press one to open it.");
+    } else if (page === "admin") {
+      const sub = parts[1] || "";
+      if (!sub) s = COUNTS.pending ? pick(".orb-wrap .orb .badge-n", "Submissions are waiting. Press Review.") : pick(".orbs .orb.primary", "Start here.");
+      else if (sub === "submissions") s = pick(".list-row, .grid .card, table tbody tr", "Open a submission to read it, then approve or decline.");
+      else if (sub === "records") s = pick(".list-row, table tbody tr, .grid .card", "Open a record to edit it, or press Upload to add a new one.");
+    }
+    if (s) return s;
+    // 3. The page's main option.
+    const primary = $$("#main .orbs .orb.primary, #main .btn:not(.ghost)").find(visible);
+    if (primary) return { el: primary, text: primary.classList.contains("orb") ? `Try "${primary.closest(".orb-wrap").querySelector(".orb-label").textContent}".` : `Next: "${primary.textContent.trim()}".` };
+    return null;
+  }
+  function showCoach() {
+    if (!P.hints || $("#menuOverlay") || pendingOrb) return;
+    const step = nextStep();
+    if (!step) return hideCoach();
+    if (coachTarget && coachTarget !== step.el) coachTarget.classList.remove("coach-target");
+    coachTarget = step.el;
+    coachTarget.classList.add("coach-target");
+    const c = coachEl();
+    $(".coach-text", c).textContent = step.text;
+    c.classList.add("on");
+    placeCoach();
+    const follow = () => { placeCoach(); coachRaf = requestAnimationFrame(follow); };
+    cancelAnimationFrame(coachRaf); coachRaf = requestAnimationFrame(follow);
+  }
+  function placeCoach() {
+    const c = coachEl();
+    if (!c || !coachTarget || !c.classList.contains("on")) return;
+    if (!document.contains(coachTarget)) return hideCoach();
+    const r = coachTarget.getBoundingClientRect();
+    const ring = $(".coach-ring", c), hand = $(".coach-hand", c), note = $(".coach-note", c);
+    const pad = 10, size = Math.max(r.width, r.height) + pad * 2;
+    const round = coachTarget.classList.contains("orb") || coachTarget.classList.contains("dock-orb") || coachTarget.classList.contains("leaflet-marker-icon") || coachTarget.id === "playBtn";
+    ring.style.width = (round ? size : r.width + pad * 2) + "px"; ring.style.height = (round ? size : r.height + pad * 2) + "px";
+    ring.style.borderRadius = round ? "50%" : "18px";
+    ring.style.left = r.left + r.width / 2 + "px"; ring.style.top = r.top + r.height / 2 + "px";
+    hand.style.left = r.left + r.width / 2 + Math.min(r.width / 2, 40) - 6 + "px"; hand.style.top = r.top + r.height / 2 + Math.min(r.height / 2, 30) - 4 + "px";
+    const below = r.bottom + 120 < innerHeight;
+    const nw = Math.min(280, innerWidth - 24);
+    note.style.width = nw + "px";
+    note.style.left = Math.max(12, Math.min(innerWidth - nw - 12, r.left + r.width / 2 - nw / 2)) + "px";
+    note.style.top = (below ? r.bottom + 46 : Math.max(70, r.top - 76)) + "px";
+    note.classList.toggle("above", !below);
+  }
+  // Any action hides the guide; it comes back when you pause.
+  ["pointerdown", "keydown", "wheel", "touchstart"].forEach((ev) => document.addEventListener(ev, () => { hideCoach(); scheduleCoach(); }, { passive: true }));
+  document.addEventListener("input", () => { hideCoach(); scheduleCoach(1800); });
+  document.addEventListener("change", () => { hideCoach(); scheduleCoach(1200); });
+  document.addEventListener("submit", (e) => { if (e.target.id === "sform") SEEN.add("searched"); }, true);
 
   async function signOut() {
     await API.logout();
-    VOCAB = null; FACETS = null; UI.more = false;
+    VOCAB = null; FACETS = null;
     toast("Signed out", "log-out"); go("#/home"); render();
   }
   async function refreshCounts() {
@@ -218,7 +536,7 @@
       const [s, m] = await Promise.all([API.get("/submissions", { status: "pending", pageSize: 1 }), isAdmin() ? API.get("/messages", { filter: "unread", pageSize: 1 }) : Promise.resolve({ unread: 0 })]);
       const changed = s.total !== COUNTS.pending || m.unread !== COUNTS.unread;
       COUNTS.pending = s.total; COUNTS.unread = m.unread;
-      if (changed) renderChrome(currentPage());
+      if (changed) { const { parts, q } = parse(); renderDock(parts, q); enhance(); }
     } catch (e) { /* badges are optional */ }
   }
 
@@ -239,7 +557,8 @@
       return;
     }
     bg.className = "bg";
-    bg.innerHTML = `<div class="bg-icon">${ic(kind === "video" ? "waves" : (kind || "waves"))}</div>
+    const bubbles = P.lowBw || REDUCED ? "" : `<div class="bg-bubbles">${Array.from({ length: 14 }, (_, i) => `<span style="--x:${(i * 37 + 7) % 100}%;--z:${8 + (i * 13) % 26}px;--t:${14 + (i * 7) % 16}s;--dl:${-(i * 2.3).toFixed(1)}s"></span>`).join("")}</div>`;
+    bg.innerHTML = bubbles + `<div class="bg-icon">${ic(kind === "video" ? "waves" : (kind || "waves"))}</div>
       <svg class="bg-waves" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90 Q 180 50 360 90 T 720 90 T 1080 90 T 1440 90" stroke="#1e6bff" stroke-opacity=".5" fill="none" stroke-width="2"/><path d="M0 120 Q 180 85 360 120 T 720 120 T 1080 120 T 1440 120" stroke="#4d8dff" stroke-opacity=".35" fill="none" stroke-width="2"/></svg>`;
   }
   function showSlide(i) {
@@ -271,7 +590,7 @@
 
   async function render() {
     cleanup.forEach((f) => { try { f(); } catch (e) {} }); cleanup = [];
-    cancelOrb(); ACTS = {}; actN = 0; closeModal(); closeSheet();
+    cancelOrb(); hideCoach(); closeMenuOverlay(); ACTS = {}; actN = 0; closeModal(); closeSheet();
     const seq = ++renderSeq;
     const { parts, q } = parse();
     const page = parts[0] || "home";
@@ -282,6 +601,8 @@
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute("content", view.desc || DEFAULT_DESC);
     renderChrome(page);
+    renderDock(parts, q);
+    SEEN.add(navKeyFor(parts, q));
     setBg(typeof view.bg === "function" ? view.bg(parts, q) : view.bg);
     let data;
     if (view.load) {
@@ -296,11 +617,19 @@
       }
       if (seq !== renderSeq) return; // the user moved on while this loaded
     }
-    $("#main").innerHTML = view.html(parts, q, data) + footer();
+    const main = $("#main");
+    main.innerHTML = view.html(parts, q, data) + (page === "home" ? "" : footer());
+    main.classList.toggle("is-home", page === "home");
+    // Content comes into focus: blurred and small at first, then sharp, one piece after another.
+    $$(".page-head, .searchbar, .results-line, .panel, .card, .orbs .orb-wrap, .grid > *, .list-row, .site-foot", main).slice(0, 40).forEach((el, i) => el.style.setProperty("--i", i));
+    main.classList.remove("page-in"); void main.offsetWidth; main.classList.add("page-in");
     if (view.after) view.after(parts, q, data);
+    const orbit = $("#orbit"); if (orbit) { layoutOrbit(orbit); flyIn(orbit, ".orb-wrap"); }
+    enhance();
     window.scrollTo(0, 0);
-    $("#main").focus({ preventScroll: true });
+    main.focus({ preventScroll: true });
     refreshCounts();
+    scheduleCoach(SEEN.has("coach:" + page) ? 3200 : 1300); SEEN.add("coach:" + page);
   }
   window.addEventListener("hashchange", render);
 
@@ -336,7 +665,7 @@
   }
   function closeSheet() { const s = $("#sheetWrap"); if (s) { s.remove(); if (returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true }); } }
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { if (pendingOrb) cancelOrb(); else if ($("#modalBg")) closeModal(); else if ($("#sheetWrap")) closeSheet(); else if (UI.more) toggleMore(false); }
+    if (e.key === "Escape") { if (pendingOrb) cancelOrb(); else if ($("#modalBg")) closeModal(); else if ($("#sheetWrap")) closeSheet(); else if ($("#menuOverlay")) closeMenuOverlay(); }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k" && me()) { e.preventDefault(); quickSearch(); }
     // Keep keyboard focus inside an open pop-up.
     const box = $("#modalBg .modal") || $("#sheetWrap .sheet");
@@ -414,36 +743,12 @@
     bg: "video",
     html() {
       const u = me();
-      if (!u) {
-        return `<div class="stage welcome">
-          <h1>Kenya's memory of the water, kept for everyone</h1>
-          <p class="lede">Oral histories, photographs, records and testimonies from the coast, the lakes and the rivers, so their safety lessons are never lost.</p>
-          ${orbRow([
-            { icon: "log-in", label: "Sign in", desc: "Sign in with your own account to explore the archive.", go: "#/login", primary: true },
-            { icon: "user-plus", label: "Create account", desc: "Open a free account in under a minute.", go: "#/login?tab=up" },
-            { icon: "anchor", label: "About", desc: "Who is behind the archive and why it matters.", go: "#/about" },
-            { icon: "smartphone", label: "Mobile app", desc: "The same archive on an Android or iOS phone.", go: "#/app" }
-          ])}</div>${slideBar()}`;
-      }
-      const user = [
-        { icon: "search", label: "Search", desc: "Search titles, transcripts, documents and places.", act: quickSearch, primary: true },
-        { icon: "layout-grid", label: "Browse", desc: "Explore every item, filtered by type, water and decade.", go: "#/browse" },
-        { icon: "map", label: "Incident map", desc: "See where each story happened, from Likoni to Lake Turkana.", go: "#/map" },
-        { icon: "headphones", label: "Listen", desc: "Play oral histories in the voices of those who lived them.", go: "#/browse?type=oral" },
-        { icon: "hand-heart", label: "Share a story", desc: "Send a recording, photo or document to the research team.", go: "#/submit" }
-      ];
-      const admin = [
-        { icon: "chart-column", label: "Dashboard", desc: "Usage, collection health and recent activity.", go: "#/admin", primary: true },
-        { icon: "inbox", label: "Review", desc: "Approve or decline material sent in by the public.", go: "#/admin/submissions", badge: COUNTS.pending || "" },
-        { icon: "upload", label: "Upload", desc: "Add a new item and catalogue its metadata.", go: "#/admin/upload" },
-        { icon: "search", label: "Search", desc: "Search titles, transcripts, documents and places.", act: quickSearch },
-        { icon: "map", label: "Incident map", desc: "See where each story happened.", go: "#/map" }
-      ];
-      return `<div class="stage welcome">
-        <h1>${greeting()}, ${esc(u.name.split(" ")[0])}</h1>
-        <p class="lede">Stories, photographs and records from Kenya's coast, lakes and rivers.</p>
-        ${orbRow(isStaff() ? admin : user)}
-      </div>${slideBar()}`;
+      const center = !u
+        ? `<h1>Kenya's memory of the water</h1>
+           <p class="lede">Stories, photographs and records from the coast, the lakes and the rivers, so their safety lessons are never lost.</p>`
+        : `<h1>${greeting()}, ${esc(u.name.split(" ")[0])}</h1>
+           <p class="lede">${isStaff() && COUNTS.pending ? `${COUNTS.pending} submission${COUNTS.pending === 1 ? "" : "s"} waiting for review.` : "Where would you like to go? Point at an option to see what it does."}</p>`;
+      return `${orbitHtml(center)}${slideBar()}`;
     },
     after() {
       const vo = $("#videoOn"); if (vo) vo.onclick = () => { P.lowBw = false; savePrefs(); render(); toast("Light mode off: video on", "play"); };
@@ -876,7 +1181,7 @@
     }
   };
   function signedIn() {
-    const u = me(); VOCAB = null; FACETS = null; UI.more = false;
+    const u = me(); VOCAB = null; FACETS = null;
     toast(`Welcome, ${u.name.split(" ")[0]}`, "life-buoy");
     const back = UI.afterLogin; UI.afterLogin = null;
     const target = back && !/^#\/(login|reset-password)/.test(back) ? back : "#/home";
@@ -974,7 +1279,7 @@
           ${[["log-in", "Sign in with the same account as the website"], ["search", "Search, browse and filter"], ["map", "Incident map"], ["headphones", "Play oral histories and read transcripts"], ["camera", "Share stories and photos straight from the phone camera"], ["inbox", "The research team can review submissions on the go"]]
             .map(([i, t]) => `<li><span class="li-ic">${ic(i)}</span>${t}</li>`).join("")}</ul>
           <p class="hint">The store versions for Google Play and the App Store follow this website.</p></div></div>
-        <div class="orbs">${seeMoreOrb(0)}</div></div>`;
+</div>`;
     }
   };
   ROUTES.notfound = { bg: "compass", html: () => `<div class="stage narrow panel empty">${ic("compass")}<h2>That page doesn't exist</h2><a class="btn" href="#/home">Go to the welcome page</a></div>` };

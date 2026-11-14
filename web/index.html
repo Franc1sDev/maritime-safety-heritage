@@ -30,16 +30,18 @@
       <span class="mark"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg></span>
       <b>Maritime Safety Heritage</b>
     </a>
-    <div class="top-extras" id="topExtras" hidden></div>
     <div class="top-right" id="topRight"></div>
   </header>
 
-  <nav class="rail" id="rail" aria-label="More options"></nav>
-  <div class="scrim" id="scrim"></div>
+  <nav class="dock" id="dock" aria-label="Main menu" hidden></nav>
 
   <main id="main" tabindex="-1"><div class="loading"><span class="ring"></span>Loading the archive</div></main>
 
-  <nav class="tabbar" id="tabbar" aria-label="App"></nav>
+  <div class="coach" id="coach" aria-live="polite">
+    <span class="coach-ring" aria-hidden="true"></span>
+    <svg class="coach-hand" viewBox="0 0 48 48" aria-hidden="true"><path d="M17 26V9.5a3.5 3.5 0 0 1 7 0V22l1-.6V18a3.5 3.5 0 0 1 7 .3v3.4l1-.4a3.4 3.4 0 0 1 6 2.2v9.6C39 41 33.5 46 27 46h-2.6a10 10 0 0 1-8-4L9.3 32.5a3.4 3.4 0 0 1 5-4.6z" fill="#fff" stroke="#02060e" stroke-width="2" stroke-linejoin="round"/></svg>
+    <div class="coach-note"><span class="coach-dot" aria-hidden="true"></span><span class="coach-text"></span></div>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="assets/vendor/leaflet/leaflet.js"></script>
