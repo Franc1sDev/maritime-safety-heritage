@@ -21,6 +21,22 @@ How to put the archive online at its own domain with HTTPS, backups, a CDN, viru
 
 Everything is in [`deploy/`](../deploy): `docker-compose.yml`, `Caddyfile`, `.env.production.example` and the backup image.
 
+## Free test hosting (current)
+
+Until the project buys hosting, the archive runs free on Render at https://maritime-heritage.onrender.com, set up by [`render.yaml`](../render.yaml):
+
+- One free web service (the API and website) and one free Render PostgreSQL database, in Frankfurt.
+- The database also holds the media files, encrypted (`STORAGE_DRIVER=database`). Uploads are limited to 100 MB each.
+- Render generates every secret, including the first admin's password. To see it: Render, *maritime-heritage*, *Environment*, `SEED_ADMIN_PASSWORD`, then the eye icon.
+- **Email** works once you add `SMTP_PASSWORD` (a Gmail app password) under *Environment*.
+- **Limits:**
+  - the service sleeps after 15 minutes without visitors (about a minute to wake);
+  - the free database expires 30 days after it was created (14 November 2026) unless upgraded;
+  - there is no virus scanner.
+- Every push to `main` redeploys automatically.
+
+To move to paid hosting, follow the steps below. Export the test data first if any of it is worth keeping.
+
 ## 1. Server and domain
 
 1. Rent a server: Ubuntu 24.04, 2 vCPU, 4 GB RAM, 80 GB disk is enough to start. Choose a region near Kenya (Johannesburg or Cape Town) or use a CDN.
