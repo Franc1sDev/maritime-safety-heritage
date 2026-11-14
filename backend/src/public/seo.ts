@@ -162,7 +162,9 @@ export function registerPublicPages(app: INestApplication) {
   // The website's start page, with the canonical address and social preview tags filled in.
   const indexFile = config.webDir ? join(config.webDir, 'index.html') : '';
   if (indexFile && existsSync(indexFile)) {
-    const html = () => readFileSync(indexFile, 'utf8').replace(/__SITE_URL__/g, esc(site()));
+    // A new version tag on every release, so browsers never mix an old script with a new page.
+    const version = (process.env.RENDER_GIT_COMMIT || process.env.APP_VERSION || String(Date.now())).slice(0, 12);
+    const html = () => readFileSync(indexFile, 'utf8').replace(/__SITE_URL__/g, esc(site())).replace(/__V__/g, esc(version));
     const cached = config.isProd ? html() : null;
     http.get(['/', '/index.html'], (_req: Request, res: Response, next: NextFunction) => {
       try { send(res, 'text/html; charset=utf-8', cached ?? html(), config.isProd ? 300 : 0); } catch (e) { next(e); }

@@ -484,7 +484,7 @@ describe('media stored in the database', () => {
     for (let i = 0; i < data.length; i++) data[i] = (i * 31) % 251;
     const path = join(storageDir, 'db-store-test.bin');
     writeFileSync(path, data);
-    await store.putFile('tests/db-store.bin', path, 'application/octet-stream');
+    await store.putFile('tests/db-store.bin', path);
     expect(await store.size('tests/db-store.bin')).toBe(data.length);
     const read = async (r?: { start: number; end: number }) => {
       const { stream } = await store.read('tests/db-store.bin', r);
