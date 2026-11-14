@@ -509,6 +509,9 @@
     // 3. The page's main option.
     const primary = $$("#main .orbs .orb.primary, #main .btn:not(.ghost)").find(visible);
     if (primary) return { el: primary, text: primary.classList.contains("orb") ? `Try "${primary.closest(".orb-wrap").querySelector(".orb-label").textContent}".` : `Next: "${primary.textContent.trim()}".` };
+    // 4. Otherwise the first choice on the page.
+    const first = $$("#main .orbs .orb:not(.on)").find(visible);
+    if (first) return { el: first, text: `Start here: pick "${first.closest(".orb-wrap").querySelector(".orb-label").textContent}", or any circle next to it.` };
     return null;
   }
   function showCoach() {
