@@ -84,7 +84,7 @@ export const config = {
     storageGb: int('STORAGE_ALERT_GB', 0),
   },
   storage: {
-    driver: (process.env.STORAGE_DRIVER ?? 'local') as 'local' | 's3',
+    driver: (process.env.STORAGE_DRIVER ?? 'local') as 'local' | 's3' | 'database',
     localDir: process.env.STORAGE_LOCAL_DIR ?? './storage',
     s3: {
       endpoint: process.env.S3_ENDPOINT ?? '',

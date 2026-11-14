@@ -1,3 +1,4 @@
+import { DataSource } from 'typeorm';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArchiveRecord, MediaFile, Submission } from '../database/entities';
@@ -8,7 +9,7 @@ import { createStorage, STORAGE } from './storage';
 @Module({
   imports: [TypeOrmModule.forFeature([MediaFile, ArchiveRecord, Submission])],
   controllers: [MediaController],
-  providers: [MediaService, { provide: STORAGE, useFactory: createStorage }],
+  providers: [MediaService, { provide: STORAGE, useFactory: createStorage, inject: [DataSource] }],
   exports: [MediaService],
 })
 export class MediaModule {}

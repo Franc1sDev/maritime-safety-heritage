@@ -39,7 +39,8 @@ export async function seed(ds: DataSource, opts = { sample: config.seed.sampleDa
     // With no seed password (hosted setups), the admin gets a random one and sets their own with "Forgot your password?".
     const viaEmail = !pw && config.isProd;
     if (viaEmail) pw = `${randomBytes(24).toString('base64url')}a1`;
-    if (!PASSWORD_RULE.test(pw) || pw.startsWith('change-me')) {
+    // Long generated passwords (for example from the host's secret generator) are accepted as they are.
+    if ((!PASSWORD_RULE.test(pw) && pw.length < 16) || pw.startsWith('change-me')) {
       throw new Error('Set SEED_ADMIN_PASSWORD in .env (8+ characters, letters and numbers) before seeding.');
     }
     await users.save(users.create({ name: 'Archive administrator', email: adminEmail, passwordHash: await hashPassword(pw), role: 'admin', organisation: 'Remembering the Waters' }));

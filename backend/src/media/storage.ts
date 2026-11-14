@@ -4,6 +4,7 @@ import { createReadStream, createWriteStream, promises as fs } from 'fs';
 import { dirname, resolve, sep } from 'path';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
+import { DataSource } from 'typeorm';
 import { config } from '../config/config';
 
 export interface ReadResult { stream: Readable; size: number }
@@ -59,5 +60,50 @@ export class S3Storage implements Storage {
   async remove(key: string) { await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key })); }
 }
 
+/**
+ * Files kept inside PostgreSQL in 1 MB chunks. For small hosted setups with no object storage (for example a free
+ * Render or Neon plan). Each chunk is written as it is read, so large uploads never sit in memory.
+ */
+export class DatabaseStorage implements Storage {
+  static readonly CHUNK = 1024 * 1024;
+  constructor(private readonly ds: DataSource) {}
+  async putFile(key: string, localPath: string) {
+    await this.ds.transaction(async (m) => {
+      await m.query(`INSERT INTO media_objects (storage_key, size_bytes) VALUES ($1, 0)`, [key]);
+      let n = 0, size = 0;
+      for await (const chunk of createReadStream(localPath, { highWaterMark: DatabaseStorage.CHUNK })) {
+        const buf = chunk as Buffer;
+        await m.query(`INSERT INTO media_chunks (storage_key, chunk_no, data) VALUES ($1, $2, $3)`, [key, n++, buf]);
+        size += buf.length;
+      }
+      await m.query(`UPDATE media_objects SET size_bytes = $2 WHERE storage_key = $1`, [key, size]);
+    });
+  }
+  async size(key: string) {
+    const [row] = await this.ds.query(`SELECT size_bytes FROM media_objects WHERE storage_key = $1`, [key]);
+    if (!row) throw new Error('Stored file not found');
+    return Number(row.size_bytes);
+  }
+  async read(key: string, range?: { start: number; end: number }) {
+    const size = await this.size(key);
+    const start = range?.start ?? 0, end = Math.min(range?.end ?? size - 1, size - 1);
+    const C = DatabaseStorage.CHUNK, first = Math.floor(start / C), last = Math.floor(end / C);
+    const ds = this.ds;
+    async function* chunks() {
+      for (let n = first; n <= last; n++) {
+        const [row] = await ds.query(`SELECT data FROM media_chunks WHERE storage_key = $1 AND chunk_no = $2`, [key, n]);
+        if (!row) return;
+        const buf: Buffer = row.data;
+        const from = n === first ? start - n * C : 0;
+        const to = n === last ? end - n * C + 1 : buf.length;
+        yield buf.subarray(from, to);
+      }
+    }
+    return { stream: size === 0 ? Readable.from([]) : Readable.from(chunks()), size };
+  }
+  async remove(key: string) { await this.ds.query(`DELETE FROM media_objects WHERE storage_key = $1`, [key]); }
+}
+
 export const STORAGE = Symbol('STORAGE');
-export const createStorage = (): Storage => (config.storage.driver === 's3' ? new S3Storage() : new LocalStorage());
+export const createStorage = (ds: DataSource): Storage =>
+  config.storage.driver === 's3' ? new S3Storage() : config.storage.driver === 'database' ? new DatabaseStorage(ds) : new LocalStorage();

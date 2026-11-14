@@ -472,3 +472,31 @@ describe('search engines', () => {
     expect(r.text).toMatch(/rel="canonical" href="http/);
   });
 });
+
+describe('media stored in the database', () => {
+  it('stores chunks and reads exact byte ranges across chunk boundaries', async () => {
+    const { DatabaseStorage } = await import('../src/media/storage');
+    const { DataSource } = await import('typeorm');
+    const { writeFileSync } = await import('fs');
+    const store = new DatabaseStorage(app.get(DataSource));
+    const C = DatabaseStorage.CHUNK;
+    const data = Buffer.alloc(C * 2 + 1234);
+    for (let i = 0; i < data.length; i++) data[i] = (i * 31) % 251;
+    const path = join(storageDir, 'db-store-test.bin');
+    writeFileSync(path, data);
+    await store.putFile('tests/db-store.bin', path, 'application/octet-stream');
+    expect(await store.size('tests/db-store.bin')).toBe(data.length);
+    const read = async (r?: { start: number; end: number }) => {
+      const { stream } = await store.read('tests/db-store.bin', r);
+      const parts: Buffer[] = [];
+      for await (const c of stream) parts.push(Buffer.from(c));
+      return Buffer.concat(parts);
+    };
+    expect((await read()).equals(data)).toBe(true);
+    for (const [a, b] of [[0, 9], [C - 5, C + 5], [C * 2 - 1, data.length - 1], [10, C * 2 + 100]]) {
+      expect((await read({ start: a, end: b })).equals(data.subarray(a, b + 1))).toBe(true);
+    }
+    await store.remove('tests/db-store.bin');
+    await expect(store.size('tests/db-store.bin')).rejects.toThrow();
+  });
+});
