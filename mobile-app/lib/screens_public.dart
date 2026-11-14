@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'main.dart';
+import 'motion.dart';
 import 'ui.dart';
 
 /// Video background, or the wave icon when Light mode is on.
@@ -41,28 +42,22 @@ class LandingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     return AppPage(
+      showMenu: false,
       background: const WelcomeBackground(),
-      body: LayoutBuilder(builder: (context, box) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 60),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: box.maxHeight - 80),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text("Kenya's memory of the water, kept for everyone", textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: Colors.white, height: 1.1, letterSpacing: -.8,
-                    shadows: const [Shadow(color: Colors.black54, blurRadius: 24)])),
-            const SizedBox(height: 14),
-            const Text('Oral histories, photographs, records and testimonies from the coast, the lakes and the rivers, so their safety lessons are never lost.',
-                textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFD6E4FB), fontSize: 15.5, height: 1.45)),
-            const SizedBox(height: 16),
-            OrbRow([
-              OrbItem(Icons.login_rounded, 'Sign in', 'Sign in with your own account to explore the archive.', () => push(context, const SignInScreen()), primary: true),
-              OrbItem(Icons.person_add_alt_rounded, 'Create account', 'Open a free account in under a minute.', () => push(context, const SignInScreen(create: true))),
-              OrbItem(Icons.anchor_rounded, 'About', 'Who is behind the archive and why it matters.', () => push(context, const AboutScreen())),
-              if (!s.hasServer) OrbItem(Icons.dns_outlined, 'Connect', 'Set the address of the archive server.', () => changeServer(context)),
-            ]),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(6, 8, 6, 14),
+        child: OrbitMenu(
+          entries: MenuHook.entries!(context),
+          center: Column(mainAxisSize: MainAxisSize.min, children: [
+            FittedBox(fit: BoxFit.scaleDown, child: Text("Kenya's memory\nof the water", textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, color: Colors.white, height: 1.1, letterSpacing: -.6,
+                    shadows: const [Shadow(color: Colors.black54, blurRadius: 24)]))),
+            const SizedBox(height: 8),
+            Text(s.hasServer ? 'Stories, photographs and records from the coast, the lakes and the rivers.' : 'Press Server to connect to the archive first.',
+                textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFD6E4FB), fontSize: 13.5, height: 1.35)),
           ]),
         ),
-      )),
+      ),
     );
   }
 }
@@ -133,29 +128,29 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
           const SizedBox(height: 18),
           if (_create) ...[
-            TextFormField(controller: _name, textCapitalization: TextCapitalization.words, autofillHints: const [AutofillHints.name],
+            CoachTarget(text: 'Start with your full name.', priority: 9, when: () => _create && _name.text.trim().isEmpty, child: TextFormField(controller: _name, textCapitalization: TextCapitalization.words, autofillHints: const [AutofillHints.name],
                 decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline_rounded)),
-                validator: (v) => (v ?? '').trim().length < 2 ? 'Enter your name' : null),
+                validator: (v) => (v ?? '').trim().length < 2 ? 'Enter your name' : null)),
             const SizedBox(height: 14),
           ],
-          TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, autofillHints: const [AutofillHints.email],
+          CoachTarget(text: 'Next: type your email address.', priority: 10, when: () => _email.text.trim().isEmpty, child: TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, autofillHints: const [AutofillHints.email],
               decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.mail_outline_rounded)),
-              validator: (v) => (v ?? '').contains('@') ? null : 'Enter a valid email'),
+              validator: (v) => (v ?? '').contains('@') ? null : 'Enter a valid email')),
           const SizedBox(height: 14),
-          TextFormField(controller: _pw, obscureText: _hide, autofillHints: [_create ? AutofillHints.newPassword : AutofillHints.password],
+          CoachTarget(text: 'Now your password.', priority: 11, when: () => _email.text.trim().isNotEmpty && _pw.text.isEmpty, child: TextFormField(controller: _pw, obscureText: _hide, autofillHints: [_create ? AutofillHints.newPassword : AutofillHints.password],
               decoration: InputDecoration(labelText: 'Password', prefixIcon: const Icon(Icons.key_outlined),
                   helperText: _create ? 'At least 8 characters, with a letter and a number' : null,
                   suffixIcon: IconButton(onPressed: () => setState(() => _hide = !_hide), icon: Icon(_hide ? Icons.visibility_outlined : Icons.visibility_off_outlined), tooltip: _hide ? 'Show password' : 'Hide password')),
-              validator: (v) => (v ?? '').isEmpty ? 'Enter your password' : _create && !_pwRule.hasMatch(v!) ? 'Use 8+ characters with a letter and a number' : null),
+              validator: (v) => (v ?? '').isEmpty ? 'Enter your password' : _create && !_pwRule.hasMatch(v!) ? 'Use 8+ characters with a letter and a number' : null)),
           if (_create) ...[
             const SizedBox(height: 14),
             TextFormField(controller: _org, decoration: const InputDecoration(labelText: 'Organisation or community (optional)', prefixIcon: Icon(Icons.groups_outlined))),
           ],
           if (_err != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err!, style: const TextStyle(color: C.danger))),
           const SizedBox(height: 18),
-          FilledButton.icon(onPressed: _busy ? null : _submit,
+          CoachTarget(text: 'All filled in. Press here to continue.', priority: 12, when: () => _email.text.trim().isNotEmpty && _pw.text.isNotEmpty && !_busy, child: FilledButton.icon(onPressed: _busy ? null : _submit,
               icon: _busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Icon(_create ? Icons.person_add_alt_rounded : Icons.login_rounded),
-              label: Text(_busy ? 'Please wait' : _create ? 'Create account' : 'Sign in')),
+              label: Text(_busy ? 'Please wait' : _create ? 'Create account' : 'Sign in'))),
           if (!_create) TextButton(onPressed: _forgot, child: const Text('Forgot your password?', style: TextStyle(color: C.sky))),
         ])))),
         const SizedBox(height: 18),

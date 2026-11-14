@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
+import 'motion.dart';
 import 'screens_admin.dart';
 import 'screens_main.dart';
 import 'screens_public.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light));
   final state = AppState();
+  MenuHook.entries = navEntries;
   runApp(AppScope(state: state, child: const HeritageApp()));
   await state.load();
 }
@@ -29,7 +31,7 @@ class HeritageApp extends StatelessWidget {
       theme: buildTheme(),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(s.largeText ? 1.15 : 1)),
-        child: child!,
+        child: CoachLayer(child: child!),
       ),
       home: !s.ready
           ? const Scaffold(body: Center(child: LoadingView(text: 'Opening the archive')))
@@ -39,13 +41,17 @@ class HeritageApp extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Common page frame: background, top bar (account + sign out), side menu.
+// Common page frame: background, top bar (your name opens My account, and Sign out),
+// and the round Menu button at the bottom left. There is no side menu: every option is round
+// and inside the page.
 // ---------------------------------------------------------------------------
 class AppPage extends StatelessWidget {
   final Widget background;
   final Widget body;
   final bool showBack;
-  const AppPage({super.key, required this.background, required this.body, this.showBack = false});
+  /// The welcome orbit is itself the menu, so it hides the Menu button.
+  final bool showMenu;
+  const AppPage({super.key, required this.background, required this.body, this.showBack = false, this.showMenu = true});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +59,6 @@ class AppPage extends StatelessWidget {
     final u = s.me;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      drawer: const MoreDrawer(),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         titleSpacing: 12,
@@ -67,9 +72,16 @@ class AppPage extends StatelessWidget {
         actions: [
           if (u != null) ...[
             Tooltip(message: 'My account', child: InkWell(
-              customBorder: const CircleBorder(),
+              borderRadius: BorderRadius.circular(99),
               onTap: () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4),
-              child: CircleAvatar(radius: 17, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  CircleAvatar(radius: 16, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
+                  const SizedBox(width: 8),
+                  Text(u.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                ]),
+              ),
             )),
             IconButton(tooltip: 'Sign out', icon: const Icon(Icons.logout_rounded), onPressed: () => confirmSignOut(context)),
           ] else
@@ -81,6 +93,7 @@ class AppPage extends StatelessWidget {
       body: Stack(fit: StackFit.expand, children: [
         background,
         SafeArea(child: body),
+        if (showMenu) const Positioned(left: 16, bottom: 18, child: SafeArea(child: MenuFab())),
       ]),
     );
   }
@@ -97,142 +110,110 @@ Future<void> confirmSignOut(BuildContext context, {bool everywhere = false}) asy
 }
 
 // ---------------------------------------------------------------------------
-// Signed-in shell: bottom tabs (standard for phone apps)
+// The menu: what this person can do, in the order they are most likely to want it.
+// ---------------------------------------------------------------------------
+List<NavEntry> navEntries(BuildContext context) {
+  final s = AppScope.read(context);
+  final u = s.me;
+  final list = <NavEntry>[];
+  // The option the guide recommends next.
+  String? next;
+  if (u == null) {
+    next = 'login';
+  } else if (u.isStaff && s.pending > 0) {
+    next = 'review';
+  } else {
+    next = ['browse', 'map', 'listen', 'share'].firstWhere((k) => !MenuHook.visited.contains(k), orElse: () => 'search');
+  }
+  const hints = {
+    'login': 'Start here: sign in, or create a free account next to it.',
+    'review': 'Submissions are waiting for your review.',
+    'browse': 'Try this first: browse everything in the archive.',
+    'map': 'Next, see where each story happened on the map.',
+    'listen': "Listen to oral histories in people's own voices.",
+    'share': 'Have a story or photo? Share it with the research team.',
+    'search': 'Search for a place, a year or a word someone said.',
+  };
+  void add(String key, IconData icon, String label, String desc, VoidCallback run, {bool primary = false, int badge = 0}) =>
+      list.add(NavEntry(key, OrbItem(icon, label, desc, run, primary: primary, badge: badge), hint: key == next ? hints[key] : null));
+
+  if (u == null) {
+    add('login', Icons.login_rounded, 'Sign in', 'Sign in with your own account to explore the archive.', () => push(context, const SignInScreen()), primary: true);
+    add('signup', Icons.person_add_alt_rounded, 'Create account', 'Open a free account in under a minute.', () => push(context, const SignInScreen(create: true)));
+  } else {
+    add('search', Icons.search_rounded, 'Search', 'Search titles, transcripts, documents and places.', () => quickSearch(context), primary: !u.isStaff);
+    add('browse', Icons.grid_view_rounded, 'Browse', 'Explore every item, filtered by type, water and decade.', () => Nav.goTab(context, 1));
+    add('map', Icons.map_outlined, 'Incident map', 'See where each story happened, from Likoni to Lake Turkana.', () => Nav.goTab(context, 2));
+    add('listen', Icons.headphones_outlined, 'Listen', 'Play oral histories in the voices of those who lived them.', () => Nav.goTab(context, 1, type: 'oral', setType: true));
+    add('share', Icons.volunteer_activism_outlined, 'Share a story', 'Send a recording, photo or document to the research team.', () => Nav.goTab(context, 3));
+    if (u.isStaff) {
+      add('admin', Icons.insert_chart_outlined_rounded, 'Dashboard', 'Usage, collection health and recent activity.', () => Nav.goTab(context, 4), primary: true);
+      add('records', Icons.inventory_2_outlined, 'Records', 'Edit, publish, unpublish or restore catalogue records.', () => push(context, const RecordsAdminScreen()));
+      add('upload', Icons.upload_rounded, 'Upload', 'Add a new item and catalogue its metadata.', () => push(context, const RecordFormScreen()));
+      add('review', Icons.inbox_outlined, 'Review', 'Approve or decline material sent in by the public.', () => push(context, const SubmissionsScreen()), badge: s.pending);
+    }
+    if (u.isAdmin) {
+      add('users', Icons.group_outlined, 'Users', 'Create accounts, change roles, suspend accounts.', () => push(context, const UsersScreen()));
+      add('messages', Icons.mail_outline_rounded, 'Messages', 'Messages from the contact form.', () => push(context, const MessagesScreen()), badge: s.unread);
+      add('reports', Icons.monitor_heart_outlined, 'Reports', 'Usage, the audit log and CSV exports.', () => push(context, const ReportsScreen()));
+    }
+  }
+  add('about', Icons.anchor_rounded, 'About', 'Who is behind the archive, privacy and terms.', () => push(context, const AboutScreen()));
+  add('contact', Icons.mail_outline_rounded, 'Contact', 'Send a message to the research team.', () => push(context, const ContactScreen()));
+  add('display', Icons.tune_rounded, 'Display', 'Larger text, light mode for slow connections, and the helper hints.', () => displayOptions(context));
+  add('server', Icons.dns_outlined, 'Server', 'The address of the archive this app connects to.', () => changeServer(context));
+  return list;
+}
+
+/// Larger text, light mode and the guide, as three round switches.
+void displayOptions(BuildContext context) {
+  showDialog(context: context, builder: (ctx) {
+    final s = AppScope.of(ctx);
+    return AlertDialog(
+      icon: const CircleIcon(Icons.tune_rounded, size: 52),
+      title: const Text('Display'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Text('Saved on this phone only.', style: TextStyle(color: C.muted)),
+        OrbRow([
+          OrbItem(Icons.text_fields_rounded, s.largeText ? 'Larger text: on' : 'Larger text', '', s.toggleLargeText, on: s.largeText),
+          OrbItem(Icons.wifi_off_rounded, s.lowBw ? 'Light mode: on' : 'Light mode', '', s.toggleLowBw, on: s.lowBw),
+          OrbItem(Icons.auto_awesome_rounded, s.hints ? 'Hints: on' : 'Hints: off', '', s.toggleHints, on: s.hints),
+        ], size: 60),
+      ]),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done'))],
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Signed-in shell. Page 0 is the welcome orbit; the others are reached from it or the Menu button.
 // ---------------------------------------------------------------------------
 class Shell extends StatelessWidget {
   const Shell({super.key});
+  static const _keys = ['home', 'browse', 'map', 'share', 'admin'];
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final admin = s.isStaff;
     return ValueListenableBuilder<int>(
       valueListenable: Nav.tab,
-      builder: (context, i, _) => Scaffold(
-        body: IndexedStack(index: i, children: [
-          const WelcomeScreen(),
-          const BrowseScreen(),
-          MapScreen(active: i == 2),
-          const ShareScreen(),
-          admin ? const DashboardScreen() : const AccountScreen(),
-        ]),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: i,
-          onDestinationSelected: (v) => Nav.tab.value = v,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-            const NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Browse'),
-            const NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map_rounded), label: 'Map'),
-            const NavigationDestination(icon: Icon(Icons.volunteer_activism_outlined), selectedIcon: Icon(Icons.volunteer_activism), label: 'Share'),
-            NavigationDestination(
-                icon: Badge(isLabelVisible: admin && s.pending > 0, label: Text('${s.pending}'),
-                    child: Icon(admin ? Icons.insert_chart_outlined_rounded : Icons.person_outline_rounded)),
-                label: admin ? 'Team' : 'Me'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// "See more": side menu with every extra option. Items glow blue briefly when it opens.
-// ---------------------------------------------------------------------------
-class MoreDrawer extends StatefulWidget {
-  const MoreDrawer({super.key});
-  @override
-  State<MoreDrawer> createState() => _MoreDrawerState();
-}
-
-class _MoreDrawerState extends State<MoreDrawer> with SingleTickerProviderStateMixin {
-  late final AnimationController _flash = AnimationController(vsync: this, duration: const Duration(milliseconds: 1900))..forward();
-  @override
-  void dispose() { _flash.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppScope.of(context);
-    final u = s.me;
-    var n = 0;
-    Widget item(IconData icon, String label, VoidCallback onTap, {Widget? trailing}) {
-      final k = n++;
-      return AnimatedBuilder(
-        animation: _flash,
-        builder: (_, child) {
-          final t = ((_flash.value * 1.9 - k * .05).clamp(0.0, 1.0));
-          final glow = t < .25 ? t / .25 : 1 - (t - .25) / .75;
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: C.blue.withValues(alpha: .28 * glow),
-              boxShadow: [BoxShadow(color: C.blue2.withValues(alpha: .7 * glow), blurRadius: 18 * glow, spreadRadius: 1)],
-              border: Border.all(color: C.blue2.withValues(alpha: .85 * glow)),
-            ),
-            child: child,
-          );
-        },
-        child: ListTile(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          leading: CircleIcon(icon, size: 36, solid: false),
-          title: Text(label, style: const TextStyle(color: C.text, fontWeight: FontWeight.w600)),
-          trailing: trailing,
-          onTap: () { Navigator.of(context).pop(); onTap(); },
-        ),
-      );
-    }
-
-    Widget head(String t) => Padding(padding: const EdgeInsets.fromLTRB(22, 16, 22, 6), child: Text(t, style: const TextStyle(color: C.muted, fontWeight: FontWeight.w600, fontSize: 12.5)));
-    Widget badge(int v) => v > 0 ? CircleAvatar(radius: 12, backgroundColor: C.blue, child: Text('$v', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800))) : const SizedBox();
-    Widget onOff(bool v) => Text(v ? 'On' : 'Off', style: TextStyle(color: v ? C.sky : C.muted, fontWeight: FontWeight.w700));
-
-    return Drawer(
-      backgroundColor: const Color(0xF2040E1E),
-      child: SafeArea(child: ListView(padding: const EdgeInsets.only(bottom: 20), children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 12, 10, 4),
-          child: Row(children: [
-            const Expanded(child: Text('More options', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white))),
-            IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded), tooltip: 'Close'),
-          ]),
-        ),
-        if (u != null) ...[
-          head('Explore'),
-          item(Icons.home_outlined, 'Welcome', () => Nav.goTab(context, 0)),
-          item(Icons.grid_view_rounded, 'Browse the archive', () => Nav.goTab(context, 1)),
-          item(Icons.map_outlined, 'Incident map', () => Nav.goTab(context, 2)),
-          for (final t in types.values) item(t.icon, t.plural, () => Nav.goTab(context, 1, type: t.key, setType: true)),
-          head('Take part'),
-          item(Icons.volunteer_activism_outlined, 'Share a story', () => Nav.goTab(context, 3)),
-        ] else ...[
-          head('Get started'),
-          item(Icons.login_rounded, 'Sign in or create account', () => push(context, const SignInScreen())),
-        ],
-        item(Icons.mail_outline_rounded, 'Contact the team', () => push(context, const ContactScreen())),
-        if (u != null && u.isStaff) ...[
-          head('Research team'),
-          item(Icons.insert_chart_outlined_rounded, 'Dashboard', () => Nav.goTab(context, 4)),
-          item(Icons.inventory_2_outlined, 'Records', () => push(context, const RecordsAdminScreen())),
-          item(Icons.upload_rounded, 'Upload and catalogue', () => push(context, const RecordFormScreen())),
-          item(Icons.inbox_outlined, 'Submissions', () => push(context, const SubmissionsScreen()), trailing: badge(s.pending)),
-          if (u.isAdmin) ...[
-            item(Icons.group_outlined, 'Users and roles', () => push(context, const UsersScreen())),
-            item(Icons.mail_outline_rounded, 'Messages', () => push(context, const MessagesScreen()), trailing: badge(s.unread)),
-            item(Icons.monitor_heart_outlined, 'Reports and logs', () => push(context, const ReportsScreen())),
-          ],
-        ],
-        head('About'),
-        item(Icons.anchor_rounded, 'About the archive', () => push(context, const AboutScreen())),
-        item(Icons.shield_outlined, 'Privacy', () => openExternal(context, '${s.server}/#/privacy')),
-        item(Icons.gavel_rounded, 'Terms and copyright', () => openExternal(context, '${s.server}/#/terms')),
-        if (u != null) item(Icons.person_outline_rounded, 'My account', () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4)),
-        head('Display'),
-        item(Icons.text_fields_rounded, 'Larger text', s.toggleLargeText, trailing: onOff(s.largeText)),
-        item(Icons.wifi_off_rounded, 'Light mode: no video or pictures', s.toggleLowBw, trailing: onOff(s.lowBw)),
-        head('Connection'),
-        item(Icons.dns_outlined, 'Server address', () => changeServer(context),
-            trailing: Text(Uri.tryParse(s.server)?.host ?? '', style: const TextStyle(color: C.muted, fontSize: 12))),
-      ])),
+      builder: (context, i, _) {
+        MenuHook.current = i == 4 && !admin ? null : _keys[i];
+        return PopScope(
+          // The back button returns to the welcome orbit before leaving the app.
+          canPop: i == 0,
+          onPopInvokedWithResult: (didPop, _) { if (!didPop) Nav.tab.value = 0; },
+          child: Scaffold(
+            body: IndexedStack(index: i, children: [
+              const CoachTab(tab: 0, child: WelcomeScreen()),
+              const CoachTab(tab: 1, child: BrowseScreen()),
+              CoachTab(tab: 2, child: MapScreen(active: i == 2)),
+              const CoachTab(tab: 3, child: ShareScreen()),
+              CoachTab(tab: 4, child: admin ? const DashboardScreen() : const AccountScreen()),
+            ]),
+          ),
+        );
+      },
     );
   }
 }

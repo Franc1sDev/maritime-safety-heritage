@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import 'main.dart';
+import 'motion.dart';
 import 'screens_admin.dart';
 import 'screens_public.dart';
 import 'state.dart';
@@ -30,39 +31,25 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final u = s.me!;
-    final orbs = u.isStaff
-        ? [
-            OrbItem(Icons.insert_chart_outlined_rounded, 'Dashboard', 'Usage, collection health and recent activity.', () => Nav.goTab(context, 4), primary: true),
-            OrbItem(Icons.inbox_outlined, 'Review', 'Approve or decline material sent in by the public.', () => push(context, const SubmissionsScreen()), badge: s.pending),
-            OrbItem(Icons.upload_rounded, 'Upload', 'Add a new item and catalogue its metadata.', () => push(context, const RecordFormScreen())),
-            OrbItem(Icons.search_rounded, 'Search', 'Search titles, transcripts, documents and places.', () => quickSearch(context)),
-            OrbItem(Icons.map_outlined, 'Incident map', 'See where each story happened.', () => Nav.goTab(context, 2)),
-          ]
-        : [
-            OrbItem(Icons.search_rounded, 'Search', 'Search titles, transcripts, documents and places.', () => quickSearch(context), primary: true),
-            OrbItem(Icons.grid_view_rounded, 'Browse', 'Explore every item, filtered by type, water and decade.', () => Nav.goTab(context, 1)),
-            OrbItem(Icons.map_outlined, 'Incident map', 'See where each story happened, from Likoni to Lake Turkana.', () => Nav.goTab(context, 2)),
-            OrbItem(Icons.headphones_outlined, 'Listen', 'Play oral histories in the voices of those who lived them.', () => Nav.goTab(context, 1, type: 'oral', setType: true)),
-            OrbItem(Icons.volunteer_activism_outlined, 'Share a story', 'Send a recording, photo or document to the research team.', () => Nav.goTab(context, 3)),
-          ];
+    // Every option floats around the greeting; nothing scrolls.
     return AppPage(
+      showMenu: false,
       background: const WelcomeBackground(),
-      body: LayoutBuilder(builder: (context, box) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 50),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: box.maxHeight - 60),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('${_greeting()}, ${u.first}', textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -.8,
-                    shadows: const [Shadow(color: Colors.black54, blurRadius: 24)])),
-            const SizedBox(height: 10),
-            const Text("Stories, photographs and records from Kenya's coast, lakes and rivers.", textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFFD6E4FB), fontSize: 15.5, height: 1.45)),
-            const SizedBox(height: 10),
-            OrbRow(orbs),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(6, 8, 6, 14),
+        child: OrbitMenu(
+          entries: MenuHook.entries!(context),
+          current: 'home',
+          center: Column(mainAxisSize: MainAxisSize.min, children: [
+            FittedBox(fit: BoxFit.scaleDown, child: Text('${_greeting()},\n${u.first}', textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -.6, height: 1.1,
+                    shadows: const [Shadow(color: Colors.black54, blurRadius: 24)]))),
+            const SizedBox(height: 8),
+            Text(u.isStaff && s.pending > 0 ? '${s.pending} waiting for review' : 'Where would you like to go?', textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFD6E4FB), fontSize: 13.5, height: 1.35)),
           ]),
         ),
-      )),
+      ),
     );
   }
 }
@@ -224,9 +211,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
             SliverPadding(padding: const EdgeInsets.fromLTRB(16, 6, 16, 0), sliver: SliverList.list(children: [
               PageTitle(_type == null ? 'Browse the archive' : types[_type]!.plural),
               const SizedBox(height: 12),
-              TextField(
+              CoachTarget(text: 'Type a place, a year or a word, then press search.', priority: 10, when: () => _q.text.isEmpty && !MenuHook.visited.contains('searched'), child: TextField(
                 controller: _q,
-                onSubmitted: (_) => _reload(),
+                onSubmitted: (_) { MenuHook.visited.add('searched'); _reload(); },
                 onChanged: (_) => setState(() {}),
                 textInputAction: TextInputAction.search,
                 style: const TextStyle(color: C.abyss),
@@ -239,7 +226,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(99), borderSide: BorderSide.none),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(99), borderSide: const BorderSide(color: C.blue, width: 2)),
                 ),
-              ),
+              )),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -248,7 +235,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   for (final t in types.values)
                     Orb(OrbItem(t.icon, t.plural, 'Show only ${t.plural.toLowerCase()}.', () { _type = t.key; _reload(); }, on: _type == t.key), size: 58),
                   Orb(OrbItem(Icons.tune_rounded, nf > 0 ? 'Filters ($nf)' : 'Filters', 'Narrow by water body or decade, or change the order.', _filters), size: 58),
-                  Builder(builder: (ctx) => Orb(OrbItem(Icons.more_horiz_rounded, 'See more', 'Opens every other option in the side menu.', () => Scaffold.of(ctx).openDrawer(), ghost: true), size: 58)),
                 ]),
               ),
               if (_page > 0)
@@ -270,7 +256,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ])))),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              sliver: SliverList.separated(itemCount: _items.length, separatorBuilder: (_, _) => const SizedBox(height: 14), itemBuilder: (_, i) => RecCard(_items[i])),
+              sliver: SliverList.separated(itemCount: _items.length, separatorBuilder: (_, _) => const SizedBox(height: 14), itemBuilder: (_, i) => i == 0 ? CoachTarget(text: 'Open an item to read, listen or watch.', priority: 20, child: RecCard(_items[i])) : RecCard(_items[i])),
             ),
             SliverToBoxAdapter(child: Padding(
               padding: const EdgeInsets.only(bottom: 30),
@@ -468,7 +454,7 @@ class _RecordViewState extends State<_RecordView> {
     }
     if (_av != null && _av!.isAudio) {
       return Glass(child: Row(children: [
-        _playBtn(56),
+        CoachTarget(text: 'Press play. The transcript follows along as people speak.', priority: 10, round: true, when: () => !_playing, child: _playBtn(56)),
         const SizedBox(width: 10),
         Expanded(child: _failed ? const Text("The recording couldn't load. Pull down to reload.", style: TextStyle(color: C.muted)) : _progress(C.sky)),
       ]));
@@ -760,7 +746,6 @@ class _MapScreenState extends State<MapScreen> {
               orb(OrbItem(Icons.layers_outlined, 'Everything', 'Show every item on the map.', () => setState(() => _type = null), on: _type == null)),
               for (final t in types.values) orb(OrbItem(t.icon, t.plural, 'Show only ${t.plural.toLowerCase()}.', () => setState(() => _type = t.key), on: _type == t.key)),
               orb(OrbItem(Icons.list_rounded, 'List', 'The items on the map. Pick one to fly to it.', () => _list(recs))),
-              Builder(builder: (ctx) => orb(OrbItem(Icons.more_horiz_rounded, 'See more', 'Opens every other option in the side menu.', () => Scaffold.of(ctx).openDrawer(), ghost: true))),
             ])),
           ),
         ),
@@ -881,10 +866,10 @@ class _ShareScreenState extends State<ShareScreen> {
       background: const PageBg(Icons.volunteer_activism_outlined),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 6, 16, 40), children: [
         const PageTitle('Share a story', sub: 'The research team checks consent and catalogues every submission before it appears in the archive.'),
-        OrbRow([
+        CoachTarget(text: "Start here: pick what you're sharing.", priority: 10, when: () => _type == null, child: OrbRow([
           for (final t in types.values) OrbItem(t.icon, t.label, _descs[t.key]!, () => setState(() => _type = t.key), on: _type == t.key),
           OrbItem(Icons.folder_open_outlined, 'My submissions', "What you've sent and its review status.", () => mySubmissions(context)),
-        ], size: 64),
+        ], size: 64)),
         if (_type == null)
           Glass(child: Column(children: const [
             Icon(Icons.volunteer_activism_outlined, size: 42, color: C.sky), SizedBox(height: 8),
@@ -938,7 +923,7 @@ class _ShareScreenState extends State<ShareScreen> {
               const SizedBox(height: 4),
               Text('Uploading ${(_progress! * 100).round()}%', style: const TextStyle(color: C.muted, fontSize: 12.5)),
             ])),
-            FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.upload_rounded), label: Text(_busy ? 'Sending' : 'Send for review')),
+            CoachTarget(text: 'Fill in the details above, add your files, then press here to send.', priority: 30, when: () => !_busy, child: FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.upload_rounded), label: Text(_busy ? 'Sending' : 'Send for review'))),
           ]))),
       ]),
     );

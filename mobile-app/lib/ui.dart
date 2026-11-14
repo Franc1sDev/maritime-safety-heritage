@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:video_player/video_player.dart';
 
+import 'motion.dart';
 import 'state.dart';
 
 // ---------------------------------------------------------------------------
@@ -80,14 +81,12 @@ void toast(BuildContext context, String msg, [IconData icon = Icons.check_circle
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Row(children: [Icon(icon, color: C.blue, size: 20), const SizedBox(width: 10), Expanded(child: Text(msg))])));
+  // Something worked (sent, published, approved, created, saved): a short burst of colour.
+  if (RegExp(r'\b(sent|published|approved|created|saved|added|uploaded|thank)', caseSensitive: false).hasMatch(msg)) celebrate(context);
 }
 
-Future<T?> push<T>(BuildContext context, Widget page) =>
-    Navigator.of(context).push<T>(PageRouteBuilder(
-      pageBuilder: (_, a, _) => page,
-      transitionsBuilder: (_, a, _, child) => FadeTransition(opacity: a, child: SlideTransition(
-          position: Tween(begin: const Offset(0, .03), end: Offset.zero).animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic)), child: child)),
-    ));
+/// Opens a page that comes into focus (blurred and small at first, then sharp).
+Future<T?> push<T>(BuildContext context, Widget page) => Navigator.of(context).push<T>(focusRoute<T>(page));
 
 Future<T?> sheet<T>(BuildContext context, {required String title, required IconData icon, required Widget Function(BuildContext) builder}) =>
     showModalBottomSheet<T>(
@@ -213,9 +212,11 @@ class Orb extends StatefulWidget {
   State<Orb> createState() => _OrbState();
 }
 
-class _OrbState extends State<Orb> {
+class _OrbState extends State<Orb> with SingleTickerProviderStateMixin {
   final _link = LayerLink();
-  bool _zoom = false;
+  bool _zoom = false, _down = false;
+  // Orbs bob gently, each at its own pace, and the halo around the main option turns slowly.
+  late final AnimationController _life = AnimationController(vsync: this, duration: Duration(milliseconds: 4600 + (widget.item.label.hashCode % 9) * 220))..repeat();
   OverlayEntry? _entry;
   Timer? _timer;
   static _OrbState? _active;
@@ -258,6 +259,7 @@ class _OrbState extends State<Orb> {
   void dispose() {
     _timer?.cancel();
     _entry?.remove();
+    _life.dispose();
     if (_active == this) _active = null;
     super.dispose();
   }
@@ -272,14 +274,32 @@ class _OrbState extends State<Orb> {
       label: '${it.label}. ${it.desc}',
       child: GestureDetector(
         onTap: _tap,
+        onTapDown: (_) => setState(() => _down = true),
+        onTapUp: (_) => setState(() => _down = false),
+        onTapCancel: () => setState(() => _down = false),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
           width: s + 28,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             CompositedTransformTarget(
               link: _link,
-              child: AnimatedScale(
-                scale: _zoom ? 1.22 : 1,
+              child: AnimatedBuilder(
+                animation: _life,
+                builder: (context, child) {
+                  final still = MediaQuery.of(context).disableAnimations;
+                  final v = still ? 0.0 : _life.value;
+                  final halo = it.primary || _zoom;
+                  return Transform.translate(
+                    offset: Offset(0, still ? 0.0 : -4 * math.sin(v * 2 * math.pi)),
+                    child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
+                      if (halo)
+                        Transform.rotate(angle: v * 2 * math.pi, child: CustomPaint(size: Size(s + 16, s + 16), painter: _HaloPainter(_zoom ? Colors.white : C.sky))),
+                      child!,
+                    ]),
+                  );
+                },
+                child: AnimatedScale(
+                scale: _down ? .9 : _zoom ? 1.22 : 1,
                 duration: const Duration(milliseconds: 380),
                 curve: Curves.easeOutBack,
                 child: AnimatedContainer(
@@ -304,6 +324,7 @@ class _OrbState extends State<Orb> {
                   ]),
                 ),
               ),
+              ),
             ),
             const SizedBox(height: 9),
             Text(it.label, textAlign: TextAlign.center, maxLines: 2,
@@ -314,6 +335,24 @@ class _OrbState extends State<Orb> {
       ),
     );
   }
+}
+
+/// A dashed ring that turns slowly around the main option.
+class _HaloPainter extends CustomPainter {
+  final Color color;
+  _HaloPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..style = PaintingStyle.stroke..strokeWidth = 2..color = color.withValues(alpha: .7);
+    final r = size.width / 2;
+    const dashes = 22;
+    for (var i = 0; i < dashes; i++) {
+      final a = i / dashes * 2 * math.pi;
+      canvas.drawArc(Rect.fromCircle(center: size.center(Offset.zero), radius: r), a, math.pi / dashes, false, p);
+    }
+  }
+  @override
+  bool shouldRepaint(_HaloPainter old) => old.color != color;
 }
 
 class _DescBubble extends StatefulWidget {
@@ -348,12 +387,12 @@ class _DescBubbleState extends State<_DescBubble> with SingleTickerProviderState
       );
 }
 
-/// A centred group of orbs, always ending with "See more" (opens the side menu).
+/// A centred group of orbs.
 class OrbRow extends StatelessWidget {
   final List<OrbItem?> items;
   final double size;
   final bool seeMore;
-  const OrbRow(this.items, {super.key, this.size = 72, this.seeMore = true});
+  const OrbRow(this.items, {super.key, this.size = 72, this.seeMore = false});
   @override
   Widget build(BuildContext context) {
     final list = items.whereType<OrbItem>().toList();
@@ -366,7 +405,7 @@ class OrbRow extends StatelessWidget {
         children: [
           for (final o in list) Orb(o, size: size),
           if (seeMore)
-            Orb(OrbItem(Icons.more_horiz_rounded, 'See more', 'Opens every other option in the side menu.', () => Scaffold.of(context).openDrawer(), ghost: true), size: size),
+            Orb(OrbItem(Icons.explore_rounded, 'All options', 'Opens every option around the screen.', () => MenuHook.open(context), ghost: true), size: size),
         ],
       ),
     );

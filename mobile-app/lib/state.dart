@@ -203,6 +203,8 @@ class AppState extends ChangeNotifier {
   late Api api;
   AppUser? me;
   bool lowBw = false, largeText = false, ready = false;
+  /// The guide that points to the next thing to press.
+  bool hints = true;
   String server = defaultServer;
   List<WaterBody> waterBodies = [];
   List<Subject> subjects = [];
@@ -216,6 +218,7 @@ class AppState extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     lowBw = _prefs.getBool('lowBw') ?? false;
     largeText = _prefs.getBool('largeText') ?? false;
+    hints = _prefs.getBool('hints') ?? true;
     server = _prefs.getString('server') ?? defaultServer;
     api = Api(server)..onSignedOut = _signedOutElsewhere;
     if (hasServer) {
@@ -306,4 +309,5 @@ class AppState extends ChangeNotifier {
 
   void toggleLowBw() { lowBw = !lowBw; _prefs.setBool('lowBw', lowBw); notifyListeners(); }
   void toggleLargeText() { largeText = !largeText; _prefs.setBool('largeText', largeText); notifyListeners(); }
+  void toggleHints() { hints = !hints; _prefs.setBool('hints', hints); notifyListeners(); }
 }
