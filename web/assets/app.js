@@ -65,7 +65,32 @@
   }
   function toast(msg, icon = "circle-check") {
     const t = $("#toast"); t.innerHTML = ic(icon) + `<span>${esc(msg)}</span>`; t.classList.add("show");
+    t.classList.toggle("bad", icon === "ban");
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 3200);
+    if (icon !== "ban" && /\b(sent|published|approved|created|saved|added|uploaded|thank)/i.test(msg)) celebrate();
+  }
+  /** A short burst of colour when something worked: a submission sent, an item published, an account created. */
+  function celebrate() {
+    if (REDUCED || P.lowBw) return;
+    const box = document.createElement("div"); box.className = "confetti"; box.setAttribute("aria-hidden", "true");
+    const colours = ["#1e6bff", "#9cc2ff", "#ffffff", "#4dd4ff", "#ffd166"];
+    box.innerHTML = Array.from({ length: 36 }, (_, i) => {
+      const a = (i / 36) * Math.PI * 2, d = 120 + (i * 53) % 140;
+      return `<i style="--x:${Math.round(Math.cos(a) * d)}px;--y:${Math.round(Math.sin(a) * d - 60)}px;--r:${(i * 47) % 360}deg;background:${colours[i % colours.length]};animation-delay:${(i % 6) * 15}ms"></i>`;
+    }).join("");
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 1600);
+  }
+  /** Numbers on dashboards count up instead of just appearing. */
+  function countUp(root) {
+    if (REDUCED) return;
+    $$(".kpi b", root).forEach((el) => {
+      const txt = el.textContent.trim(), target = +txt.replace(/,/g, "");
+      if (!Number.isFinite(target) || target <= 0) return;
+      const t0 = performance.now(), dur = 900 + Math.min(600, target);
+      const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(target * e).toLocaleString(); if (k < 1) requestAnimationFrame(step); else el.textContent = txt; };
+      requestAnimationFrame(step);
+    });
   }
   const fail = (e) => toast(e && e.message ? e.message : "Something went wrong. Try again.", "ban");
   /** Escapes server text, then turns the API's highlight markers into <mark>. */
@@ -626,6 +651,7 @@
     if (view.after) view.after(parts, q, data);
     const orbit = $("#orbit"); if (orbit) { layoutOrbit(orbit); flyIn(orbit, ".orb-wrap"); }
     enhance();
+    countUp(main);
     window.scrollTo(0, 0);
     main.focus({ preventScroll: true });
     refreshCounts();

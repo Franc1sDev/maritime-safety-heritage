@@ -541,3 +541,22 @@ html.app-mode body.has-dock main { padding-left: 14px; }
   .orb, .orb.primary, .orbit-rings i, .dock-orb.hub .i, .bg-bubbles, .bg-icon, .coach-hand, .coach-note, .dock-fab .i { animation: none !important; }
   .orbit .orb-wrap, main.page-in * { animation-duration: .01s !important; animation-delay: 0s !important; }
 }
+
+/* ----- Feedback you can feel: buttons squash when pressed, toasts spring in, success sparkles ----- */
+.btn, .pill, .chip { transition: transform .18s var(--spring), background .2s, border-color .2s, box-shadow .25s; }
+.btn:hover, .pill:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(30, 107, 255, .35); }
+.btn:active, .pill:active, .chip:active, .orb:active, .dock-orb:active { transform: scale(.94); transition-duration: .08s; }
+.chip:hover { transform: translateY(-2px) scale(1.04); }
+.toast { transition: opacity .3s, transform .5s var(--spring); }
+.toast.show .i { animation: hop .7s var(--ease) both; }
+.toast.bad { animation: shake .45s ease; }
+@keyframes shake { 20%, 60% { translate: -6px 0; } 40%, 80% { translate: 6px 0; } }
+.confetti { position: fixed; left: 50%; bottom: 90px; z-index: 310; pointer-events: none; }
+.confetti i { position: absolute; width: 9px; height: 14px; border-radius: 3px; animation: confetti 1.4s cubic-bezier(.2, .7, .4, 1) forwards; }
+@keyframes confetti { 0% { transform: translate(0, 0) rotate(0) scale(.4); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--x), calc(var(--y) + 160px)) rotate(calc(var(--r) * 3)) scale(1); opacity: 0; } }
+input, select, textarea { transition: border-color .2s, box-shadow .25s, transform .2s var(--ease); }
+input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 4px rgba(77, 141, 255, .28); }
+.coach-target:is(input, select, textarea) { box-shadow: 0 0 0 4px rgba(77, 141, 255, .45); }
+.loading .ring { animation: spin 1s linear infinite, glowRing 1.6s ease-in-out infinite; }
+@keyframes glowRing { 50% { box-shadow: 0 0 24px rgba(77, 141, 255, .7); } }
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } .btn:hover, .pill:hover { transform: none; } }
