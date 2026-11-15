@@ -40,6 +40,16 @@ Upload the original master. If it is very large (over 500 MB) or plays slowly on
 ffmpeg -i master.mov -c:v libx264 -preset veryfast -crf 26 -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 128k -movflags +faststart web.mp4
 ```
 
+## Signing in and your to-do strip
+
+Everyone uses the same sign-in page; editors and admins land on the dashboard. Work that needs you pops up when it arrives and then stays in the strip at the top of every page until it's done:
+
+- **Review** a new submission (editors and admins). It goes away for everyone once someone approves or declines it.
+- **Read and reply** to a new enquiry (admins). It goes away once someone replies or deletes it.
+- **Choose your own password** after a temporary one.
+
+The bell counts notifications you haven't seen; the speech-bubble button counts unread enquiries.
+
 ## Reviewing submissions
 
 **Submissions** lists material sent in by the public, newest pending first.
@@ -57,14 +67,14 @@ ffmpeg -i master.mov -c:v libx264 -preset veryfast -crf 26 -vf "scale='min(1280,
 
 ## Accounts (admins)
 
-- **Create user** gives a one-time password to pass on privately. Ask them to change it from My account.
+- **Create user** gives a one-time password to pass on privately. Until they change it, a "Choose your own password" to-do stays pinned at the top of their screen.
 - **Change role** or **Suspend** ends the person's sessions at once, so it takes effect immediately.
 - **Reset password** gives a new one-time password and signs them out everywhere. People can also reset their own password by email.
 - Accounts people closed themselves are hidden from the list. Their past actions stay in the audit log as "Deleted account".
 
 ## Messages (admins)
 
-Messages from the contact form arrive in **Messages**, newest first. Reply by email from the message, then mark it read. Obvious spam is dropped automatically.
+Messages from the contact form arrive in **Messages**, newest first. Open one and write your reply in the box: it is emailed to the sender, and members also see it under **Enquiries** with a notification. Opening a message counts it as read. Obvious spam is dropped automatically.
 
 ## Reports and the audit log (admins)
 

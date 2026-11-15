@@ -66,7 +66,7 @@ The Phase 1 "clickable prototype" from the proposal (slide 18). It shows how the
 | Normal user (researcher) | researcher@demo.ke | demo1234 |
 | Admin (research team) | admin@demo.ke | admin1234 |
 
-The sign-in page also has two round buttons, Researcher and Admin, that sign you in with one click. Before a showcase, open **See more → Reset demo data** to restore the original state.
+There is one sign-in form for everyone; the account decides where you land (the research team goes straight to the dashboard). Before a showcase, open **See more → Reset demo data** to restore the original state.
 
 ## Suggested 10-minute walkthrough
 
