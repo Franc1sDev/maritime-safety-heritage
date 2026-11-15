@@ -33,7 +33,7 @@ Until the project buys hosting, the archive runs free on Render at https://marit
   - the service sleeps after 15 minutes without visitors (about a minute to wake);
   - the free database expires 30 days after it was created (14 November 2026) unless upgraded;
   - there is no virus scanner.
-- Every push to `main` redeploys automatically.
+- Deploying: open the service, then **Manual Deploy**, **Deploy latest commit** (automatic deploys on push are not firing for this service).
 
 To move to paid hosting, follow the steps below. Export the test data first if any of it is worth keeping.
 
