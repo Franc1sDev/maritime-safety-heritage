@@ -8,6 +8,7 @@ import { hashPassword } from '../common/crypto';
 import { AuthUser, RequestMeta } from '../common/decorators';
 import { pageOf } from '../common/pagination';
 import { User } from '../database/entities';
+import { NotificationsService } from '../notifications/notifications.module';
 import { CreateUserDto, publicUser, UpdateUserDto, UserQuery } from './user.dto';
 
 /** A readable one-time password such as "tide-4821-Reef". */
@@ -23,6 +24,7 @@ export class UsersService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly auth: AuthService,
     private readonly activity: ActivityService,
+    private readonly notes: NotificationsService,
   ) {}
 
   async list(q: UserQuery) {
@@ -40,6 +42,10 @@ export class UsersService {
     const password = temporaryPassword();
     const user = await this.users.save(this.users.create({ name: dto.name, email: dto.email, role: dto.role, organisation: dto.organisation ?? '', passwordHash: await hashPassword(password) }));
     await this.activity.record({ actor, action: 'user.create', entityType: 'user', entityId: user.id, summary: `Created ${dto.role} account for ${user.name}`, ip: meta.ip });
+    await this.notes.notify([user.id], {
+      kind: 'password', title: 'Choose your own password', summary: 'You signed in with a temporary password. Replace it now to keep your account safe.',
+      body: 'Open My account and use Change password. This message stays until you do.', link: '#/profile', actionKey: `password:${user.id}`, actionLabel: 'Change password',
+    });
     return { user: publicUser(user), temporaryPassword: password };
   }
 
@@ -74,6 +80,11 @@ export class UsersService {
     await this.users.update(id, { passwordHash: await hashPassword(password), failedLogins: 0, lockedUntil: null });
     await this.auth.revokeAll(id);
     await this.activity.record({ actor, action: 'user.reset_password', entityType: 'user', entityId: id, summary: `Reset the password for ${user.name}`, ip: meta.ip });
+    await this.notes.complete(`password:${id}`);
+    await this.notes.notify([id], {
+      kind: 'password', title: 'Choose your own password', summary: 'You signed in with a temporary password. Replace it now to keep your account safe.',
+      body: 'Open My account and use Change password. This message stays until you do.', link: '#/profile', actionKey: `password:${id}`, actionLabel: 'Change password',
+    });
     return { temporaryPassword: password };
   }
 }

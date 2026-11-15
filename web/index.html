@@ -33,6 +33,8 @@
     <div class="top-right" id="topRight"></div>
   </header>
 
+  <div class="pins" id="pins" aria-label="Still to do" role="region"></div>
+
   <nav class="dock" id="dock" aria-label="Main menu" hidden></nav>
 
   <main id="main" tabindex="-1"><div class="loading"><span class="ring"></span>Loading the archive</div></main>
@@ -42,6 +44,8 @@
     <svg class="coach-hand" viewBox="0 0 48 48" aria-hidden="true"><path d="M17 26V9.5a3.5 3.5 0 0 1 7 0V22l1-.6V18a3.5 3.5 0 0 1 7 .3v3.4l1-.4a3.4 3.4 0 0 1 6 2.2v9.6C39 41 33.5 46 27 46h-2.6a10 10 0 0 1-8-4L9.3 32.5a3.4 3.4 0 0 1 5-4.6z" fill="#fff" stroke="#02060e" stroke-width="2" stroke-linejoin="round"/></svg>
     <div class="coach-note"><span class="coach-dot" aria-hidden="true"></span><span class="coach-text"></span></div>
   </div>
+  <div class="pop-layer" id="popLayer"></div>
+  <div class="tip-layer" id="tipLayer" aria-live="polite"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="assets/vendor/leaflet/leaflet.js"></script>

@@ -106,6 +106,11 @@ export class AuthService {
     await this.tokens.update({ tokenHash: this.hashRefresh(token), revokedAt: IsNull() }, { revokedAt: new Date() });
   }
 
+  /** A new password is in place: the pinned "choose your own password" notice goes away. */
+  private async passwordActionDone(userId: string) {
+    await this.users.manager.query(`UPDATE notifications SET done_at = now(), viewed_at = coalesce(viewed_at, now()) WHERE action_key = $1 AND done_at IS NULL`, [`password:${userId}`]);
+  }
+
   async revokeAll(userId: string): Promise<void> {
     await this.tokens.update({ userId, revokedAt: IsNull() }, { revokedAt: new Date() });
   }
@@ -116,6 +121,7 @@ export class AuthService {
     if (current === next) throw new ConflictException('Choose a password you have not used here before.');
     await this.users.update(userId, { passwordHash: await hashPassword(next) });
     await this.revokeAll(userId);
+    await this.passwordActionDone(userId);
     await this.activity.record({ actor: user, action: 'password.change', entityType: 'user', entityId: userId, summary: `${user.name} changed their password`, ip: meta.ip });
   }
 
@@ -139,6 +145,7 @@ export class AuthService {
     await this.resets.update(row.id, { usedAt: new Date() });
     await this.users.update(row.userId, { passwordHash: await hashPassword(password), failedLogins: 0, lockedUntil: null });
     await this.revokeAll(row.userId);
+    await this.passwordActionDone(row.userId);
     const user = await this.users.findOneBy({ id: row.userId });
     await this.activity.record({ actor: user, action: 'password.reset', entityType: 'user', entityId: row.userId, summary: 'Password reset with an emailed link', ip: meta.ip });
   }

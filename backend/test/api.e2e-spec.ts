@@ -414,6 +414,93 @@ describe('editors', () => {
   });
 });
 
+describe('notifications, reminders and replies', () => {
+  let admin: string, member: string;
+  const summary = async (t: string) => (await request(http).get('/api/v1/notifications/summary').set(bearer(t)).expect(200)).body;
+  beforeAll(async () => {
+    admin = (await login('admin@demo.ke', 'admin1234')).body.accessToken;
+    member = (await request(http).post('/api/v1/auth/register').set('X-Client', 'app').send({ name: 'Notified Member', email: 'notified@test.ke', password: 'notified123' }).expect(201)).body.accessToken;
+  });
+
+  it('tells the contributor to wait, gives staff a review action, and clears it when decided', async () => {
+    const sub = await request(http).post('/api/v1/submissions').set(bearer(member))
+      .field('type', 'testimony').field('title', 'Night crossing to Mfangano').field('description', 'We crossed in a storm and nobody had a lifejacket.')
+      .field('consentConfirmed', 'true').expect(201);
+    const mine = await summary(member);
+    expect(mine.fresh.some((n: { title: string }) => /waiting for review/.test(n.title))).toBe(true);
+    expect(mine.unviewed).toBeGreaterThan(0);
+    let staff = await summary(admin);
+    const action = staff.actions.find((n: { actionKey: string }) => n.actionKey === `review:${sub.body.id}`);
+    expect(action.requiresAction).toBe(true);
+    // Viewing it lowers the count but keeps the action pinned
+    const before = staff.unviewed;
+    staff = (await request(http).post(`/api/v1/notifications/${action.id}/viewed`).set(bearer(admin)).expect(200)).body;
+    expect(staff.unviewed).toBe(before - 1);
+    expect(staff.actions.some((n: { id: string }) => n.id === action.id)).toBe(true);
+    await request(http).post(`/api/v1/submissions/${sub.body.id}/reject`).set(bearer(admin)).send({ reviewNote: 'Please add the year.' }).expect(200);
+    staff = await summary(admin);
+    expect(staff.actions.some((n: { id: string }) => n.id === action.id)).toBe(false);
+    const after = await summary(member);
+    expect(after.fresh.some((n: { body: string }) => /Please add the year/.test(n.body))).toBe(true);
+    // Other people never see someone else's notifications
+    await request(http).post(`/api/v1/notifications/${action.id}/viewed`).set(bearer(member)).expect(404);
+    const all = (await request(http).post('/api/v1/notifications/viewed').set(bearer(member)).expect(200)).body;
+    expect(all.unviewed).toBe(0);
+  });
+
+  it('pins a password change after a temporary password until it is changed', async () => {
+    const c = await request(http).post('/api/v1/users').set(bearer(admin)).send({ name: 'Temp Person', email: 'temp@test.ke', role: 'user' }).expect(201);
+    const t = (await login('temp@test.ke', c.body.temporaryPassword)).body.accessToken;
+    expect((await summary(t)).actions.map((a: { actionKey: string }) => a.actionKey)).toContain(`password:${c.body.user.id}`);
+    await request(http).post('/api/v1/auth/change-password').set(bearer(t)).send({ currentPassword: c.body.temporaryPassword, newPassword: 'mynewpass1' }).expect((r) => expect(r.status).toBeLessThan(300));
+    const t2 = (await login('temp@test.ke', 'mynewpass1')).body.accessToken;
+    expect((await summary(t2)).actions).toHaveLength(0);
+  });
+
+  it('lets an admin reply to an enquiry, emails the sender and shows the reply to the member', async () => {
+    await request(http).post('/api/v1/messages').set(bearer(member)).send({ name: 'Notified Member', email: 'notified@test.ke', subject: 'Visiting the archive', body: 'Can I visit the reading room in Kisumu?' }).expect(202);
+    let staff = await summary(admin);
+    expect(staff.enquiries).toBeGreaterThan(0);
+    const act = staff.actions.find((a: { kind: string; summary: string }) => a.kind === 'message' && a.summary === 'Visiting the archive');
+    const id = act.actionKey.split(':')[1];
+    await request(http).post(`/api/v1/messages/${id}/reply`).set(bearer(admin)).send({ reply: 'Yes, Monday to Friday, 9 to 4.' }).expect(200);
+    expect(mail.outbox.get('notified@test.ke')!.text).toContain('Monday to Friday');
+    staff = await summary(admin);
+    expect(staff.actions.some((a: { id: string }) => a.id === act.id)).toBe(false);
+    expect((await summary(member)).enquiries).toBe(1);
+    const mine = await request(http).get('/api/v1/messages/mine').set(bearer(member)).expect(200);
+    expect(mine.body.items[0].reply).toContain('Monday');
+    expect(mine.body.items[0].new).toBe(true);
+    expect((await summary(member)).enquiries).toBe(0);
+    await request(http).post(`/api/v1/messages/${id}/reply`).set(bearer(member)).send({ reply: 'Hacked' }).expect(403);
+  });
+
+  it('sets reminders that fire when due, can be snoozed and are done only when marked', async () => {
+    await request(http).post('/api/v1/reminders').set(bearer(member)).send({ subject: '', dueAt: new Date().toISOString() }).expect(400);
+    const later = await request(http).post('/api/v1/reminders').set(bearer(member))
+      .send({ subject: 'Record grandmother', description: 'Bring the recorder to Homa Bay', dueAt: new Date(Date.now() + 86400_000).toISOString() }).expect(201);
+    expect(later.body.fired).toBe(false);
+    const now = await request(http).post('/api/v1/reminders').set(bearer(member))
+      .send({ subject: 'Call the beach unit', dueAt: new Date(Date.now() - 1000).toISOString() }).expect(201);
+    expect(now.body.fired).toBe(true);
+    let s = await summary(member);
+    expect(s.actions.find((a: { actionKey: string }) => a.actionKey === `reminder:${now.body.id}`).title).toBe('Reminder: Call the beach unit');
+    await request(http).post(`/api/v1/reminders/${now.body.id}/snooze`).set(bearer(member)).send({ minutes: 10 }).expect(200);
+    s = await summary(member);
+    expect(s.actions.some((a: { actionKey: string }) => a.actionKey === `reminder:${now.body.id}`)).toBe(false);
+    await request(http).patch(`/api/v1/reminders/${later.body.id}`).set(bearer(member)).send({ dueAt: new Date(Date.now() - 1000).toISOString() }).expect(200);
+    s = await summary(member);
+    expect(s.actions.some((a: { actionKey: string }) => a.actionKey === `reminder:${later.body.id}`)).toBe(true);
+    const done = await request(http).post(`/api/v1/reminders/${later.body.id}/done`).set(bearer(member)).expect(200);
+    expect(done.body.done).toBe(true);
+    expect((await summary(member)).actions.some((a: { actionKey: string }) => a.actionKey === `reminder:${later.body.id}`)).toBe(false);
+    const list = await request(http).get('/api/v1/reminders').set(bearer(member)).expect(200);
+    expect(list.body.map((r: { subject: string }) => r.subject)).toEqual(['Call the beach unit']);
+    await request(http).delete(`/api/v1/reminders/${now.body.id}`).set(bearer(admin)).expect(404);
+    await request(http).delete(`/api/v1/reminders/${now.body.id}`).set(bearer(member)).expect(204);
+  });
+});
+
 describe('closing an account', () => {
   it('needs the password, erases personal details, withdraws pending submissions and blocks sign-in', async () => {
     const reg = await request(http).post('/api/v1/auth/register').set('X-Client', 'app').send({ name: 'Leaving Person', email: 'leaving@test.ke', password: 'leaving123' }).expect(201);

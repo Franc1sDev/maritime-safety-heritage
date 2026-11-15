@@ -179,6 +179,44 @@ export class ContactMessage {
   @Column({ default: false }) read: boolean;
   @Column({ type: 'uuid', nullable: true }) userId: string | null;
   @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
+  /** The team's reply, also emailed to the sender. */
+  @Column({ type: 'text', nullable: true }) reply: string | null;
+  @Column({ type: 'timestamptz', nullable: true }) repliedAt: Date | null;
+  @Column({ type: 'uuid', nullable: true }) repliedById: string | null;
+  /** When the sender (if signed in) opened the reply in the archive. */
+  @Column({ type: 'timestamptz', nullable: true }) replySeenAt: Date | null;
+}
+
+/** Something to tell one person. Actions stay on screen until they are done. */
+@Entity('notifications')
+export class Notification {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ type: 'uuid' }) userId: string;
+  @Column() kind: string;
+  @Column() title: string;
+  @Column({ default: '' }) summary: string;
+  @Column({ type: 'text', default: '' }) body: string;
+  @Column({ default: '' }) link: string;
+  @Column({ default: false }) requiresAction: boolean;
+  @Column({ type: 'text', nullable: true }) actionKey: string | null;
+  @Column({ default: '' }) actionLabel: string;
+  @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
+  @Column({ type: 'timestamptz', nullable: true }) viewedAt: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) doneAt: Date | null;
+}
+
+/** A reminder someone set for themselves. */
+@Entity('reminders')
+export class Reminder {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ type: 'uuid' }) userId: string;
+  @Column() subject: string;
+  @Column({ type: 'text', default: '' }) description: string;
+  @Column({ type: 'timestamptz' }) dueAt: Date;
+  @Column({ type: 'timestamptz', nullable: true }) firedAt: Date | null;
+  @Column({ type: 'timestamptz', nullable: true }) doneAt: Date | null;
+  @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
+  @UpdateDateColumn({ type: 'timestamptz' }) updatedAt: Date;
 }
 
 /** Audit trail of every sign-in and admin action. */
@@ -204,4 +242,4 @@ export class RecordView {
   @CreateDateColumn({ type: 'timestamptz' }) viewedAt: Date;
 }
 
-export const ENTITIES = [User, RefreshToken, PasswordResetToken, WaterBody, Subject, ArchiveRecord, TranscriptSegment, MediaFile, Submission, ContactMessage, Activity, RecordView];
+export const ENTITIES = [User, RefreshToken, PasswordResetToken, WaterBody, Subject, ArchiveRecord, TranscriptSegment, MediaFile, Submission, ContactMessage, Activity, RecordView, Notification, Reminder];

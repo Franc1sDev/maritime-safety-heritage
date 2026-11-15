@@ -1,5 +1,6 @@
 # Local secrets - never commit
 LOCAL-DEV-CREDENTIALS.txt
+ACCESS-CREDENTIALS.txt
 *.env
 .env*
 !.env.example

@@ -38,7 +38,7 @@
   const P = (() => { try { return Object.assign({ largeText: false, lowBw: false, hints: true }, JSON.parse(localStorage.getItem(PREF_KEY) || "{}")); } catch (e) { return { largeText: false, lowBw: false, hints: true }; } })();
   const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(P)); } catch (e) {} };
   const UI = { slide: 0, afterLogin: null };
-  const COUNTS = { pending: 0, unread: 0 };
+  const COUNTS = { pending: 0, unread: 0, bell: 0, enq: 0 };
   let VOCAB = null, FACETS = null;
 
   /* ---------- Helpers ---------- */
@@ -162,6 +162,8 @@
       add("map", "map", "Incident map", "See where each story happened, from Likoni to Lake Turkana.", "#/map");
       add("listen", "headphones", "Listen", "Play oral histories in the voices of those who lived them.", "#/browse?type=oral");
       add("submit", "hand-heart", "Share a story", "Send a recording, photo or document to the research team.", "#/submit");
+      add("reminders", "alarm-clock", "Reminders", "Set a reminder with a subject, a note, a date and a time.", "#/reminders");
+      if (!admin) add("enquiries", "message-circle", "Enquiries", "Your questions to the research team, and their replies.", "#/enquiries", { badge: COUNTS.enq || "" });
       if (staff) {
         add("admin", "chart-column", "Dashboard", "Usage, collection health and recent activity.", "#/admin", { primary: true });
         add("records", "archive", "Records", "Edit, publish, unpublish or restore catalogue records.", "#/admin/records");
@@ -431,10 +433,13 @@
   function renderChrome(page) {
     const u = me();
     $("#topRight").innerHTML = u
-      ? `<a class="pill has-lbl who" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">${esc(u.name.split(" ")[0])}</span>${u.role !== "user" ? `<span class="role lbl">${roleName(u.role)}</span>` : ""}</a>
+      ? `<button class="pill icon-only alert-btn" id="bellBtn" data-label="Notifications" aria-label="Notifications${COUNTS.bell ? `, ${COUNTS.bell} new` : ""}" title="Notifications">${ic("bell")}${COUNTS.bell ? `<span class="count">${COUNTS.bell > 99 ? "99+" : COUNTS.bell}</span>` : ""}</button>
+         <a class="pill icon-only alert-btn" id="enqBtn" data-label="Enquiries" href="${isAdmin() ? "#/admin/messages?f=unread" : "#/enquiries"}" aria-label="Enquiries${COUNTS.enq ? `, ${COUNTS.enq} new` : ""}" title="Enquiries">${ic("message-circle")}${COUNTS.enq ? `<span class="count">${COUNTS.enq > 99 ? "99+" : COUNTS.enq}</span>` : ""}</a>
+         <a class="pill has-lbl who" href="#/profile" title="My account"><span class="avatar">${esc(initials(u.name))}</span><span class="lbl">${esc(u.name.split(" ")[0])}</span>${u.role !== "user" ? `<span class="role lbl">${roleName(u.role)}</span>` : ""}</a>
          <button class="pill has-lbl" id="logout" title="Sign out">${ic("log-out")}<span class="lbl">Sign out</span></button>`
       : (page === "login" ? "" : `<a class="pill has-lbl" href="#/login">${ic("log-in")}<span class="lbl">Sign in</span></a>`);
     const lo = $("#logout"); if (lo) lo.onclick = signOut;
+    const bb = $("#bellBtn"); if (bb) bb.onclick = openBell;
     applyPrefs();
     $(".top").classList.toggle("solid", page !== "home");
   }
@@ -485,6 +490,11 @@
     const pick = (sel, text) => { const el = typeof sel === "string" ? $(sel) : sel; return visible(el) ? { el, text } : null; };
     const orbFor = (key) => $(`.orbit .orb-wrap[data-key="${key}"] .orb`);
     let s = null;
+    const pinChip = $("#pins .pin-chip:not(.thanks) .pin-main");
+    if (pinChip && ["home", "admin", "browse"].includes(page) && !SEEN.has("coach-pin:" + pinChip.parentElement.dataset.pin)) {
+      SEEN.add("coach-pin:" + pinChip.parentElement.dataset.pin);
+      return { el: pinChip, text: `Still to do: ${pinChip.textContent.trim()}. Press it to deal with it now.` };
+    }
     if (page === "home") {
       if (!me()) s = pick(orbFor("login"), "Start here: sign in, or create a free account next to it.");
       else if (isStaff() && COUNTS.pending) s = pick(orbFor("review"), `${COUNTS.pending} submission${COUNTS.pending === 1 ? " is" : "s are"} waiting for your review.`);
@@ -555,7 +565,7 @@
 
   async function signOut() {
     await API.logout();
-    VOCAB = null; FACETS = null;
+    VOCAB = null; FACETS = null; alertsReset(true);
     toast("Signed out", "log-out"); go("#/home"); render();
   }
   async function refreshCounts() {
@@ -566,6 +576,326 @@
       COUNTS.pending = s.total; COUNTS.unread = m.unread;
       if (changed) { const { parts, q } = parse(); renderDock(parts, q); enhance(); }
     } catch (e) { /* badges are optional */ }
+  }
+
+  /* =====================================================================
+     NOTIFICATIONS: the bell, pop-ups and things still to do.
+     - New news pops up in the middle of the screen (a banner at the top on phones).
+       Click anywhere else, and it goes away.
+     - Something you must do (review a submission, reply to a message, change a
+       temporary password, a reminder) pops up the same way, but clicking away only
+       flies it up to a bar at the top of the screen. It stays there, on every page,
+       until you do it, then leaves with a thumbs-up.
+     - After you sign in again, things still to do come back to the middle once.
+     - The bell and Enquiries buttons count what you haven't seen yet.
+     ===================================================================== */
+  const AL = { sum: null, timer: null, dueTimer: null, queue: [], open: null, known: new Set(), pinned: new Map(), shownFresh: new Set(), first: true };
+  const KIND_ICON = { submission: "hourglass", review: "inbox", accepted: "badge-check", declined: "message-circle", message: "mail", reply: "reply", password: "key-round", reminder: "alarm-clock" };
+  const centredKey = () => me() ? "msh-centred-" + me().id : "";
+  function centred() { try { return new Set(JSON.parse(sessionStorage.getItem(centredKey()) || "[]")); } catch (e) { return new Set(); } }
+  function markCentred(id) { const s = centred(); s.add(id); try { sessionStorage.setItem(centredKey(), JSON.stringify([...s].slice(-200))); } catch (e) {} }
+  const phone = () => innerWidth <= 640;
+  const ago = (d) => { const s = (Date.now() - new Date(d)) / 1000; return s < 60 ? "just now" : s < 3600 ? Math.round(s / 60) + " min ago" : s < 86400 ? Math.round(s / 3600) + " h ago" : date(d); };
+
+  /** Forget everything about the last person: used when signing in or out. */
+  function alertsReset(freshLogin) {
+    clearTimeout(AL.timer); clearTimeout(AL.dueTimer);
+    if (freshLogin) { try { Object.keys(sessionStorage).filter((k) => k.startsWith("msh-centred-")).forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} }
+    AL.sum = null; AL.queue = []; AL.known.clear(); AL.shownFresh.clear(); AL.first = true;
+    closePop(true);
+    AL.pinned.clear(); const bar = $("#pins"); if (bar) bar.innerHTML = "";
+    COUNTS.bell = 0; COUNTS.enq = 0;
+    if (me()) pollAlerts();
+  }
+  async function pollAlerts() {
+    clearTimeout(AL.timer);
+    if (!me()) return;
+    try {
+      const s = await API.get("/notifications/summary");
+      if (!me()) return;
+      applySummary(s);
+    } catch (e) { /* try again on the next round */ }
+    AL.timer = setTimeout(pollAlerts, document.hidden ? 60000 : 20000);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && me()) pollAlerts(); });
+
+  function applySummary(s) {
+    const before = AL.sum;
+    AL.sum = s;
+    const changed = !before || before.unviewed !== s.unviewed || before.enquiries !== s.enquiries;
+    COUNTS.bell = s.unviewed; COUNTS.enq = s.enquiries;
+    if (changed) updateBadges();
+    // Things done since last time: say thank you and let them go.
+    const openIds = new Set(s.actions.map((a) => a.id));
+    for (const [id] of AL.pinned) if (!openIds.has(id)) thankAndRemove(id);
+    if (AL.open && AL.open.n.requiresAction && !openIds.has(AL.open.n.id)) thankInPop();
+    // Things to do: centre each one once per sign-in, otherwise keep it pinned at the top.
+    const was = centred();
+    for (const a of s.actions) {
+      if (AL.pinned.has(a.id) || (AL.open && AL.open.n.id === a.id) || AL.queue.some((q) => q.id === a.id)) continue;
+      if (was.has(a.id)) pin(a, false); else AL.queue.push(a);
+    }
+    for (const f of s.fresh) if (!AL.shownFresh.has(f.id) && !AL.queue.some((q) => q.id === f.id)) AL.queue.push(f);
+    // Tell the computer too, when the archive is in a background tab.
+    for (const n of [...s.actions, ...s.fresh]) {
+      if (!AL.known.has(n.id) && !AL.first) systemNotify(n);
+      AL.known.add(n.id);
+    }
+    AL.first = false;
+    nextPop();
+  }
+  function systemNotify(n) {
+    if (!document.hidden || !("Notification" in window) || Notification.permission !== "granted") return;
+    try { const sn = new Notification(n.title, { body: n.summary, tag: n.id, icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%231e6bff'/%3E%3C/svg%3E" }); sn.onclick = () => { window.focus(); sn.close(); }; } catch (e) {}
+  }
+  function askSystemAlerts() {
+    if (!("Notification" in window) || Notification.permission !== "default") return;
+    try { Notification.requestPermission().then((p) => { if (p === "granted") tip("Alerts are on. Reminders will reach you even when this tab is in the background.", "bell-ring"); }); } catch (e) {}
+  }
+
+  function updateBadges() {
+    const set = (sel, n) => { const b = $(sel); if (!b) return; const el = $(".count", b); const was = el ? +el.textContent : 0; if (n) { if (el) el.textContent = n > 99 ? "99+" : n; else b.insertAdjacentHTML("beforeend", `<span class="count">${n > 99 ? "99+" : n}</span>`); } else if (el) el.remove(); b.classList.toggle("ring", n > was); b.setAttribute("aria-label", b.dataset.label + (n ? `, ${n} new` : "")); if (n > was) { b.classList.remove("ring"); void b.offsetWidth; b.classList.add("ring"); } };
+    set("#bellBtn", COUNTS.bell); set("#enqBtn", COUNTS.enq);
+    if (isAdmin()) COUNTS.unread = COUNTS.enq;
+  }
+
+  /* ----- The pop-up ----- */
+  function nextPop() {
+    if (AL.open || !AL.queue.length || $("#modalBg") || $("#menuOverlay")) return;
+    const n = AL.queue.shift();
+    if (!n.requiresAction) AL.shownFresh.add(n.id);
+    showPop(n);
+  }
+  function popActions(n) {
+    if (!n.requiresAction) return n.link && n.link !== location.hash ? `<a class="btn sm" href="${esc(n.link)}" data-pop-go>${ic("arrow-right")}Open</a>` : "";
+    if (n.kind === "reminder") return `<button class="btn sm" data-rem-done="${esc(n.actionKey.split(":")[1])}">${ic("check")}Done</button><button class="btn ghost sm" data-rem-snooze="${esc(n.actionKey.split(":")[1])}">${ic("alarm-clock")}In 10 minutes</button>`;
+    if (n.kind === "password") return `<button class="btn sm" data-pop-pw>${ic("key-round")}${esc(n.actionLabel || "Change password")}</button>`;
+    return `<a class="btn sm" href="${esc(n.link)}" data-pop-go>${ic("arrow-right")}${esc(n.actionLabel || "Do it now")}</a>`;
+  }
+  function showPop(n) {
+    const layer = $("#popLayer");
+    const long = n.body && n.body.trim() && n.body.trim() !== n.summary.trim();
+    layer.innerHTML = `<div class="pop ${phone() ? "pop-phone" : ""} ${n.requiresAction ? "must" : ""}" role="alertdialog" aria-modal="false" aria-labelledby="popT" aria-describedby="popS" tabindex="-1">
+      ${phone() ? `<span class="pop-grip" aria-hidden="true"></span>` : ""}
+      <div class="pop-ic">${ic(KIND_ICON[n.kind] || "bell")}<i aria-hidden="true"></i></div>
+      <div class="pop-body"><p class="pop-k">${n.requiresAction ? `${ic("pin")}To do` : "New"} <span>${ago(n.createdAt)}</span></p>
+        <h2 id="popT">${esc(n.title)}</h2><p id="popS" class="pop-s">${esc(n.summary)}</p>
+        ${long || (phone() && n.summary.length > 70) ? `<div class="pop-more" hidden>${long ? `<p>${esc(n.body)}</p>` : ""}</div><button class="pop-expand" type="button" aria-expanded="false">${ic("chevron-down")}<span>${phone() ? "Slide down to read it all" : "Read it all"}</span></button>` : ""}
+        <div class="pop-acts">${popActions(n)}</div>
+        <p class="pop-hint">${n.requiresAction ? "Clicking elsewhere keeps it pinned at the top until it's done." : "Click anywhere else to close."}</p></div></div>`;
+    layer.classList.add("on");
+    const el = $(".pop", layer);
+    AL.open = { n, el };
+    hideCoach();
+    if (!n.viewed) { n.viewed = true; API.post(`/notifications/${n.id}/viewed`).then((s) => { COUNTS.bell = s.unviewed; COUNTS.enq = s.enquiries; updateBadges(); }).catch(() => {}); }
+    if (n.requiresAction) markCentred(n.id);
+    const exp = $(".pop-expand", el);
+    const expand = (on) => { if (!exp) return; $(".pop-more", el).hidden = !on; exp.setAttribute("aria-expanded", on); $("span", exp).textContent = on ? "Show less" : (phone() ? "Slide down to read it all" : "Read it all"); el.classList.toggle("expanded", on); };
+    if (exp) exp.onclick = () => expand(exp.getAttribute("aria-expanded") !== "true");
+    wirePopButtons(el, n);
+    // Phones: slide down to read it all, slide up to put it away.
+    if (phone()) {
+      let y0 = null, dy = 0;
+      el.addEventListener("touchstart", (e) => { y0 = e.touches[0].clientY; dy = 0; el.style.transition = "none"; }, { passive: true });
+      el.addEventListener("touchmove", (e) => { if (y0 == null) return; dy = e.touches[0].clientY - y0; el.style.transform = `translate(-50%, ${Math.max(-120, Math.min(80, dy * 0.6))}px)`; }, { passive: true });
+      el.addEventListener("touchend", () => { el.style.transition = ""; el.style.transform = ""; if (dy > 40) expand(true); else if (dy < -50) dismissPop(); y0 = null; });
+    }
+    setTimeout(() => el.focus({ preventScroll: true }), 50);
+  }
+  function wirePopButtons(root, n) {
+    const isOpen = () => AL.open && n && AL.open.n.id === n.id;
+    $$("[data-pop-go]", root).forEach((a) => a.addEventListener("click", () => { if (!isOpen()) return; if (n.requiresAction) pinFromPop(); else closePop(); }));
+    $$("[data-pop-pw]", root).forEach((b) => (b.onclick = () => { if (isOpen()) pinFromPop(); changePassword(); }));
+    $$("[data-rem-done]", root).forEach((b) => (b.onclick = async () => { busy(b, true, "Saving"); try { await API.post(`/reminders/${b.dataset.remDone}/done`); pollAlerts(); if (currentPage() === "reminders") render(); } catch (e) { busy(b, false); fail(e); } }));
+    $$("[data-rem-snooze]", root).forEach((b) => (b.onclick = async () => { busy(b, true, "Saving"); try { await API.post(`/reminders/${b.dataset.remSnooze}/snooze`, { minutes: 10 }); tip("Snoozed. It will ring again in 10 minutes.", "alarm-clock"); scheduleDue(); pollAlerts(); if (currentPage() === "reminders") render(); } catch (e) { busy(b, false); fail(e); } }));
+  }
+  function closePop(silent) {
+    const layer = $("#popLayer"); if (!layer) return;
+    layer.classList.remove("on"); layer.innerHTML = ""; AL.open = null;
+    if (!silent) setTimeout(nextPop, 350);
+  }
+  /** Clicked away: news closes; a to-do flies up to the bar at the top. */
+  function dismissPop() {
+    if (!AL.open) return;
+    if (AL.open.n.requiresAction) return pinFromPop();
+    const el = AL.open.el; el.classList.add("leaving");
+    setTimeout(() => closePop(), REDUCED ? 0 : 260);
+  }
+  function pinFromPop() {
+    if (!AL.open) return;
+    const { n, el } = AL.open;
+    const from = el.getBoundingClientRect();
+    const chip = pin(n, true);
+    const to = chip.getBoundingClientRect();
+    closePop(true);
+    if (!REDUCED) {
+      const ghost = document.createElement("div"); ghost.className = "pop-ghost";
+      ghost.style.cssText = `left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${from.height}px`;
+      document.body.appendChild(ghost);
+      requestAnimationFrame(() => { ghost.style.cssText = `left:${to.left}px;top:${to.top}px;width:${to.width}px;height:${to.height}px;opacity:.2;border-radius:99px`; });
+      setTimeout(() => { ghost.remove(); chip.classList.add("landed"); }, 520);
+    }
+    if (!SEEN.has("pins-explained")) { SEEN.add("pins-explained"); setTimeout(() => tip("Pinned up here. It stays on every page until it's done.", "pin", { anchor: chip }), 600); }
+    setTimeout(nextPop, 700);
+  }
+  document.addEventListener("pointerdown", (e) => {
+    if (!AL.open) return;
+    if (e.target.closest(".pop, #pins, .tip")) return;
+    dismissPop();
+  }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && AL.open) { e.stopPropagation(); dismissPop(); } }, true);
+
+  /* ----- The bar of things to do ----- */
+  function pin(n, animate) {
+    const bar = $("#pins");
+    let chip = $(`[data-pin="${n.id}"]`, bar);
+    if (!chip) {
+      chip = document.createElement("div");
+      chip.className = "pin-chip" + (animate ? " arriving" : "");
+      chip.dataset.pin = n.id;
+      chip.innerHTML = `<button class="pin-main" type="button" aria-label="${esc(n.title)}: open">${ic(KIND_ICON[n.kind] || "bell")}<span>${esc(n.title)}</span></button><span class="pin-acts">${popActions(n)}</span>`;
+      bar.appendChild(chip);
+      $(".pin-main", chip).onclick = () => { if (AL.open) closePop(true); unpin(n.id); showPop(n); };
+      wirePopButtons(chip, n);
+      $$("[data-pop-go]", chip).forEach((a) => a.addEventListener("click", (e) => e.stopPropagation()));
+    }
+    AL.pinned.set(n.id, n);
+    document.body.classList.add("has-pins");
+    pinsHeight();
+    return chip;
+  }
+  /** Pushes the page down by exactly the height of the to-do bar, so titles are never hidden under it. */
+  function pinsHeight() { pinsOverflow(); requestAnimationFrame(() => { const bar = $("#pins"); document.body.style.setProperty("--pins-h", (bar && bar.children.length ? bar.offsetHeight + 12 : 0) + "px"); }); }
+  window.addEventListener("resize", () => pinsHeight());
+  /** More than a few to-dos: show the first ones and a "+N more" chip that opens the rest. */
+  function pinsOverflow() {
+    const bar = $("#pins"); if (!bar) return;
+    const max = phone() ? 2 : 3;
+    const chips = $$(".pin-chip", bar);
+    chips.forEach((c, i) => c.classList.toggle("extra", i >= max && !bar.classList.contains("all")));
+    let more = $(".pin-more", bar);
+    const hidden = chips.length - max;
+    if (hidden > 0) {
+      if (!more) { more = document.createElement("button"); more.type = "button"; more.className = "pin-more"; more.onclick = () => { bar.classList.toggle("all"); pinsHeight(); }; }
+      bar.appendChild(more);
+      more.innerHTML = bar.classList.contains("all") ? `${ic("chevron-up")}Show fewer` : `${ic("chevron-down")}${hidden} more to do`;
+    } else if (more) { more.remove(); bar.classList.remove("all"); }
+  }
+  function unpin(id) {
+    const chip = $(`#pins [data-pin="${id}"]`); if (chip) chip.remove();
+    AL.pinned.delete(id);
+    if (!AL.pinned.size) document.body.classList.remove("has-pins");
+    pinsHeight();
+  }
+  function thankAndRemove(id) {
+    const chip = $(`#pins [data-pin="${id}"]`);
+    AL.pinned.delete(id);
+    if (!chip) return;
+    chip.classList.add("thanks");
+    chip.innerHTML = `<span class="thanks-face">${ic(id.charCodeAt(0) % 2 ? "thumbs-up" : "smile")}</span><span>Done. Thank you!</span>`;
+    celebrate();
+    setTimeout(() => { chip.classList.add("gone"); }, 1600);
+    setTimeout(() => { chip.remove(); if (!AL.pinned.size) document.body.classList.remove("has-pins"); pinsHeight(); }, 2100);
+  }
+  function thankInPop() {
+    const { el } = AL.open;
+    el.classList.add("thanks");
+    $(".pop-body", el).innerHTML = `<h2>Done. Thank you!</h2><p class="pop-s">That's taken care of.</p>`;
+    $(".pop-ic", el).innerHTML = ic("thumbs-up");
+    celebrate();
+    setTimeout(() => closePop(), 1500);
+  }
+
+  /* ----- The bell: everything, newest first ----- */
+  async function openBell() {
+    sheet("Notifications", loading(), async (w) => {
+      try {
+        const res = await API.get("/notifications", { pageSize: 40 });
+        const box = $(".loading", w); if (!box) return;
+        const canAlert = "Notification" in window && Notification.permission === "default";
+        box.outerHTML = (res.items.length ? `<div class="row" style="margin-bottom:10px"><span class="muted small">${res.unviewed ? `${res.unviewed} not seen yet` : "All caught up"}</span><span class="spacer"></span>${res.unviewed ? `<button class="btn ghost sm" id="allSeen">${ic("check")}Mark all as seen</button>` : ""}</div>
+          <div class="note-list">${res.items.map((n) => `<button class="note-item ${n.viewed ? "" : "new"} ${n.requiresAction && !n.done ? "must" : ""}" data-note="${n.id}"><span class="li-ic">${ic(KIND_ICON[n.kind] || "bell")}</span><span class="li-main"><b>${esc(n.title)}</b><span>${esc(n.summary)}</span><small>${ago(n.createdAt)}${n.requiresAction ? (n.done ? " · done" : " · to do") : ""}</small></span></button>
+            <div class="note-full" data-full="${n.id}" hidden>${n.body ? `<p>${esc(n.body)}</p>` : ""}<div class="row">${!n.requiresAction || n.done ? (n.link ? `<a class="btn sm" href="${esc(n.link)}" data-close-sheet>${ic("arrow-right")}Open</a>` : "") : popActions(n)}</div></div>`).join("")}</div>`
+          : `<div class="empty">${ic("bell")}<h3>Nothing yet</h3><p>News about your stories, replies and reminders will appear here.</p></div>`)
+          + (canAlert ? `<button class="btn ghost sm" id="sysAlerts" style="margin-top:14px">${ic("bell-ring")}Also alert me on this computer</button>` : "");
+        const all = $("#allSeen", w); if (all) all.onclick = async () => { const s = await API.post("/notifications/viewed"); COUNTS.bell = s.unviewed; updateBadges(); $$(".note-item.new", w).forEach((x) => x.classList.remove("new")); all.remove(); };
+        const sa = $("#sysAlerts", w); if (sa) sa.onclick = () => { askSystemAlerts(); sa.remove(); };
+        $$("[data-note]", w).forEach((b) => (b.onclick = async () => {
+          const full = $(`[data-full="${b.dataset.note}"]`, w); full.hidden = !full.hidden; b.classList.toggle("open", !full.hidden);
+          if (b.classList.contains("new")) { b.classList.remove("new"); try { const s = await API.post(`/notifications/${b.dataset.note}/viewed`); COUNTS.bell = s.unviewed; COUNTS.enq = s.enquiries; updateBadges(); } catch (e) {} }
+        }));
+        const n = res.items.reduce((m, x) => (m[x.id] = x, m), {});
+        $$(".note-full", w).forEach((f) => wirePopButtons(f, n[f.dataset.full]));
+      } catch (e) { fail(e); closeSheet(); }
+    });
+  }
+
+  /* ----- Reminders ring on time, even between checks ----- */
+  async function scheduleDue() {
+    clearTimeout(AL.dueTimer);
+    if (!me()) return;
+    try {
+      const list = await API.get("/reminders");
+      const next = list.filter((r) => !r.fired && !r.done).map((r) => new Date(r.dueAt).getTime()).sort((a, b) => a - b)[0];
+      if (next) AL.dueTimer = setTimeout(() => { pollAlerts(); scheduleDue(); }, Math.min(2 ** 31 - 1, Math.max(500, next - Date.now() + 800)));
+    } catch (e) {}
+  }
+
+  /* =====================================================================
+     TIPS: short, friendly notes that react to what you are doing,
+     then float away by themselves ("Uploaded. Now wait for review").
+     ===================================================================== */
+  const TIP_ONCE = new Set();
+  function tip(text, icon = "lightbulb", o = {}) {
+    if (o.once) { if (TIP_ONCE.has(o.once)) return; TIP_ONCE.add(o.once); }
+    const layer = $("#tipLayer"); if (!layer) return;
+    $$(".tip", layer).forEach((t) => t.classList.add("bye"));
+    const t = document.createElement("div");
+    t.className = "tip"; t.setAttribute("role", "status");
+    t.innerHTML = `<span class="tip-face">${ic(icon)}</span><span class="tip-text">${esc(text)}</span>`;
+    layer.appendChild(t);
+    const a = o.anchor && document.contains(o.anchor) ? o.anchor.getBoundingClientRect() : null;
+    if (a && !phone()) {
+      const w = Math.min(320, innerWidth - 24);
+      t.style.width = w + "px";
+      t.style.left = Math.max(12, Math.min(innerWidth - w - 12, a.left + a.width / 2 - w / 2)) + "px";
+      const below = a.bottom + 90 < innerHeight;
+      t.style.top = (below ? a.bottom + 12 : Math.max(70, a.top - 74)) + "px";
+      t.classList.add(below ? "below" : "above");
+    } else t.classList.add("docked");
+    const ms = o.ms || Math.max(3800, Math.min(8000, text.length * 70));
+    setTimeout(() => t.classList.add("bye"), ms);
+    setTimeout(() => t.remove(), ms + 600);
+    t.onclick = () => t.classList.add("bye");
+  }
+  // Sensing what is going on, so the tips fit the moment.
+  document.addEventListener("keyup", (e) => {
+    if (e.target && e.target.type === "password" && e.getModifierState) {
+      if (e.getModifierState("CapsLock")) tip("Caps Lock is on, so your password may not match.", "lock", { anchor: e.target, once: "caps-" + e.target.id });
+      else TIP_ONCE.delete("caps-" + e.target.id);
+    }
+  });
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.id === "sd" && t.value.length > 400 && (!$("#sy").value || !$("#sp").value.trim())) tip("Great detail. If you know the year and the place, add them too: it helps people find your story.", "sparkles", { anchor: $("#sy").value ? $("#sp") : $("#sy"), once: "sd-detail" });
+    if (t.id === "remWhen" || t.id === "remDate" || t.id === "remTime") {
+      const d = remDue();
+      if (d && d < new Date()) tip("That time has already passed, so this reminder will ring as soon as you save it.", "alarm-clock", { anchor: t, once: "rem-past-" + t.value });
+    }
+  });
+  window.addEventListener("offline", () => tip("You're offline. What you've typed stays on the page; send it when you're back.", "wifi-off", { ms: 6000 }));
+  window.addEventListener("online", () => { tip("Back online.", "circle-check"); if (me()) pollAlerts(); });
+  /** What a file says about the story, said back to the person sharing it. */
+  function fileTip(files, anchor) {
+    if (!files.length) return;
+    const big = files.find((f) => f.size > 40 * 1024 * 1024);
+    const kinds = new Set(files.map((f) => (f.type || "").split("/")[0]));
+    let text;
+    if (big) text = `${big.name} is large (${size(big.size)}). Keep this tab open while it uploads.`;
+    else if (kinds.has("image")) text = files.length > 1 ? `${files.length} photos ready. Say who or what is in them in "Tell us about it".` : "Nice photo. Say who or what is in it, and roughly when it was taken.";
+    else if (kinds.has("audio") || kinds.has("video")) text = "A recording. Mention who is speaking and where, so the team can catalogue it.";
+    else text = files.length > 1 ? `${files.length} files ready to send.` : `${files[0].name} is ready to send.`;
+    tip(text, kinds.has("image") ? "image" : kinds.has("audio") ? "mic" : kinds.has("video") ? "video" : "file-up", { anchor });
   }
 
   /* ---------- Background: video slideshow (welcome) or a big page icon ---------- */
@@ -657,7 +987,7 @@
     countUp(main);
     window.scrollTo(0, 0);
     main.focus({ preventScroll: true });
-    refreshCounts();
+    refreshCounts(); nextPop();
     scheduleCoach(SEEN.has("coach:" + page) ? 3200 : 1300); SEEN.add("coach:" + page);
   }
   window.addEventListener("hashchange", render);
@@ -679,7 +1009,7 @@
   }
   function closeModal(keepFocus) {
     const m = $("#modalBg"); if (!m) return;
-    m.remove();
+    m.remove(); setTimeout(nextPop, 400);
     if (!keepFocus && returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
   }
   function sheet(title, inner, after) {
@@ -822,6 +1152,7 @@
     },
     after(parts, qs) {
       $("#sform").onsubmit = (e) => { e.preventDefault(); const p = new URLSearchParams(qs); p.delete("page"); const v = $("#q").value.trim(); if (v) p.set("q", v); else p.delete("q"); go("#/browse?" + p.toString()); };
+      if ($("#main .panel.empty") && qs.get("q")) tip(qs.get("q").trim().split(/\s+/).length > 2 ? "No matches. Try just one or two of those words." : "No matches. Check the spelling, or try a place or a year instead.", "search", { anchor: $("#q") });
     }
   };
   async function filterSheet(qs) {
@@ -1030,7 +1361,7 @@
       const t = qs.get("type"); if (!TYPES[t]) return;
       let files = [];
       dropzone($("#drop"), $("#sf"), (fs) => {
-        files = fs.slice(0, 5);
+        files = fs.slice(0, 5); fileTip(files, $("#drop"));
         $("#fname").textContent = files.length ? files.map((f) => `${f.name} (${size(f.size)})`).join(", ") + (fs.length > 5 ? ". Only the first 5 will be sent." : "") : "";
       });
       $("#subForm").onsubmit = async (e) => {
@@ -1052,6 +1383,8 @@
           const s = await API.upload("/submissions", fd, (p) => { $("b", bar).style.width = Math.round(p * 100) + "%"; });
           toast(`Sent as ${s.reference}. The research team will review it.`, "circle-check");
           go("#/submit");
+          setTimeout(() => tip(`${s.reference} is with the research team. Sit tight while they review it: you'll get a notification here when they decide.`, "hourglass", { ms: 7000 }), 900);
+          setTimeout(pollAlerts, 1500);
         } catch (ex) { busy(btn, false); bar.hidden = true; err.textContent = ex.message; }
       };
     }
@@ -1093,10 +1426,123 @@
         const btn = $("#cbtn"); busy(btn, true, "Sending"); $("#cerr").textContent = "";
         try {
           const r = await API.post("/messages", { name: $("#cn").value.trim(), email: $("#ce").value.trim(), subject: $("#cs").value.trim(), body: $("#cb").value.trim(), website: $("#cw").value });
-          toast(r.message, "mail"); go("#/home");
+          toast(r.message, "mail"); go(me() && !isAdmin() ? "#/enquiries" : "#/home");
+          if (me() && !isAdmin()) setTimeout(() => tip("Sent. When the team replies, the Enquiries button at the top lights up with a number.", "message-circle", { anchor: $("#enqBtn"), ms: 7000 }), 900);
         } catch (ex) { busy(btn, false); $("#cerr").textContent = ex.message; }
       };
     }
+  };
+
+  /* ----- Reminders ----- */
+  /** The date and time chosen on the reminder form, or null. */
+  function remDue() {
+    const d = $("#remDate"), t = $("#remTime");
+    if (!d || !d.value || !t || !t.value) return null;
+    const v = new Date(`${d.value}T${t.value}`);
+    return isNaN(v) ? null : v;
+  }
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const localDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const localTime = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  function untilText(d) {
+    const s = (new Date(d) - Date.now()) / 1000;
+    if (s <= 0) return "Due now";
+    if (s < 3600) return `In ${Math.max(1, Math.round(s / 60))} min`;
+    if (s < 86400) return `In ${Math.round(s / 3600)} h`;
+    return `In ${Math.round(s / 86400)} day${Math.round(s / 86400) === 1 ? "" : "s"}`;
+  }
+  ROUTES.reminders = {
+    title: "Reminders",
+    bg: "alarm-clock",
+    load(parts, qs) { return API.get("/reminders", { show: qs.get("show") === "done" ? "done" : "upcoming" }); },
+    html(parts, qs, list) {
+      const done = qs.get("show") === "done";
+      const soon = new Date(Date.now() + 3600_000); soon.setMinutes(0, 0, 0);
+      return `<div class="stage narrow">${head("Reminders", "A subject, a note, a date and a time. When it's due, it pops up here, on your phone, and in your email.", true)}
+        ${orbRow([
+          { icon: "plus", label: "New reminder", desc: "Fill in the form below.", act: () => { $("#remSubject").focus(); $("#remSubject").scrollIntoView({ behavior: "smooth", block: "center" }); }, primary: !done },
+          { icon: "alarm-clock", label: "Coming up", desc: "Reminders that haven't been dealt with.", go: "#/reminders", on: !done },
+          { icon: "check", label: "Done", desc: "Reminders you've marked as done.", go: "#/reminders?show=done", on: done }
+        ])}
+        ${done ? "" : `<form class="panel" id="remForm" novalidate>
+          <div class="field"><label for="remSubject">Subject</label><input id="remSubject" required maxlength="200" placeholder="For example: Record grandmother's story at Homa Bay"></div>
+          <div class="field"><label for="remDesc">Description (optional)</label><textarea id="remDesc" maxlength="2000" rows="3" placeholder="What to bring, who to call, anything you'll want to know then"></textarea></div>
+          <div class="grid g2"><div class="field"><label for="remDate">Date</label><input id="remDate" type="date" required value="${localDate(soon)}"></div>
+          <div class="field"><label for="remTime">Time</label><input id="remTime" type="time" required value="${localTime(soon)}"></div></div>
+          <div class="row quick-when">${[["In 1 hour", 60], ["This evening", "eve"], ["Tomorrow 9:00", "tom"], ["In a week", 7 * 1440]].map(([l, v]) => `<button type="button" class="chip" data-when="${v}">${ic("clock")}${l}</button>`).join("")}</div>
+          <div class="err" id="remErr" role="alert"></div>
+          <button class="btn" id="remBtn">${ic("alarm-clock")}Set reminder</button></form>`}
+        <div class="rem-list">${list.length ? list.map((r) => `<div class="panel rem ${r.fired && !r.done ? "due" : ""} ${r.done ? "is-done" : ""}" data-rem="${r.id}">
+            <div class="rem-when"><b>${new Date(r.dueAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</b><span>${new Date(r.dueAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span></div>
+            <div class="rem-main"><h3>${esc(r.subject)}</h3>${r.description ? `<p>${esc(r.description)}</p>` : ""}<span class="small ${r.fired && !r.done ? "due-tag" : "muted"}">${r.done ? "Done " + date(r.doneAt) : r.fired ? "Due now" : untilText(r.dueAt)}</span></div>
+            <div class="rem-acts">${r.done ? `<button class="btn ghost sm" data-del-rem="${r.id}">${ic("trash-2")}Delete</button>` : `<button class="btn sm" data-rem-done="${r.id}">${ic("check")}Done</button>${r.fired ? `<button class="btn ghost sm" data-rem-snooze="${r.id}">${ic("alarm-clock")}In 10 minutes</button>` : ""}<button class="btn ghost sm" data-edit-rem="${r.id}">${ic("pencil")}Change</button><button class="pill icon-only" data-del-rem="${r.id}" aria-label="Delete">${ic("trash-2")}</button>`}</div></div>`).join("")
+          : `<div class="panel empty">${ic(done ? "check" : "alarm-clock")}<h3>${done ? "Nothing marked as done yet" : "No reminders coming up"}</h3><p>${done ? "Reminders move here when you mark them as done." : "Set one above. It will pop up on time, wherever you are signed in."}</p></div>`}</div></div>`;
+    },
+    after(parts, qs, list) {
+      wirePopButtons($("#main"), {});
+      $$("[data-del-rem]").forEach((b) => (b.onclick = async () => {
+        const card = b.closest(".rem"); card.classList.add("leaving");
+        try { await API.del("/reminders/" + b.dataset.delRem); setTimeout(render, 260); pollAlerts(); scheduleDue(); } catch (e) { card.classList.remove("leaving"); fail(e); }
+      }));
+      $$("[data-edit-rem]").forEach((b) => (b.onclick = () => editReminder(list.find((r) => r.id === b.dataset.editRem))));
+      const f = $("#remForm"); if (!f) return;
+      $$("[data-when]").forEach((c) => (c.onclick = () => {
+        const d = new Date(), v = c.dataset.when;
+        if (v === "eve") { d.setHours(18, 0, 0, 0); if (d < new Date()) d.setDate(d.getDate() + 1); }
+        else if (v === "tom") { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); }
+        else d.setMinutes(d.getMinutes() + +v, 0, 0);
+        $("#remDate").value = localDate(d); $("#remTime").value = localTime(d);
+        $$("[data-when]").forEach((x) => x.classList.toggle("on", x === c));
+        tip(`It will ring ${d.toLocaleString("en-GB", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.`, "alarm-clock", { anchor: c });
+      }));
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const err = $("#remErr"); err.textContent = "";
+        const subject = $("#remSubject").value.trim(), due = remDue();
+        if (!subject) return (err.textContent = "Give the reminder a subject.");
+        if (!due) return (err.textContent = "Choose a date and a time.");
+        const btn = $("#remBtn"); busy(btn, true, "Saving");
+        try {
+          await API.post("/reminders", { subject, description: $("#remDesc").value.trim(), dueAt: due.toISOString() });
+          toast("Reminder saved", "alarm-clock");
+          askSystemAlerts(); scheduleDue(); pollAlerts();
+          render();
+        } catch (ex) { busy(btn, false); err.textContent = ex.message; }
+      };
+    }
+  };
+  function editReminder(r) {
+    const d = new Date(r.dueAt);
+    modal("pencil", "Change reminder", `<form id="erForm"><div class="field"><label for="erS">Subject</label><input id="erS" required maxlength="200" value="${esc(r.subject)}"></div>
+      <div class="field"><label for="erD">Description</label><textarea id="erD" maxlength="2000" rows="3">${esc(r.description)}</textarea></div>
+      <div class="grid g2"><div class="field"><label for="erDate">Date</label><input id="erDate" type="date" required value="${localDate(d)}"></div><div class="field"><label for="erTime">Time</label><input id="erTime" type="time" required value="${localTime(d)}"></div></div>
+      <div class="err" id="erErr"></div><button class="btn" id="erBtn">${ic("check")}Save changes</button></form>`, () => {
+      $("#erForm").onsubmit = async (e) => {
+        e.preventDefault(); const btn = $("#erBtn"); busy(btn, true, "Saving");
+        const when = new Date(`${$("#erDate").value}T${$("#erTime").value}`);
+        if (!$("#erS").value.trim() || isNaN(when)) { busy(btn, false); $("#erErr").textContent = "Fill in the subject, date and time."; return; }
+        try { await API.patch("/reminders/" + r.id, { subject: $("#erS").value.trim(), description: $("#erD").value.trim(), dueAt: when.toISOString() }); closeModal(); toast("Reminder saved", "alarm-clock"); scheduleDue(); pollAlerts(); render(); }
+        catch (ex) { busy(btn, false); $("#erErr").textContent = ex.message; }
+      };
+    });
+  }
+
+  /* ----- My enquiries and the team's replies ----- */
+  ROUTES.enquiries = {
+    title: "Enquiries",
+    bg: "message-circle",
+    load() { return API.get("/messages/mine"); },
+    html(parts, qs, res) {
+      COUNTS.enq = 0; setTimeout(updateBadges);
+      return `<div class="stage narrow">${head("Your enquiries", "Questions you've sent to the research team, and their replies. Replies also arrive by email.", true)}
+        ${orbRow([{ icon: "mail", label: "Ask something", desc: "Write to the research team.", go: "#/contact", primary: true }])}
+        <div class="grid" style="gap:14px">${res.items.length ? res.items.map((m) => `<div class="panel enq ${m.new ? "fresh" : ""}">
+          <div class="row"><span class="li-ic">${ic(m.reply ? "reply" : "hourglass")}</span><b class="enq-s">${esc(m.subject)}</b><span class="spacer"></span><span class="small muted">${date(m.createdAt)}</span></div>
+          <p class="enq-q">${esc(m.body)}</p>
+          ${m.reply ? `<div class="enq-a"><p class="small muted">${m.new ? `<span class="new-tag">New</span> ` : ""}Reply from the research team, ${dateTime(m.repliedAt)}</p><p>${esc(m.reply)}</p></div>` : `<p class="small muted waiting">${ic("hourglass")}Waiting for a reply. You'll get a notification and an email.</p>`}</div>`).join("")
+          : `<div class="panel empty">${ic("message-circle")}<h3>No enquiries yet</h3><p>Questions you send from Contact appear here with the team's reply.</p></div>`}</div></div>`;
+    },
+    after(parts, qs, res) { if (res.unseen) { celebrate(); tip(`${res.unseen} new ${res.unseen === 1 ? "reply" : "replies"} from the research team.`, "reply"); } }
   };
 
   /* ----- About ----- */
@@ -1189,7 +1635,7 @@
       $("#inForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#lbtn"); busy(btn, true, "Signing in"); $("#lerr").textContent = "";
         try { await API.login($("#le").value.trim(), $("#lp").value); signedIn(); }
-        catch (ex) { busy(btn, false); $("#lerr").textContent = ex.message; }
+        catch (ex) { busy(btn, false); $("#lerr").textContent = ex.message; UI.fails = (UI.fails || 0) + 1; if (UI.fails >= 2 && ex.status === 401) tip("Having trouble? Use \"Forgot your password?\" just below, and we'll email you a link.", "key-round", { anchor: $("#forgot"), once: "forgot" }); }
       };
       $("#upForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#ubtn"); busy(btn, true, "Creating account"); $("#uerr").textContent = "";
@@ -1213,7 +1659,9 @@
     const u = me(); VOCAB = null; FACETS = null;
     toast(`Welcome, ${u.name.split(" ")[0]}`, "life-buoy");
     const back = UI.afterLogin; UI.afterLogin = null;
-    const target = back && !/^#\/(login|reset-password)/.test(back) ? back : "#/home";
+    // One sign-in for everyone: the account decides where you land.
+    const target = back && !/^#\/(login|reset-password)/.test(back) ? back : (isStaff() ? "#/admin" : "#/home");
+    alertsReset(true); scheduleDue();
     if (location.hash === target) render(); else go(target);
   }
   ROUTES["reset-password"] = {
@@ -1648,20 +2096,39 @@
       COUNTS.unread = res.unread;
       const f = qs.get("f") || "";
       const link = (n) => `#/admin/messages?${f ? "f=" + f + "&" : ""}page=${n}`;
-      return `${head("Messages", "From the contact form.", true)}
+      return `${head("Messages", "From the contact form. Open one to read it and reply.", true)}
         ${orbRow([dash,
           { icon: "inbox", label: "All", desc: "Every message.", go: "#/admin/messages", on: !f },
           { icon: "bell", label: "Unread", desc: "Messages nobody has read yet.", go: "#/admin/messages?f=unread", on: f === "unread", badge: res.unread || "" }
         ])}
-        <div class="grid" style="gap:12px">${res.items.length ? res.items.map((m) => `<div class="panel" style="${m.read ? "" : "border-color:var(--blue-2)"}"><div class="row"><span class="li-ic">${ic(m.read ? "mail" : "bell")}</span><b style="color:#fff">${esc(m.subject)}</b><span class="spacer"></span><span class="small muted">${dateTime(m.createdAt)}</span></div>
-          <p class="small muted" style="margin:8px 0">${esc(m.name)}, ${esc(m.email)}</p><p style="white-space:pre-line">${esc(m.body)}</p>
-          <div class="actions"><button class="btn ghost sm" data-read="${m.id}" data-to="${!m.read}">${ic(m.read ? "bell" : "check")}${m.read ? "Mark as unread" : "Mark as read"}</button><a class="btn sm" href="mailto:${encodeURIComponent(m.email)}?subject=${encodeURIComponent("Re: " + m.subject)}">${ic("mail")}Reply by email</a><button class="btn ghost sm" data-del="${m.id}">${ic("trash-2")}Delete</button></div></div>`).join("") : `<div class="panel empty">${ic("inbox")}<h3>No messages</h3></div>`}</div>
+        <div class="grid" style="gap:12px">${res.items.length ? res.items.map((m) => `<div class="panel msg ${m.read ? "" : "unread"} ${qs.get("open") === m.id ? "open" : ""}" data-msg="${m.id}" data-read-now="${m.read}">
+          <button class="msg-head" type="button" aria-expanded="${qs.get("open") === m.id}"><span class="li-ic">${ic(m.reply ? "reply" : m.read ? "mail" : "bell")}</span><span class="msg-t"><b>${esc(m.subject)}</b><span class="small muted">${esc(m.name)}${m.userId ? " (member)" : ""}, ${dateTime(m.createdAt)}</span></span>${m.reply ? `<span class="st st-approved">Replied</span>` : m.read ? "" : `<span class="st st-pending">New</span>`}${ic("chevron-down", "msg-chev")}</button>
+          <div class="msg-body"><p class="small muted" style="margin:8px 0">${esc(m.email)}</p><p style="white-space:pre-line">${esc(m.body)}</p>
+          ${m.reply ? `<div class="enq-a"><p class="small muted">Your team's reply, ${dateTime(m.repliedAt)}</p><p style="white-space:pre-line">${esc(m.reply)}</p></div>` : `<form class="reply-form" data-reply="${m.id}"><div class="field"><label for="rp-${m.id}">Reply</label><textarea id="rp-${m.id}" required minlength="2" maxlength="5000" rows="4" placeholder="Write your reply. It is emailed to ${esc(m.email)}${m.userId ? " and shown under their Enquiries" : ""}."></textarea></div><div class="err" role="alert"></div><button class="btn sm">${ic("reply")}Send reply</button></form>`}
+          <div class="actions"><button class="btn ghost sm" data-read="${m.id}" data-to="${!m.read}">${ic(m.read ? "bell" : "check")}${m.read ? "Mark as unread" : "Mark as read"}</button><button class="btn ghost sm" data-del="${m.id}">${ic("trash-2")}Delete</button></div></div></div>`).join("") : `<div class="panel empty">${ic("inbox")}<h3>No messages</h3></div>`}</div>
         ${pager(res.page, res.pages, link)}`;
     },
-    after() {
-      $$("[data-read]").forEach((b) => (b.onclick = async () => { try { await API.patch("/messages/" + b.dataset.read, { read: b.dataset.to === "true" }); render(); } catch (e) { fail(e); } }));
+    after(parts, qs) {
+      const open = async (card, on) => {
+        card.classList.toggle("open", on); $(".msg-head", card).setAttribute("aria-expanded", on);
+        if (on && card.dataset.readNow === "false") {
+          card.dataset.readNow = "true"; card.classList.remove("unread");
+          try { await API.patch("/messages/" + card.dataset.msg, { read: true }); COUNTS.enq = Math.max(0, COUNTS.enq - 1); COUNTS.unread = COUNTS.enq; updateBadges(); renderDock(parse().parts, parse().q); } catch (e) {}
+          const tag = $(".st-pending", card); if (tag) tag.remove();
+        }
+        if (on && $(".reply-form textarea", card)) setTimeout(() => tip("Write your reply here. It goes by email, and members also see it in the app.", "reply", { anchor: $(".reply-form textarea", card), once: "reply-help" }), 500);
+      };
+      $$(".msg").forEach((card) => { $(".msg-head", card).onclick = () => open(card, !card.classList.contains("open")); if (card.classList.contains("open")) { open(card, true); card.scrollIntoView({ block: "center" }); } });
+      $$("[data-reply]").forEach((f) => (f.onsubmit = async (e) => {
+        e.preventDefault(); const btn = $("button", f), err = $(".err", f), text = $("textarea", f).value.trim();
+        if (text.length < 2) return (err.textContent = "Write a reply first.");
+        busy(btn, true, "Sending");
+        try { await API.post(`/messages/${f.dataset.reply}/reply`, { reply: text }); toast("Reply sent", "reply"); pollAlerts(); render(); }
+        catch (ex) { busy(btn, false); err.textContent = ex.message; }
+      }));
+      $$("[data-read]").forEach((b) => (b.onclick = async () => { try { await API.patch("/messages/" + b.dataset.read, { read: b.dataset.to === "true" }); pollAlerts(); render(); } catch (e) { fail(e); } }));
       $$("[data-del]").forEach((b) => (b.onclick = () => modal("trash-2", "Delete this message?", `<p class="muted">It is removed permanently.</p><div class="row"><button class="btn danger" id="dmok">${ic("trash-2")}Delete</button><button class="btn ghost" data-close>Cancel</button></div>`, () => {
-        $("#dmok").onclick = async () => { try { await API.del("/messages/" + b.dataset.del); closeModal(); toast("Message deleted", "trash-2"); render(); } catch (e) { closeModal(); fail(e); } };
+        $("#dmok").onclick = async () => { try { await API.del("/messages/" + b.dataset.del); closeModal(); toast("Message deleted", "trash-2"); pollAlerts(); render(); } catch (e) { closeModal(); fail(e); } };
       })));
     }
   };
@@ -1701,9 +2168,10 @@
 
   /* ---------- Boot ---------- */
   if (APP_MODE) document.documentElement.classList.add("app-mode");
-  API.onSignedOut = () => { toast("Your session ended. Sign in again.", "lock"); };
+  API.onSignedOut = () => { toast("Your session ended. Sign in again.", "lock"); alertsReset(true); };
   (async () => {
     await API.refresh(); // restores the session from the secure cookie, if there is one
     render();
+    if (me()) { alertsReset(false); scheduleDue(); }
   })();
 })();

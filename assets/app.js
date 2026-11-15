@@ -735,12 +735,8 @@
             <div class="field"><label for="up">Password</label><input id="up" type="password" minlength="8" required><div class="hint">At least 8 characters.</div></div>
             <button class="btn" style="width:100%">${ic("user-plus")}Create account</button></form>
         </div>
-        <p class="center muted small" style="margin:28px 0 0">Prototype demo accounts</p>
-        <div class="orbs" style="margin-top:12px">
-          ${orb({ icon: "user", label: "Researcher", desc: "Signs in as Peter, a normal user.", act: () => demo("researcher@demo.ke") })}
-          ${orb({ icon: "user-round-cog", label: "Admin", desc: "Signs in as Grace, a research team admin.", act: () => demo("admin@demo.ke"), n: 1 })}
-          ${seeMoreOrb(2)}
-        </div></div>`;
+        <p class="center muted small" style="margin:20px 0 0">One sign-in for everyone: the archive knows from your account whether you are a member or on the research team, and opens the right dashboard.<br>Demo accounts: researcher@demo.ke / demo1234, admin@demo.ke / admin1234</p>
+        </div>`;
     },
     after() {
       $$("[data-tab]").forEach((b) => (b.onclick = () => { $$("[data-tab]").forEach((x) => x.classList.toggle("on", x === b)); $("#inForm").hidden = b.dataset.tab !== "in"; $("#upForm").hidden = b.dataset.tab !== "up"; }));
@@ -758,7 +754,7 @@
   function finish(u) {
     S.session = u.id; logAct("signed in"); const back = S.afterLogin; S.afterLogin = null; save(); UI.more = false;
     toast(`Welcome, ${u.name.split(" ")[0]}`, "life-buoy");
-    const target = back && back !== "#/login" ? back : "#/home";
+    const target = back && back !== "#/login" ? back : (u.role === "admin" ? "#/admin" : "#/home");
     if (location.hash === target) render(); else go(target);
   }
   function attempt(email, pw) {
@@ -768,7 +764,6 @@
     if (u.status === "suspended") { if (err) err.textContent = "This account is suspended. Contact the research team."; return; }
     finish(u);
   }
-  function demo(email) { const u = S.users.find((x) => x.email === email); if (u) attempt(u.email, u.password); }
 
   /* ----- My account ----- */
   ROUTES.profile = {

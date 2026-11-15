@@ -12,6 +12,7 @@ import { User } from './database/entities';
 import { HealthController } from './health/health.controller';
 import { MediaModule } from './media/media.module';
 import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { RecordsModule } from './records/records.module';
 import { ReportsModule } from './reports/reports.module';
 import { SubmissionsModule } from './submissions/submissions.module';
@@ -23,7 +24,7 @@ import { VocabModule } from './vocab/vocab.module';
     TypeOrmModule.forRootAsync({ useFactory: () => dataSourceOptions() }),
     TypeOrmModule.forFeature([User]),
     ThrottlerModule.forRoot([{ ...DEFAULT_LIMIT, limit: DEFAULT_LIMIT.limit * config.rateLimitScale }]),
-    ActivityModule, AuthModule, UsersModule, VocabModule, RecordsModule, MediaModule, SubmissionsModule, MessagesModule, ReportsModule,
+    ActivityModule, AuthModule, NotificationsModule, UsersModule, VocabModule, RecordsModule, MediaModule, SubmissionsModule, MessagesModule, ReportsModule,
   ],
   controllers: [HealthController],
   providers: [

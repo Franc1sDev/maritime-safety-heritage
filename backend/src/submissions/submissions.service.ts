@@ -8,6 +8,7 @@ import { pageOf } from '../common/pagination';
 import { buildSearchText } from '../common/search-text';
 import { ArchiveRecord, MediaFile, RecordFormat, Submission, isStaff } from '../database/entities';
 import { MediaService } from '../media/media.service';
+import { NotificationsService } from '../notifications/notifications.module';
 import { TYPE_LABELS, VocabService } from '../vocab/vocab.service';
 import { SubmissionInputDto, SubmissionQuery } from './submission.dto';
 
@@ -22,6 +23,7 @@ export class SubmissionsService {
     private readonly vocab: VocabService,
     private readonly activity: ActivityService,
     private readonly mail: MailService,
+    private readonly notes: NotificationsService,
   ) {}
 
   private async view(s: Submission, withSubmitter = false) {
@@ -60,6 +62,17 @@ export class SubmissionsService {
     const fresh = await this.subs.findOneByOrFail({ id: saved.id });
     await this.activity.record({ actor: user, action: 'submission.create', entityType: 'submission', entityId: saved.id,
       summary: `${user.name} shared ${fresh.reference} "${fresh.title}"`, details: { files: stored.length }, ip: meta.ip });
+    await this.notes.notify([user.id], {
+      kind: 'submission', title: `Thank you. ${fresh.reference} is waiting for review`,
+      summary: 'The research team will look at it soon. You will get a notification here (and an email) when they decide.',
+      body: `"${fresh.title}" and ${stored.length} file${stored.length === 1 ? '' : 's'} arrived safely. The research team checks every contribution before it joins the archive. You can follow its status under My contributions.`,
+      link: '#/submit',
+    });
+    const staff = (await this.notes.staffIds()).filter((id) => id !== user.id);
+    await this.notes.notify(staff, {
+      kind: 'review', title: `Review ${fresh.reference}`, summary: `${user.name} shared "${fresh.title}"`,
+      body: fresh.description.slice(0, 1200), link: '#/admin/submissions', actionKey: `review:${fresh.id}`, actionLabel: 'Review it',
+    });
     return this.view(fresh);
   }
 
@@ -116,6 +129,11 @@ export class SubmissionsService {
       summary: `Approved ${s.reference}; catalogue it as ${record.identifier}`, details: { recordId }, ip: meta.ip });
     await this.mail.send(s.submittedBy.email, `Your submission ${s.reference} was accepted`,
       `Hello ${s.submittedBy.name},\n\nThank you. "${s.title}" has been accepted into the Maritime Safety Heritage Archive. The research team will catalogue it before it is published.${note ? `\n\nNote from the team: ${note}` : ''}\n`);
+    await this.notes.complete(`review:${s.id}`);
+    await this.notes.notify([s.submittedById], {
+      kind: 'accepted', title: `${s.reference} was accepted`, summary: `"${s.title}" is joining the archive. The team will catalogue it before it is published.`,
+      body: note ? `Note from the team: ${note}` : '', link: '#/submit',
+    });
     return { submission: await this.get(s.id, user), recordId, recordIdentifier: record.identifier };
   }
 
@@ -126,6 +144,10 @@ export class SubmissionsService {
     await this.activity.record({ actor: user, action: 'submission.reject', entityType: 'submission', entityId: s.id, summary: `Declined ${s.reference}`, ip: meta.ip });
     await this.mail.send(s.submittedBy.email, `About your submission ${s.reference}`,
       `Hello ${s.submittedBy.name},\n\nThank you for sharing "${s.title}". The research team could not add it to the archive this time.\n\nReason: ${note}\n`);
+    await this.notes.complete(`review:${s.id}`);
+    await this.notes.notify([s.submittedById], {
+      kind: 'declined', title: `About ${s.reference}`, summary: `The team could not add "${s.title}" this time.`, body: `Reason: ${note}`, link: '#/submit',
+    });
     return this.get(s.id, user);
   }
 }
