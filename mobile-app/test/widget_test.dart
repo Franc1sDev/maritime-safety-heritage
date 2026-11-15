@@ -22,4 +22,20 @@ void main() {
     expect(r.media.single.isAudio, isTrue);
     expect(r.transcript.single.text, 'Hello');
   });
+
+  test('reads notifications, reminders and replies', () {
+    final n = Note.fromJson({
+      'id': 'n1', 'kind': 'reminder', 'title': 'Reminder: Call the beach unit', 'summary': 'Ask about lifejackets', 'body': 'Ask about lifejackets at Dunga beach',
+      'link': '#/reminders', 'requiresAction': true, 'actionKey': 'reminder:r1', 'actionLabel': 'Mark as done', 'viewed': false, 'done': false,
+      'createdAt': '2026-11-15T15:00:00Z',
+    });
+    expect(n.target, 'r1');
+    expect(n.requiresAction, isTrue);
+    expect(n.hasMore, isTrue);
+    final r = Reminder.fromJson({'id': 'r1', 'subject': 'Call', 'description': '', 'dueAt': '2026-11-15T16:00:00Z', 'fired': true, 'done': false});
+    expect(r.fired && !r.done, isTrue);
+    final m = Message.fromJson({'id': 'm1', 'subject': 'Hours', 'body': 'When?', 'reply': 'Monday to Friday', 'new': true});
+    expect(m.reply, 'Monday to Friday');
+    expect(m.isNew, isTrue);
+  });
 }

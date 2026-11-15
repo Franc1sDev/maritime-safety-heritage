@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'alerts.dart';
+
 import 'main.dart';
 import 'motion.dart';
 import 'ui.dart';
@@ -75,6 +77,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _form = GlobalKey<FormState>();
   String? _err;
   bool _hide = true, _busy = false;
+  int _fails = 0;
   static final _pwRule = RegExp(r'^(?=.*[A-Za-z])(?=.*\d).{8,128}$');
 
   Future<void> _submit() async {
@@ -90,10 +93,14 @@ class _SignInScreenState extends State<SignInScreen> {
       }
       if (!mounted) return;
       toast(context, 'Welcome, ${s.me!.first}', Icons.support_rounded);
-      Nav.tab.value = 0;
+      // One sign-in for everyone: the account decides where you land.
+      Nav.tab.value = s.isStaff ? 4 : 0;
       Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
       if (mounted) setState(() { _busy = false; _err = errText(e); });
+      if (!_create && e is ApiError && e.status == 401 && ++_fails >= 2) {
+        tip('Having trouble? Press "Forgot your password?" below and we will email you a link.', Icons.key_outlined, 'forgot');
+      }
     }
   }
 
@@ -236,6 +243,7 @@ class _ContactScreenState extends State<ContactScreen> {
       if (!mounted) return;
       toast(context, '${r['message']}', Icons.mail_outline_rounded);
       Navigator.of(context).pop();
+      if (s.me != null && !s.isAdmin) tip('Sent. When the team replies, the chat button at the top shows a number.', Icons.chat_bubble_outline_rounded);
     } catch (e) {
       if (mounted) { setState(() => _busy = false); toast(context, errText(e), Icons.error_outline_rounded); }
     }

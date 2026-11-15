@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'main.dart';
 import 'screens_main.dart';
@@ -783,15 +782,17 @@ class _UsersScreenState extends State<UsersScreen> {
 // Messages
 // ---------------------------------------------------------------------------
 class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({super.key});
+  /// Opens the reply box for this message straight away (from a "Read and reply" to-do).
+  final String? openId;
+  const MessagesScreen({super.key, this.openId});
   @override
   State<MessagesScreen> createState() => _MessagesScreenState();
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  bool _unreadOnly = false;
+  bool _unreadOnly = false, _opened = false;
   Key _key = UniqueKey();
-  void _refresh() { setState(() => _key = UniqueKey()); AppScope.read(context).refreshCounts(); }
+  void _refresh() { setState(() => _key = UniqueKey()); AppScope.read(context).refreshCounts(); AppScope.read(context).alerts.poll(); }
 
   Future<void> _mark(Message m, bool read) async {
     try { await AppScope.read(context).api.patch('/messages/${m.id}', {'read': read}); _refresh(); }
@@ -805,6 +806,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
     catch (e) { if (mounted) toast(context, errText(e), Icons.error_outline_rounded); }
   }
 
+  /// Reply in the app: it is emailed to the sender, and members also see it under Enquiries.
+  Future<void> _reply(Message m) async {
+    final s = AppScope.read(context);
+    if (!m.read) { try { await s.api.patch('/messages/${m.id}', {'read': true}); } catch (_) {} }
+    if (!mounted) return;
+    final c = TextEditingController();
+    String? err;
+    var busy = false;
+    final sent = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, set) => AlertDialog(
+      icon: const CircleIcon(Icons.reply_rounded, size: 52),
+      title: Text('Re: ${m.subject}'),
+      content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('${m.name} wrote:', style: const TextStyle(color: C.muted, fontSize: 12.5)),
+        const SizedBox(height: 4),
+        Text(m.body),
+        const SizedBox(height: 14),
+        TextField(controller: c, autofocus: true, minLines: 4, maxLines: 10, textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(labelText: 'Your reply', alignLabelWithHint: true, errorText: err,
+                helperText: 'Emailed to ${m.email}${m.userId != null ? ' and shown in their app' : ''}.', helperMaxLines: 2)),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        FilledButton.icon(onPressed: busy ? null : () async {
+          if (c.text.trim().length < 2) { set(() => err = 'Write a reply first.'); return; }
+          set(() { busy = true; err = null; });
+          try { await s.api.post('/messages/${m.id}/reply', {'reply': c.text.trim()}); if (ctx.mounted) Navigator.pop(ctx, true); }
+          catch (e) { set(() { busy = false; err = errText(e); }); }
+        }, icon: const Icon(Icons.send_rounded), label: Text(busy ? 'Sending' : 'Send reply')),
+      ],
+    )));
+    if (!mounted) return;
+    if (sent == true) toast(context, 'Reply sent', Icons.reply_rounded);
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
@@ -813,26 +849,47 @@ class _MessagesScreenState extends State<MessagesScreen> {
       background: const PageBg(Icons.mail_outline_rounded),
       body: Column(children: [
         Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 6), child: Column(children: [
-          const PageTitle('Messages', sub: 'From the contact form.'),
+          const PageTitle('Messages', sub: 'From the contact form. Reply here: it is emailed to the sender.'),
           const SizedBox(height: 10),
           SegmentedButton<bool>(segments: const [ButtonSegment(value: false, label: Text('All')), ButtonSegment(value: true, label: Text('Unread'))],
               selected: {_unreadOnly}, showSelectedIcon: false, onSelectionChanged: (v) { _unreadOnly = v.first; _refresh(); }),
         ])),
         Expanded(child: _PagedList<Message>(
           key: _key,
-          load: (page) async => PageOf.fromJson(await s.api.get('/messages', {'filter': _unreadOnly ? 'unread' : '', 'page': page, 'pageSize': 20}), Message.fromJson),
+          load: (page) async {
+            final p = PageOf.fromJson(await s.api.get('/messages', {'filter': _unreadOnly ? 'unread' : '', 'page': page, 'pageSize': 20}), Message.fromJson);
+            final want = widget.openId;
+            if (!_opened && want != null) {
+              final m = p.items.where((x) => x.id == want).firstOrNull;
+              if (m != null) { _opened = true; WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted && m.reply == null) _reply(m); }); }
+            }
+            return p;
+          },
           empty: 'No messages.',
           item: (m) => Padding(padding: const EdgeInsets.fromLTRB(8, 0, 8, 12), child: Glass(border: m.read ? null : C.blue2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [Icon(m.read ? Icons.mail_outline_rounded : Icons.notifications_active_outlined, color: C.sky), const SizedBox(width: 8),
-              Expanded(child: Text(m.subject, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)))]),
+            Row(children: [Icon(m.reply != null ? Icons.reply_rounded : m.read ? Icons.mail_outline_rounded : Icons.notifications_active_outlined, color: C.sky), const SizedBox(width: 8),
+              Expanded(child: Text(m.subject, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+              if (m.reply != null) const StatusChip('replied') else if (!m.read) const StatusChip('new')]),
             const SizedBox(height: 4),
-            Text('${m.name}, ${m.email}\n${fmtDateTime(m.createdAt)}', style: const TextStyle(color: C.muted, fontSize: 12.5)),
+            Text('${m.name}${m.userId != null ? ' (member)' : ''}, ${m.email}\n${fmtDateTime(m.createdAt)}', style: const TextStyle(color: C.muted, fontSize: 12.5)),
             const SizedBox(height: 8),
             Text(m.body),
+            if (m.reply != null) Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: C.blue.withValues(alpha: .16), borderRadius: BorderRadius.circular(14), border: Border.all(color: C.blue2.withValues(alpha: .6))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Your team replied, ${fmtDateTime(m.repliedAt)}', style: const TextStyle(color: C.muted, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(m.reply!),
+              ]),
+            ),
             const SizedBox(height: 8),
             Wrap(spacing: 4, children: [
+              if (m.reply == null) FilledButton.icon(onPressed: () => _reply(m), icon: const Icon(Icons.reply_rounded, size: 18), label: const Text('Reply'),
+                  style: const ButtonStyle(minimumSize: WidgetStatePropertyAll(Size(0, 38)))),
               TextButton.icon(onPressed: () => _mark(m, !m.read), icon: Icon(m.read ? Icons.mark_email_unread_outlined : Icons.done_rounded), label: Text(m.read ? 'Mark unread' : 'Mark read')),
-              TextButton.icon(onPressed: () => launchUrl(Uri(scheme: 'mailto', path: m.email, queryParameters: {'subject': 'Re: ${m.subject}'})), icon: const Icon(Icons.reply_rounded), label: const Text('Reply')),
               TextButton.icon(onPressed: () => _delete(m), icon: const Icon(Icons.delete_outline_rounded), label: const Text('Delete')),
             ]),
           ]))),

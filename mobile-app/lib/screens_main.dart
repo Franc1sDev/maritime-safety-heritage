@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import 'alerts.dart';
 import 'main.dart';
 import 'motion.dart';
 import 'screens_admin.dart';
@@ -833,6 +834,7 @@ class _ShareScreenState extends State<ShareScreen> {
   Future<void> _attach() async {
     final picked = await pickFiles(context);
     if (!mounted || picked.isEmpty) return;
+    fileTip(picked);
     setState(() {
       _files.addAll(picked);
       if (_files.length > 5) { _files.removeRange(5, _files.length); toast(context, 'Up to 5 files can be sent at once.', Icons.info_outline_rounded); }
@@ -853,6 +855,8 @@ class _ShareScreenState extends State<ShareScreen> {
       }, _files, onProgress: (p) { if (mounted) setState(() => _progress = p); }) as Map<String, dynamic>;
       if (!mounted) return;
       toast(context, 'Sent as ${res['reference']}. The research team will review it.');
+      tip('${res['reference']} is with the research team. Sit tight while they review it: you will get a notification when they decide.', Icons.hourglass_top_rounded);
+      s.alerts.poll();
       setState(() { _type = null; _title.clear(); _year.clear(); _place.clear(); _desc.clear(); _files.clear(); _water = null; _consent = false; _busy = false; _progress = null; });
     } catch (e) {
       if (mounted) { setState(() { _busy = false; _progress = null; }); toast(context, errText(e), Icons.error_outline_rounded); }
@@ -947,6 +951,9 @@ void mySubmissions(BuildContext context) {
         ]),
       ));
 }
+
+/// Change password (also opened from the "choose your own password" to-do).
+void changePasswordDialog(BuildContext context) => const AccountScreen()._password(context);
 
 // ---------------------------------------------------------------------------
 // My account

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
+import 'alerts.dart';
 import 'motion.dart';
 import 'screens_admin.dart';
 import 'screens_main.dart';
@@ -29,9 +30,10 @@ class HeritageApp extends StatelessWidget {
       title: 'Maritime Heritage',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
+      navigatorKey: appNavigator,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(s.largeText ? 1.15 : 1)),
-        child: CoachLayer(child: child!),
+        child: AlertsLayer(child: CoachLayer(child: child!)),
       ),
       home: !s.ready
           ? const Scaffold(body: Center(child: LoadingView(text: 'Opening the archive')))
@@ -71,6 +73,7 @@ class AppPage extends StatelessWidget {
         ]),
         actions: [
           if (u != null) ...[
+            const AlertButtons(),
             Tooltip(message: 'My account', child: InkWell(
               borderRadius: BorderRadius.circular(99),
               onTap: () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4),
@@ -78,8 +81,10 @@ class AppPage extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   CircleAvatar(radius: 16, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
-                  const SizedBox(width: 8),
-                  Text(u.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  if (MediaQuery.of(context).size.width > 380) ...[
+                    const SizedBox(width: 8),
+                    Text(u.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ],
                 ]),
               ),
             )),
@@ -92,7 +97,14 @@ class AppPage extends StatelessWidget {
       ),
       body: Stack(fit: StackFit.expand, children: [
         background,
-        SafeArea(child: body),
+        // Things still to do sit in a strip at the top; the page moves down to make room.
+        SafeArea(child: ListenableBuilder(
+          listenable: s.alerts,
+          builder: (_, child) => AnimatedPadding(
+            duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic,
+            padding: EdgeInsets.only(top: u != null && s.alerts.hasStrip ? 52 : 0), child: child),
+          child: body,
+        )),
         if (showMenu) const Positioned(left: 16, bottom: 18, child: SafeArea(child: MenuFab())),
       ]),
     );
@@ -146,6 +158,8 @@ List<NavEntry> navEntries(BuildContext context) {
     add('map', Icons.map_outlined, 'Incident map', 'See where each story happened, from Likoni to Lake Turkana.', () => Nav.goTab(context, 2));
     add('listen', Icons.headphones_outlined, 'Listen', 'Play oral histories in the voices of those who lived them.', () => Nav.goTab(context, 1, type: 'oral', setType: true));
     add('share', Icons.volunteer_activism_outlined, 'Share a story', 'Send a recording, photo or document to the research team.', () => Nav.goTab(context, 3));
+    add('reminders', Icons.alarm_rounded, 'Reminders', 'Set a reminder with a subject, a note, a date and a time.', () => push(context, const RemindersScreen()));
+    if (!u.isAdmin) add('enquiries', Icons.chat_bubble_outline_rounded, 'Enquiries', 'Your questions to the research team, and their replies.', () => push(context, const EnquiriesScreen()), badge: s.alerts.enquiries);
     if (u.isStaff) {
       add('admin', Icons.insert_chart_outlined_rounded, 'Dashboard', 'Usage, collection health and recent activity.', () => Nav.goTab(context, 4), primary: true);
       add('records', Icons.inventory_2_outlined, 'Records', 'Edit, publish, unpublish or restore catalogue records.', () => push(context, const RecordsAdminScreen()));

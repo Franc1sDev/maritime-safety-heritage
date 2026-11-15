@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -172,10 +175,243 @@ class Submission {
 class Message {
   final String id, name, email, subject, body;
   final bool read;
-  final DateTime? createdAt;
+  final DateTime? createdAt, repliedAt;
+  /// The research team's reply, once there is one.
+  final String? reply, userId;
+  /// For a member's own enquiries: a reply they haven't seen yet.
+  final bool isNew;
   Message.fromJson(Map<String, dynamic> j)
       : id = _s(j['id']), name = _s(j['name']), email = _s(j['email']), subject = _s(j['subject']), body = _s(j['body']),
-        read = j['read'] == true, createdAt = _dt(j['createdAt']);
+        read = j['read'] == true, createdAt = _dt(j['createdAt']), repliedAt = _dt(j['repliedAt']),
+        reply = j['reply'] as String?, userId = j['userId'] as String?, isNew = j['new'] == true;
+}
+
+/// Something to tell the person: news, or an action that stays until it's done.
+class Note {
+  final String id, kind, title, summary, body, link, actionLabel;
+  final String? actionKey;
+  final bool requiresAction, done;
+  bool viewed;
+  final DateTime? createdAt;
+  Note.fromJson(Map<String, dynamic> j)
+      : id = _s(j['id']), kind = _s(j['kind']), title = _s(j['title']), summary = _s(j['summary']), body = _s(j['body']), link = _s(j['link']),
+        actionLabel = _s(j['actionLabel']), actionKey = j['actionKey'] as String?, requiresAction = j['requiresAction'] == true,
+        done = j['done'] == true, viewed = j['viewed'] == true, createdAt = _dt(j['createdAt']);
+  /// The id of the thing the action is about (a reminder, a submission, a message).
+  String get target => (actionKey ?? '').split(':').last;
+  bool get hasMore => body.trim().isNotEmpty && body.trim() != summary.trim();
+}
+
+class Reminder {
+  final String id, subject, description;
+  final DateTime dueAt;
+  final DateTime? doneAt;
+  final bool fired, done;
+  Reminder.fromJson(Map<String, dynamic> j)
+      : id = _s(j['id']), subject = _s(j['subject']), description = _s(j['description']), dueAt = _dt(j['dueAt']) ?? DateTime.now(),
+        doneAt = _dt(j['doneAt']), fired = j['fired'] == true, done = j['done'] == true;
+}
+
+/// Notifications on the phone itself (Android alarms and iOS local notifications), so reminders ring
+/// on time even when the app is closed. Written in the app's own Android and iOS code (MainActivity.kt, AppDelegate.swift).
+class PhoneAlerts {
+  static const _ch = MethodChannel('msh/alerts');
+  static Future<bool> permission() async {
+    try { return await _ch.invokeMethod<bool>('permission') ?? false; } catch (_) { return false; }
+  }
+  static Future<void> schedule(String id, String title, String body, DateTime at) async {
+    try { await _ch.invokeMethod('schedule', {'id': id, 'title': title, 'body': body, 'at': at.millisecondsSinceEpoch}); } catch (_) {}
+  }
+  static Future<void> cancel(String id) async {
+    try { await _ch.invokeMethod('cancel', {'id': id}); } catch (_) {}
+  }
+}
+
+/// Keeps the bell and enquiries counts, pop-ups and to-dos up to date.
+/// - News pops up once, as a banner at the top of the screen.
+/// - A to-do pops up once per sign-in; put away, it stays pinned at the top until it is done.
+class Alerts extends ChangeNotifier {
+  Alerts(this._s);
+  final AppState _s;
+
+  int bell = 0, enquiries = 0;
+  /// The banner on screen now.
+  Note? showing;
+  /// The banner's to-do was just done: it says thank you before leaving.
+  bool showingThanks = false;
+  /// To-dos waiting at the top of the screen.
+  final pinned = <Note>[];
+  /// Done to-dos saying thank you on their way out.
+  final thanks = <Note>[];
+  /// The to-do that just flew up (it lands with a bounce).
+  String? justPinned;
+  final _queue = <Note>[];
+  final _shownFresh = <String>{};
+  Set<String> _centred = {};
+  Timer? _timer, _due;
+  bool _running = false;
+
+  bool get hasStrip => pinned.isNotEmpty || thanks.isNotEmpty;
+  String get _key => 'centred-${_s.me?.id ?? ''}';
+
+  void start({required bool freshLogin}) {
+    stop(notify: false);
+    _running = true;
+    _centred = freshLogin ? <String>{} : (_s._prefs.getStringList(_key) ?? const <String>[]).toSet();
+    if (freshLogin) _s._prefs.setStringList(_key, const []);
+    poll();
+    syncReminders();
+  }
+
+  void stop({bool notify = true}) {
+    _running = false;
+    _timer?.cancel(); _due?.cancel();
+    bell = 0; enquiries = 0; showing = null; showingThanks = false; justPinned = null;
+    pinned.clear(); thanks.clear(); _queue.clear(); _shownFresh.clear();
+    if (notify) notifyListeners();
+  }
+
+  /// The app went to the background: check less, and again as soon as it's back.
+  void pause() { _timer?.cancel(); }
+
+  Future<void> poll() async {
+    _timer?.cancel();
+    if (!_running || _s.me == null) return;
+    try {
+      final j = await _s.api.get('/notifications/summary') as Map<String, dynamic>;
+      if (_running) _apply(j);
+    } catch (_) {/* try again next round */}
+    if (_running) _timer = Timer(const Duration(seconds: 20), poll);
+  }
+
+  void _apply(Map<String, dynamic> j) {
+    bell = _i(j['unviewed']);
+    enquiries = _i(j['enquiries']);
+    if (_s.isAdmin) _s.unread = enquiries;
+    final actions = _list(j['actions']).map(Note.fromJson).toList();
+    final fresh = _list(j['fresh']).map(Note.fromJson).toList();
+    final open = actions.map((a) => a.id).toSet();
+    // Done since last time: thank you, then gone.
+    for (final p in pinned.where((p) => !open.contains(p.id)).toList()) {
+      pinned.remove(p);
+      thanks.add(p);
+      Timer(const Duration(milliseconds: 2200), () { thanks.remove(p); notifyListeners(); });
+    }
+    final sh = showing;
+    if (sh != null && sh.requiresAction && !open.contains(sh.id) && !showingThanks) {
+      showingThanks = true;
+      Timer(const Duration(milliseconds: 1700), () { if (showing?.id == sh.id) close(); });
+    }
+    for (final a in actions) {
+      if (pinned.any((p) => p.id == a.id) || showing?.id == a.id || _queue.any((q) => q.id == a.id)) continue;
+      if (_centred.contains(a.id)) { pinned.add(a); } else { _queue.add(a); }
+    }
+    for (final f in fresh) {
+      if (!_shownFresh.contains(f.id) && !_queue.any((q) => q.id == f.id)) _queue.add(f);
+    }
+    _next();
+    notifyListeners();
+  }
+
+  void _next() {
+    if (showing != null || _queue.isEmpty) return;
+    final n = _queue.removeAt(0);
+    showing = n;
+    showingThanks = false;
+    if (n.requiresAction) {
+      _centred.add(n.id);
+      _s._prefs.setStringList(_key, _centred.toList());
+    } else {
+      _shownFresh.add(n.id);
+    }
+    if (!n.viewed) {
+      n.viewed = true;
+      _s.api.post('/notifications/${n.id}/viewed').then((r) {
+        final m = r as Map<String, dynamic>;
+        bell = _i(m['unviewed']); enquiries = _i(m['enquiries']);
+        notifyListeners();
+      }).catchError((_) {});
+    }
+  }
+
+  /// Put the banner away: news goes; a to-do flies up to the top of the screen.
+  void dismiss() {
+    final n = showing;
+    if (n == null) return;
+    if (n.requiresAction && !showingThanks) {
+      if (!pinned.any((p) => p.id == n.id)) pinned.add(n);
+      justPinned = n.id;
+      Timer(const Duration(milliseconds: 900), () { justPinned = null; notifyListeners(); });
+    }
+    close();
+  }
+
+  void close() {
+    showing = null;
+    showingThanks = false;
+    notifyListeners();
+    Timer(const Duration(milliseconds: 450), () { _next(); notifyListeners(); });
+  }
+
+  /// Opens a pinned to-do in the banner again.
+  void reopen(Note n) {
+    if (showing != null) return;
+    pinned.removeWhere((p) => p.id == n.id);
+    showing = n;
+    showingThanks = false;
+    notifyListeners();
+  }
+
+  void seen(Map<String, dynamic> summary) {
+    bell = _i(summary['unviewed']);
+    enquiries = _i(summary['enquiries']);
+    notifyListeners();
+  }
+
+  void setEnquiries(int n) { if (enquiries != n) { enquiries = n; notifyListeners(); } }
+
+  void enquiriesSeen() { if (enquiries != 0) { enquiries = 0; notifyListeners(); } }
+
+  Future<void> reminderDone(String id) async {
+    await _s.api.post('/reminders/$id/done');
+    await PhoneAlerts.cancel(id);
+    await poll();
+  }
+
+  Future<void> reminderSnooze(String id, [int minutes = 10]) async {
+    await _s.api.post('/reminders/$id/snooze', {'minutes': minutes});
+    await syncReminders();
+    await poll();
+  }
+
+  /// Hands every upcoming reminder to the phone, and checks back the moment the next one is due.
+  Future<void> syncReminders() async {
+    _due?.cancel();
+    if (!_running) return;
+    try {
+      final list = (await _s.api.get('/reminders') as List).whereType<Map<String, dynamic>>().map(Reminder.fromJson).toList();
+      final upcoming = list.where((r) => !r.done && !r.fired).toList();
+      final keep = upcoming.map((r) => r.id).toSet();
+      for (final old in _s._prefs.getStringList('scheduled') ?? const <String>[]) {
+        if (!keep.contains(old)) await PhoneAlerts.cancel(old);
+      }
+      for (final r in upcoming) {
+        await PhoneAlerts.schedule(r.id, 'Reminder: ${r.subject}', r.description.isEmpty ? "It's time." : r.description, r.dueAt);
+      }
+      await _s._prefs.setStringList('scheduled', keep.toList());
+      if (upcoming.isNotEmpty) {
+        upcoming.sort((a, b) => a.dueAt.compareTo(b.dueAt));
+        final wait = upcoming.first.dueAt.difference(DateTime.now()) + const Duration(seconds: 1);
+        _due = Timer(wait.isNegative ? Duration.zero : wait, () { poll(); syncReminders(); });
+      }
+    } catch (_) {}
+  }
+
+  /// Signing out: the phone forgets this person's reminders.
+  Future<void> forgetReminders() async {
+    for (final id in _s._prefs.getStringList('scheduled') ?? const <String>[]) { await PhoneAlerts.cancel(id); }
+    await _s._prefs.setStringList('scheduled', const []);
+  }
 }
 
 class Activity {
@@ -209,6 +445,7 @@ class AppState extends ChangeNotifier {
   List<WaterBody> waterBodies = [];
   List<Subject> subjects = [];
   int pending = 0, unread = 0;
+  late final Alerts alerts = Alerts(this);
 
   bool get isAdmin => me?.isAdmin ?? false;
   bool get isStaff => me?.isStaff ?? false;
@@ -227,11 +464,12 @@ class AppState extends ChangeNotifier {
     }
     ready = true;
     notifyListeners();
-    if (me != null) refreshVocab();
+    if (me != null) { refreshVocab(); alerts.start(freshLogin: false); }
   }
 
   void _signedOutElsewhere() {
     me = null;
+    alerts.stop();
     notifyListeners();
   }
 
@@ -242,7 +480,7 @@ class AppState extends ChangeNotifier {
     if (!v.startsWith('http://') && !v.startsWith('https://')) v = 'http://$v';
     final u = Uri.tryParse(v);
     if (u == null || u.host.isEmpty) return "That doesn't look like a web address.";
-    if (me != null && v != server) await api.logout();
+    if (me != null && v != server) { await alerts.forgetReminders(); alerts.stop(); await api.logout(); }
     server = v;
     api = Api(v)..onSignedOut = _signedOutElsewhere;
     me = null;
@@ -260,15 +498,19 @@ class AppState extends ChangeNotifier {
     me = AppUser.fromJson(await api.login(email.trim(), password));
     notifyListeners();
     refreshVocab();
+    alerts.start(freshLogin: true);
   }
 
   Future<void> register(String name, String email, String password, String org) async {
     me = AppUser.fromJson(await api.register({'name': name.trim(), 'email': email.trim(), 'password': password, if (org.trim().isNotEmpty) 'organisation': org.trim()}));
     notifyListeners();
     refreshVocab();
+    alerts.start(freshLogin: true);
   }
 
   Future<void> signOut({bool everywhere = false}) async {
+    await alerts.forgetReminders();
+    alerts.stop();
     await api.logout(everywhere: everywhere);
     me = null;
     pending = 0;
@@ -277,6 +519,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> forgetSession() async {
+    await alerts.forgetReminders();
+    alerts.stop();
     await api.forget();
     me = null;
     notifyListeners();
@@ -302,6 +546,7 @@ class AppState extends ChangeNotifier {
       if (isAdmin) {
         final m = await api.get('/messages', {'filter': 'unread', 'pageSize': 1}) as Map<String, dynamic>;
         unread = _i(m['unread']);
+        alerts.setEnquiries(unread);
       }
       notifyListeners();
     } catch (_) {}
