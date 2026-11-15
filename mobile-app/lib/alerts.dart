@@ -860,7 +860,7 @@ class EnquiriesScreen extends StatelessWidget {
           if (unseen > 0) {
             tip('$unseen new ${unseen == 1 ? 'reply' : 'replies'} from the research team.', Icons.reply_rounded);
             final c = navContext;
-            if (c != null) celebrate(c);
+            if (c != null && c.mounted) celebrate(c);
           }
           return j;
         },
