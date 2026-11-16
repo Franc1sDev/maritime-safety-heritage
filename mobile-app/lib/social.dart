@@ -32,8 +32,8 @@ class _QuickSignInState extends State<QuickSignIn> {
     AppScope.read(context).providers().then((c) { if (mounted) setState(() => _cfg = c); }).catchError((_) {});
   }
 
-  Map<String, dynamic>? get _google => Platform.isAndroid ? _cfg?['google'] as Map<String, dynamic>? : null;
-  Map<String, dynamic>? get _apple => (Platform.isAndroid || Platform.isIOS) ? _cfg?['apple'] as Map<String, dynamic>? : null;
+  Map<String, dynamic>? get _google => Platform.isAndroid ? (_cfg?['google'] as Map<String, dynamic>?) : null;
+  Map<String, dynamic>? get _apple => (Platform.isAndroid || Platform.isIOS) ? (_cfg?['apple'] as Map<String, dynamic>?) : null;
 
   Future<void> _run(String provider, Future<(String, String?)?> Function() getToken) async {
     final s = AppScope.read(context);
@@ -123,9 +123,9 @@ class _QuickSignInState extends State<QuickSignIn> {
           ),
         if (_err != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(_err!, textAlign: TextAlign.center, style: const TextStyle(color: C.danger))),
         const SizedBox(height: 16),
-        const Row(children: [
+        Row(children: [
           Expanded(child: Divider(color: C.line)),
-          Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('or use your email', style: TextStyle(color: C.muted, fontSize: 12.5))),
+          const Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('or use your email', style: TextStyle(color: C.muted, fontSize: 12.5))),
           Expanded(child: Divider(color: C.line)),
         ]),
         const SizedBox(height: 16),
