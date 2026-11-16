@@ -144,7 +144,7 @@ People who only visit now and then can sign in with their Google or Apple accoun
 1. Open https://console.cloud.google.com with the project's Google account and create a project (for example *Maritime Heritage*).
 2. **Google Auth Platform, Branding:** app name *Maritime Safety Heritage Archive*, the support email, and the archive's logo. Under **Audience**, choose *External* and press **Publish app**. Only the basic profile and email are requested, so Google does not need to review it.
 3. **Clients, Create client, Web application:** add `https://<your domain>` (and `http://localhost:4000` for testing) under *Authorised JavaScript origins*. Copy the **Client ID**.
-4. **Clients, Create client, Android:** package name `ke.rememberingthewaters.maritime_heritage`, and the SHA-1 fingerprint of the app's signing key. Get it from the built app with `keytool -printcert -jarfile Maritime-Heritage.apk`. If the app is published on Google Play, also add the SHA-1 Play shows under *App signing*.
+4. **Clients, Create client, Android:** package name `ke.rememberingthewaters.maritime_heritage`, and the SHA-1 fingerprint of the app's signing key. For the release key in `mobile-app/keys` it is `4C:EE:6F:8C:63:66:06:28:32:7C:50:C0:AE:2A:5E:E7:83:1F:D9:81`. If the key ever changes, read the new one with `keytool -list -v -keystore <key file>`. If the app is published on Google Play, also add the SHA-1 Play shows under *App signing*.
 5. Set `GOOGLE_CLIENT_IDS` on the server to the web Client ID. To also accept tokens from other clients (for example an iOS client), add their ids after it, separated by commas.
 
 **Apple (needs the Apple Developer Program, USD 99 a year):**
