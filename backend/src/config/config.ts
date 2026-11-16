@@ -105,6 +105,8 @@ export const config = {
     user: process.env.SMTP_USER ?? '',
     password: process.env.SMTP_PASSWORD ?? '',
     from: process.env.MAIL_FROM ?? 'Maritime Safety Heritage Archive <no-reply@localhost>',
+    /** Sends email over HTTPS instead of SMTP (for hosts that block mail ports, such as Render's free plan). See docs/DEPLOYMENT.md. */
+    webhook: process.env.MAIL_WEBHOOK_URL ?? '',
     webBaseUrl: process.env.WEB_BASE_URL ?? 'http://localhost:4000',
   },
   /** The archive's official public address (no trailing slash), used for canonical links, the sitemap and emails. */

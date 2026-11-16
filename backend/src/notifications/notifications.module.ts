@@ -153,7 +153,7 @@ export class RemindersService implements OnApplicationBootstrap, OnApplicationSh
         kind: 'reminder', title: `Reminder: ${r.subject}`, summary: r.description ? r.description.slice(0, 160) : 'It is time.',
         body: r.description, link: '#/reminders', actionKey: `reminder:${r.id}`, actionLabel: 'Mark as done',
       });
-      if (config.mail.host) {
+      if (this.mail.enabled) {
         const [u]: { email: string; name: string }[] = await this.ds.query(`SELECT email, name FROM users WHERE id = $1 AND status = 'active'`, [r.userId]);
         if (u) await this.mail.send(u.email, `Reminder: ${r.subject}`, `Hello ${u.name},\n\n${r.subject}\n\n${r.description || ''}\n\nMark it as done in the archive: ${config.siteUrl}/#/reminders\n`);
       }
