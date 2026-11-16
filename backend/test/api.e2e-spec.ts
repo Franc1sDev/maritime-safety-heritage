@@ -539,7 +539,7 @@ describe('sign in with Google and Apple', () => {
     const again = await request(http).post('/api/v1/auth/oauth/google').send({ idToken: google({ sub: 'g-100', email: 'wanjiru@example.com' }) }).expect(200);
     expect(again.body.created).toBe(false);
     expect(again.body.user.id).toBe(first.body.user.id);
-    expect(again.headers['set-cookie']?.join(';')).toMatch(/msh_refresh=/);
+    expect(String(again.headers['set-cookie'] ?? '')).toMatch(/msh_refresh=/);
     // No password yet: they can set one without a current password, and close the account without one
     const t = first.body.accessToken;
     await request(http).post('/api/v1/auth/change-password').set(bearer(t)).send({ newPassword: 'harbour-lights9' }).expect(204);
