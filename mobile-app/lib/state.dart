@@ -145,9 +145,11 @@ class Rec {
 class AppUser {
   final String id, name, email, role, status, organisation;
   final DateTime? lastLoginAt, createdAt;
+  /// False for accounts made with Google or Apple until the person chooses a password.
+  final bool hasPassword;
   AppUser.fromJson(Map<String, dynamic> j)
       : id = _s(j['id']), name = _s(j['name']), email = _s(j['email']), role = _s(j['role'], 'user'), status = _s(j['status'], 'active'),
-        organisation = _s(j['organisation']), lastLoginAt = _dt(j['lastLoginAt']), createdAt = _dt(j['createdAt']);
+        organisation = _s(j['organisation']), lastLoginAt = _dt(j['lastLoginAt']), createdAt = _dt(j['createdAt']), hasPassword = j['hasPassword'] != false;
   bool get isAdmin => role == 'admin';
   /// Editors and admins catalogue, publish and review. Only admins manage people, messages and reports.
   bool get isStaff => role == 'admin' || role == 'editor';
@@ -482,6 +484,7 @@ class AppState extends ChangeNotifier {
     if (u == null || u.host.isEmpty) return "That doesn't look like a web address.";
     if (me != null && v != server) { await alerts.forgetReminders(); alerts.stop(); await api.logout(); }
     server = v;
+    _providers = null;
     api = Api(v)..onSignedOut = _signedOutElsewhere;
     me = null;
     await _prefs.setString('server', v);
@@ -499,6 +502,23 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     refreshVocab();
     alerts.start(freshLogin: true);
+  }
+
+  /// Signs in with a Google or Apple ID token. Returns true when this made a new account.
+  Future<bool> signInWith(String provider, String idToken, {String? name}) async {
+    final r = await api.oauth(provider, idToken, name: name);
+    me = AppUser.fromJson(r['user'] as Map<String, dynamic>);
+    notifyListeners();
+    refreshVocab();
+    alerts.start(freshLogin: true);
+    return r['created'] == true;
+  }
+
+  Map<String, dynamic>? _providers;
+  /// Which quick sign-in options this archive offers (Google, Apple), with their public client ids.
+  Future<Map<String, dynamic>> providers() async {
+    if (_providers != null) return _providers!;
+    return _providers = await api.get('/auth/providers') as Map<String, dynamic>;
   }
 
   Future<void> register(String name, String email, String password, String org) async {

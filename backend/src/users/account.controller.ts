@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, ForbiddenException, HttpCode, Post, Res } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import type { Response } from 'express';
 import { randomBytes } from 'crypto';
 import { DataSource, In, Repository } from 'typeorm';
@@ -15,7 +15,7 @@ import { config } from '../config/config';
 import { MediaFile, Submission, User } from '../database/entities';
 import { MediaService } from '../media/media.service';
 
-class DeleteAccountDto { @ApiProperty() @IsString() @MaxLength(128) password: string }
+class DeleteAccountDto { @ApiPropertyOptional({ description: 'Needed unless the account was made with Google or Apple and has no password' }) @IsOptional() @IsString() @MaxLength(128) password?: string }
 
 /**
  * Lets people close their own account (required by Google Play and the App Store).
@@ -40,7 +40,7 @@ export class AccountController {
   @ApiOperation({ summary: 'Permanently close your account (needs your password)' })
   async deleteAccount(@CurrentUser() me: AuthUser, @Body() dto: DeleteAccountDto, @Meta() meta: RequestMeta, @Res({ passthrough: true }) res: Response) {
     const user = await this.users.createQueryBuilder('u').addSelect('u.passwordHash').where('u.id = :id', { id: me.id }).getOneOrFail();
-    if (!(await verifyPassword(dto.password, user.passwordHash))) throw new ForbiddenException('Your password is incorrect.');
+    if (user.passwordSet !== false && !(await verifyPassword(dto.password ?? '', user.passwordHash))) throw new ForbiddenException('Your password is incorrect.');
     if (user.role === 'admin' && (await this.users.countBy({ role: 'admin', status: 'active' })) <= 1) {
       throw new BadRequestException('You are the only admin. Make someone else an admin before closing your account.');
     }
@@ -52,7 +52,7 @@ export class AccountController {
     }
     await this.users.update(user.id, {
       name: 'Deleted account', email: `deleted-${user.id}@deleted.invalid`, organisation: '', status: 'deleted', deletedAt: new Date(),
-      passwordHash: await hashPassword(randomBytes(32).toString('hex')), failedLogins: 0, lockedUntil: null,
+      passwordHash: await hashPassword(randomBytes(32).toString('hex')), failedLogins: 0, lockedUntil: null, googleSub: null, appleSub: null,
     });
     await this.auth.revokeAll(user.id);
     // Past audit entries keep what happened but no longer name the person.

@@ -32,6 +32,11 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true, select: false }) lockedUntil: Date | null;
   @Column({ type: 'timestamptz', nullable: true }) lastLoginAt: Date | null;
   @Column({ type: 'timestamptz', nullable: true }) deletedAt: Date | null;
+  /** Google and Apple account ids, once the person has signed in with them. */
+  @Column({ type: 'text', nullable: true, select: false }) googleSub: string | null;
+  @Column({ type: 'text', nullable: true, select: false }) appleSub: string | null;
+  /** False for accounts made with Google or Apple until the person chooses a password. */
+  @Column({ default: true }) passwordSet: boolean;
   @CreateDateColumn({ type: 'timestamptz' }) createdAt: Date;
   @UpdateDateColumn({ type: 'timestamptz' }) updatedAt: Date;
 }

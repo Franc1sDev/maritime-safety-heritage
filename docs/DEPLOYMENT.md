@@ -135,6 +135,29 @@ The `clamav` container scans every upload before it is stored, and updates its v
 - **Malware scanning:** every upload is scanned on arrival (see above). For the server itself, turn on the hosting provider's malware scanning, or install ClamAV on the host (`apt install clamav`) and add a weekly `clamscan -r --infected /opt/archive` to cron.
 - **Logs:** Caddy keeps access logs in its data volume. The archive's audit log (Reports and logs) records sign-ins and every staff action.
 
+## Sign in with Google and Apple
+
+People who only visit now and then can sign in with their Google or Apple account instead of keeping another password. The first time, an account is made for them from the name and verified email Google or Apple shares. If an account already uses that email, they are signed in to it. The buttons appear on the website and in the app only once the matching setting below is filled in, and the server checks every sign-in token against Google's and Apple's published keys.
+
+**Google (free):**
+
+1. Open https://console.cloud.google.com with the project's Google account and create a project (for example *Maritime Heritage*).
+2. **Google Auth Platform, Branding:** app name *Maritime Safety Heritage Archive*, the support email, and the archive's logo. Under **Audience**, choose *External* and press **Publish app**. Only the basic profile and email are requested, so Google does not need to review it.
+3. **Clients, Create client, Web application:** add `https://<your domain>` (and `http://localhost:4000` for testing) under *Authorised JavaScript origins*. Copy the **Client ID**.
+4. **Clients, Create client, Android:** package name `ke.rememberingthewaters.maritime_heritage`, and the SHA-1 fingerprint of the app's signing key. Get it from the built app with `keytool -printcert -jarfile Maritime-Heritage.apk`. If the app is published on Google Play, also add the SHA-1 Play shows under *App signing*.
+5. Set `GOOGLE_CLIENT_IDS` on the server to the web Client ID. To also accept tokens from other clients (for example an iOS client), add their ids after it, separated by commas.
+
+**Apple (needs the Apple Developer Program, USD 99 a year):**
+
+1. At https://developer.apple.com, **Identifiers**: turn on *Sign in with Apple* for the app's App ID (`ke.rememberingthewaters.maritimeHeritage`).
+2. Create a **Services ID** (for example `ke.rememberingthewaters.maritimeHeritage.web`), turn on *Sign in with Apple*, and configure it:
+   - **Domain:** your domain.
+   - **Return URL:** `https://<your domain>/api/v1/auth/oauth/apple/callback`.
+3. In Xcode, add the *Sign in with Apple* capability to the Runner target before building for the App Store.
+4. Set `APPLE_CLIENT_IDS` to the Services ID followed by the App ID, for example `ke.rememberingthewaters.maritimeHeritage.web,ke.rememberingthewaters.maritimeHeritage`. The website and Android use the Services ID; the iPhone app uses the App ID.
+
+Apple's App Store rules require *Sign in with Apple* in any iPhone app that offers Google sign-in, so set up Apple before publishing the iPhone app with Google turned on.
+
 ## Search engines (Google Search Console)
 
 1. Sign in to Google Search Console with the project's Google account and add the domain property.

@@ -35,7 +35,7 @@ export class AuthService {
     return createHmac('sha256', config.jwt.refreshSecret).update(token).digest('hex');
   }
 
-  private async issue(user: User, meta: RequestMeta): Promise<Session> {
+  async issue(user: User, meta: RequestMeta): Promise<Session> {
     const expiresIn = parseTtl(config.jwt.accessTtl);
     const accessToken = await this.jwt.signAsync({ sub: user.id, role: user.role, typ: 'access' }, { secret: config.jwt.accessSecret, expiresIn, algorithm: 'HS256' });
     const refreshToken = randomToken(48);
@@ -115,11 +115,14 @@ export class AuthService {
     await this.tokens.update({ userId, revokedAt: IsNull() }, { revokedAt: new Date() });
   }
 
-  async changePassword(userId: string, current: string, next: string, meta: RequestMeta): Promise<void> {
+  async changePassword(userId: string, current: string | undefined, next: string, meta: RequestMeta): Promise<void> {
     const user = await this.users.createQueryBuilder('u').addSelect('u.passwordHash').where('u.id = :userId', { userId }).getOneOrFail();
-    if (!(await verifyPassword(current, user.passwordHash))) throw new ForbiddenException('Your current password is incorrect.');
-    if (current === next) throw new ConflictException('Choose a password you have not used here before.');
-    await this.users.update(userId, { passwordHash: await hashPassword(next) });
+    // Accounts made with Google or Apple have no password to confirm until they choose one.
+    if (user.passwordSet !== false) {
+      if (!current || !(await verifyPassword(current, user.passwordHash))) throw new ForbiddenException('Your current password is incorrect.');
+      if (current === next) throw new ConflictException('Choose a password you have not used here before.');
+    }
+    await this.users.update(userId, { passwordHash: await hashPassword(next), passwordSet: true });
     await this.revokeAll(userId);
     await this.passwordActionDone(userId);
     await this.activity.record({ actor: user, action: 'password.change', entityType: 'user', entityId: userId, summary: `${user.name} changed their password`, ip: meta.ip });
@@ -143,7 +146,7 @@ export class AuthService {
     const row = await this.resets.findOneBy({ tokenHash: sha256(token), usedAt: IsNull(), expiresAt: MoreThan(new Date()) });
     if (!row) throw new UnauthorizedException('This reset link has expired or was already used. Ask for a new one.');
     await this.resets.update(row.id, { usedAt: new Date() });
-    await this.users.update(row.userId, { passwordHash: await hashPassword(password), failedLogins: 0, lockedUntil: null });
+    await this.users.update(row.userId, { passwordHash: await hashPassword(password), passwordSet: true, failedLogins: 0, lockedUntil: null });
     await this.revokeAll(row.userId);
     await this.passwordActionDone(row.userId);
     const user = await this.users.findOneBy({ id: row.userId });

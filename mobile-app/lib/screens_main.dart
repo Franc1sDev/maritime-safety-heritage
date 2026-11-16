@@ -976,7 +976,10 @@ class AccountScreen extends StatelessWidget {
         PageTitle(u.name, sub: '${u.email}\n${u.roleName} since ${fmtDate(u.createdAt)}${u.organisation.isNotEmpty ? ', ${u.organisation}' : ''}'),
         OrbRow([
           OrbItem(Icons.edit_outlined, 'Edit profile', 'Change your name or organisation.', () => _edit(context), primary: true),
-          OrbItem(Icons.key_outlined, 'Password', "Change your password. You'll sign in again everywhere.", () => _password(context)),
+          if (u.hasPassword)
+            OrbItem(Icons.key_outlined, 'Password', "Change your password. You'll sign in again everywhere.", () => _password(context))
+          else
+            OrbItem(Icons.key_outlined, 'Set a password', 'You sign in with Google or Apple. Add a password to sign in with your email too.', () => _password(context)),
           OrbItem(Icons.folder_open_outlined, 'My submissions', "What you've sent and its review status.", () => mySubmissions(context)),
           OrbItem(Icons.shield_outlined, 'Sign out everywhere', 'Ends your sessions on every device, including this one.', () => confirmSignOut(context, everywhere: true)),
           OrbItem(Icons.logout_rounded, 'Sign out', 'Signs you out on this phone.', () => confirmSignOut(context)),
@@ -1032,7 +1035,10 @@ class AccountScreen extends StatelessWidget {
         const Text("This can't be undone. Your name, email and organisation are erased and you can't sign in again. "
             'Submissions still waiting for review are withdrawn and their files deleted. Material already accepted into the archive stays in it.'),
         const SizedBox(height: 12),
-        TextField(controller: pw, obscureText: true, autofillHints: const [AutofillHints.password], decoration: InputDecoration(labelText: 'Your password', errorText: err)),
+        if (s.me?.hasPassword ?? true)
+          TextField(controller: pw, obscureText: true, autofillHints: const [AutofillHints.password], decoration: InputDecoration(labelText: 'Your password', errorText: err))
+        else if (err != null)
+          Text(err!, style: const TextStyle(color: C.danger)),
       ])),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Keep my account')),
@@ -1041,7 +1047,7 @@ class AccountScreen extends StatelessWidget {
           onPressed: busy ? null : () async {
             set(() { busy = true; err = null; });
             try {
-              await s.api.post('/auth/delete-account', {'password': pw.text});
+              await s.api.post('/auth/delete-account', {if (s.me?.hasPassword ?? true) 'password': pw.text});
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) {
                 toast(context, 'Your account is closed', Icons.no_accounts_outlined);
@@ -1060,12 +1066,17 @@ class AccountScreen extends StatelessWidget {
   void _password(BuildContext context) {
     final s = AppScope.read(context);
     final a = TextEditingController(), b = TextEditingController();
+    // Accounts made with Google or Apple have no password until they choose one.
+    final first = !(s.me?.hasPassword ?? true);
     String? err;
     showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, set) => AlertDialog(
       icon: const CircleIcon(Icons.key_outlined, size: 52),
-      title: const Text('Change password'),
+      title: Text(first ? 'Set a password' : 'Change password'),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextField(controller: a, obscureText: true, decoration: const InputDecoration(labelText: 'Current password')),
+        if (first)
+          const Text("You sign in with Google or Apple. Add a password if you'd like to sign in with your email too.", style: TextStyle(color: C.muted))
+        else
+          TextField(controller: a, obscureText: true, decoration: const InputDecoration(labelText: 'Current password')),
         const SizedBox(height: 12),
         TextField(controller: b, obscureText: true, decoration: const InputDecoration(labelText: 'New password', helperText: '8+ characters with a letter and a number', helperMaxLines: 2)),
         if (err != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(err!, style: const TextStyle(color: C.danger))),
@@ -1074,16 +1085,16 @@ class AccountScreen extends StatelessWidget {
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         FilledButton(onPressed: () async {
           try {
-            await s.api.post('/auth/change-password', {'currentPassword': a.text, 'newPassword': b.text});
+            await s.api.post('/auth/change-password', {if (!first) 'currentPassword': a.text, 'newPassword': b.text});
             if (ctx.mounted) Navigator.pop(ctx);
             if (context.mounted) {
-              toast(context, 'Password changed. Sign in with your new password.', Icons.key_outlined);
+              toast(context, first ? 'Password saved. Sign in again.' : 'Password changed. Sign in with your new password.', Icons.key_outlined);
               Navigator.of(context).popUntil((r) => r.isFirst);
             }
             Nav.tab.value = 0;
             await s.forgetSession();
           } catch (e) { set(() => err = errText(e)); }
-        }, child: const Text('Change password')),
+        }, child: Text(first ? 'Save password' : 'Change password')),
       ],
     )));
   }

@@ -15,11 +15,13 @@ Object.assign(process.env, {
   NODE_ENV: 'test', DB_HOST: 'localhost', DB_USER: 'postgres',
   STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: storageDir, SEED_ADMIN_EMAIL: 'admin@demo.ke', SEED_ADMIN_PASSWORD: 'admin1234',
   SEED_SAMPLE_DATA: 'true', RATE_LIMIT_SCALE: '50', CORS_ORIGINS: 'http://localhost:5173', MAX_FAILED_LOGINS: '5',
+  GOOGLE_CLIENT_IDS: 'web-client.apps.googleusercontent.com', APPLE_CLIENT_IDS: 'ke.test.services,ke.test.ios',
 });
 
 let app: INestApplication;
 let http: any;
 let mail: { outbox: Map<string, { subject: string; text: string }> };
+let oauth: { useKeysForTesting: (p: 'google' | 'apple', keys: object[]) => void };
 
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082', 'hex');
 
@@ -48,6 +50,8 @@ beforeAll(async () => {
   await app.init();
   http = app.getHttpServer();
   mail = mod.get(MailService);
+  const { OAuthService } = await import('../src/auth/oauth.service');
+  oauth = mod.get(OAuthService);
 });
 
 afterAll(async () => {
@@ -498,6 +502,79 @@ describe('notifications, reminders and replies', () => {
     expect(list.body.map((r: { subject: string }) => r.subject)).toEqual(['Call the beach unit']);
     await request(http).delete(`/api/v1/reminders/${now.body.id}`).set(bearer(admin)).expect(404);
     await request(http).delete(`/api/v1/reminders/${now.body.id}`).set(bearer(member)).expect(204);
+  });
+});
+
+describe('sign in with Google and Apple', () => {
+  const { generateKeyPairSync, createSign } = require('crypto') as typeof import('crypto');
+  const pair = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const other = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const enc = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const token = (claims: Record<string, unknown>, key = pair.privateKey, kid = 'k1') => {
+    const head = enc({ alg: 'RS256', kid, typ: 'JWT' });
+    const body = enc({ iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 600, ...claims });
+    const sig = createSign('RSA-SHA256').update(`${head}.${body}`).sign(key).toString('base64url');
+    return `${head}.${body}.${sig}`;
+  };
+  const google = (c: Record<string, unknown>) => token({ iss: 'https://accounts.google.com', aud: 'web-client.apps.googleusercontent.com', email_verified: true, ...c });
+  beforeAll(() => {
+    const jwk = { ...(pair.publicKey.export({ format: 'jwk' }) as object), kid: 'k1', alg: 'RS256', use: 'sig' };
+    oauth.useKeysForTesting('google', [jwk]);
+    oauth.useKeysForTesting('apple', [jwk]);
+  });
+
+  it('tells the website and app which buttons to show', async () => {
+    const r = await request(http).get('/api/v1/auth/providers').expect(200);
+    expect(r.body.google.clientId).toBe('web-client.apps.googleusercontent.com');
+    expect(r.body.apple.clientId).toBe('ke.test.services');
+    expect(r.body.apple.redirectUri).toMatch(/\/api\/v1\/auth\/oauth\/apple\/callback$/);
+  });
+
+  it('creates an account on first Google sign-in, then signs the same person in again', async () => {
+    const first = await request(http).post('/api/v1/auth/oauth/google').set('X-Client', 'app')
+      .send({ idToken: google({ sub: 'g-100', email: 'Wanjiru@Example.com', name: 'Wanjiru Kamau' }) }).expect(200);
+    expect(first.body.created).toBe(true);
+    expect(first.body.user).toMatchObject({ email: 'wanjiru@example.com', name: 'Wanjiru Kamau', role: 'user', hasPassword: false });
+    expect(first.body.refreshToken).toBeTruthy();
+    const again = await request(http).post('/api/v1/auth/oauth/google').send({ idToken: google({ sub: 'g-100', email: 'wanjiru@example.com' }) }).expect(200);
+    expect(again.body.created).toBe(false);
+    expect(again.body.user.id).toBe(first.body.user.id);
+    expect(again.headers['set-cookie']?.join(';')).toMatch(/msh_refresh=/);
+    // No password yet: they can set one without a current password, and close the account without one
+    const t = first.body.accessToken;
+    await request(http).post('/api/v1/auth/change-password').set(bearer(t)).send({ newPassword: 'harbour-lights9' }).expect(204);
+    expect((await login('wanjiru@example.com', 'harbour-lights9')).status).toBe(200);
+  });
+
+  it('links Google to an existing account with the same verified email', async () => {
+    const r = await request(http).post('/api/v1/auth/oauth/google').send({ idToken: google({ sub: 'g-200', email: 'researcher@demo.ke' }) }).expect(200);
+    expect(r.body.created).toBe(false);
+    expect(r.body.user.email).toBe('researcher@demo.ke');
+    expect(r.body.user.hasPassword).toBe(true);
+  });
+
+  it('refuses forged, expired, unverified or wrong-audience tokens', async () => {
+    const post = (t: string) => request(http).post('/api/v1/auth/oauth/google').send({ idToken: t });
+    await post(google({ sub: 'g-300', email: 'x@example.com' }).replace(/\.[^.]+$/, '.' + Buffer.from('nope').toString('base64url'))).expect(401);
+    await post(token({ iss: 'https://accounts.google.com', aud: 'web-client.apps.googleusercontent.com', sub: 'g-300', email: 'x@example.com', email_verified: true }, other.privateKey)).expect(401);
+    await post(google({ sub: 'g-300', email: 'x@example.com', exp: Math.floor(Date.now() / 1000) - 3600 })).expect(401);
+    await post(google({ sub: 'g-300', email: 'x@example.com', aud: 'someone-else' })).expect(401);
+    await post(google({ sub: 'g-300', email: 'x@example.com', iss: 'https://evil.example' })).expect(401);
+    await post(google({ sub: 'g-300', email: 'x@example.com', email_verified: false })).expect(401);
+    await post('not-a-token').expect(401);
+  });
+
+  it('signs in with Apple, keeping the name the app sends the first time', async () => {
+    const idToken = token({ iss: 'https://appleid.apple.com', aud: 'ke.test.ios', sub: 'a-1', email: 'abc123@privaterelay.appleid.com', email_verified: 'true' });
+    const r = await request(http).post('/api/v1/auth/oauth/apple').send({ idToken, name: 'Otieno Ouma' }).expect(200);
+    expect(r.body).toMatchObject({ created: true, user: { name: 'Otieno Ouma', email: 'abc123@privaterelay.appleid.com' } });
+    const t = r.body.accessToken;
+    await request(http).post('/api/v1/auth/delete-account').set(bearer(t)).send({}).expect(204);
+  });
+
+  it('hands Apple\'s answer back to the Android app', async () => {
+    const r = await request(http).post('/api/v1/auth/oauth/apple/callback').type('form').send({ code: 'c1', id_token: 'a.b.c', state: 's1' }).expect(303);
+    expect(r.headers.location).toBe('intent://callback?code=c1&id_token=a.b.c&state=s1#Intent;package=ke.rememberingthewaters.maritime_heritage;scheme=signinwithapple;end');
   });
 });
 

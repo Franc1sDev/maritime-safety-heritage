@@ -706,3 +706,18 @@ body.has-pins main:not(.is-home) { padding-top: calc(var(--head) + 24px + var(--
 @media (prefers-reduced-motion: reduce) {
   .pop, .pop-ic, .pop-ic i, .pin-chip, .pin-main .i, .tip, .tip-face, .alert-btn .count, .alert-btn.ring .i, .rem.due .rem-when, .waiting .i { animation: none !important; }
 }
+
+/* ----- Quick sign-in: Google and Apple ----- */
+.quick-in { margin: 0 0 18px; display: grid; gap: 10px; justify-items: center; animation: fadeIn .4s both; }
+.quick-in.working { opacity: .6; pointer-events: none; }
+.quick-k { margin: 0; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--sky); font-size: .88rem; }
+.quick-k .i { width: 16px; height: 16px; }
+.quick-btns { display: grid; gap: 10px; width: min(360px, 100%); }
+.g-btn { min-height: 44px; display: flex; justify-content: center; }
+.g-btn:empty { display: none; }
+.apple-btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 44px; width: 100%; border-radius: 99px; border: 1px solid rgba(255, 255, 255, .35); background: #000; color: #fff; font: 600 .95rem/1 -apple-system, "SF Pro Text", var(--body); cursor: pointer; transition: transform .25s var(--spring), box-shadow .25s; }
+.apple-btn svg { width: 17px; height: 17px; margin-top: -2px; }
+.apple-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 24px rgba(0, 0, 0, .45); }
+.apple-btn:focus-visible { outline: 3px solid var(--blue-2); outline-offset: 3px; }
+.quick-or { display: flex; align-items: center; gap: 12px; width: 100%; margin: 6px 0 0; color: var(--muted); font-size: .82rem; }
+.quick-or::before, .quick-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }

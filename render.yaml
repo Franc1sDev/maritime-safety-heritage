@@ -59,6 +59,11 @@ services:
         value: contactfrancismutuku@gmail.com
       - key: MAIL_FROM
         value: Maritime Safety Heritage Archive <contactfrancismutuku@gmail.com>
+      # Sign in with Google and Apple: fill these in to show the buttons (see docs/DEPLOYMENT.md)
+      - key: GOOGLE_CLIENT_IDS
+        sync: false
+      - key: APPLE_CLIENT_IDS
+        sync: false
       # Sample (placeholder) records so the test site is not empty; set to false before real use
       - key: SEED_SAMPLE_DATA
         value: "true"

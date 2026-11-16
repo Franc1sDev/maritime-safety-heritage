@@ -26,7 +26,8 @@ export class RefreshDto {
 }
 
 export class ChangePasswordDto {
-  @ApiProperty() @IsString() @Length(1, 128) currentPassword: string;
+  @ApiPropertyOptional({ description: 'Not needed when the account was made with Google or Apple and has no password yet' })
+  @IsOptional() @IsString() @Length(1, 128) currentPassword?: string;
   @ApiProperty() @IsString() @Matches(PASSWORD_RULE, { message: PASSWORD_RULE_TEXT }) newPassword: string;
 }
 
@@ -59,6 +60,6 @@ export class UserQuery extends PageQuery {
 
 export const publicUser = (u: User) => ({
   id: u.id, name: u.name, email: u.email, role: u.role, status: u.status, organisation: u.organisation,
-  lastLoginAt: u.lastLoginAt, createdAt: u.createdAt,
+  lastLoginAt: u.lastLoginAt, createdAt: u.createdAt, hasPassword: u.passwordSet !== false,
 });
 export type PublicUser = ReturnType<typeof publicUser>;

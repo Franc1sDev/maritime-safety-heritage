@@ -17,17 +17,18 @@ export function configureApp(app: INestApplication) {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        // Sign in with Google (Google Identity Services) and Sign in with Apple load their own scripts.
+        scriptSrc: ["'self'", 'https://accounts.google.com/gsi/client', 'https://appleid.cdn-apple.com'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com/gsi/style'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         imgSrc: ["'self'", 'data:', 'blob:', 'https://*.basemaps.cartocdn.com', 'https://assets.mixkit.co'],
         mediaSrc: ["'self'", 'blob:', 'https://assets.mixkit.co'],
-        connectSrc: ["'self'"],
-        frameSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://accounts.google.com/gsi/'],
+        frameSrc: ["'self'", 'https://accounts.google.com/gsi/', 'https://appleid.apple.com'],
         frameAncestors: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
-        formAction: ["'self'"],
+        formAction: ["'self'", 'https://appleid.apple.com'],
         // Only upgrade to HTTPS in production, so the site still works on http://localhost and local network addresses.
         upgradeInsecureRequests: config.isProd ? [] : null,
       },
@@ -54,6 +55,8 @@ export function configureApp(app: INestApplication) {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new ErrorsFilter());
   express.useBodyParser('json', { limit: '1mb' });
+  // Form posts: only Sign in with Apple's return address uses these.
+  express.useBodyParser('urlencoded', { limit: '32kb', extended: false });
 
   if (!config.isProd || process.env.API_DOCS === 'true') {
     const doc = new DocumentBuilder()

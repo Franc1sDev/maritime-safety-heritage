@@ -5,6 +5,7 @@ For everyone who uses the Maritime Safety Heritage Archive: researchers, communi
 ## Your account
 
 - **Create an account.** On the website choose **Sign in**, then **Create account**. In the app, tap **Create account**. Use 8 or more characters with at least one letter and one number for your password.
+- **Quick sign-in.** Just visiting now and then? Press **Continue with Google** or **Continue with Apple** on the sign-in page. The first time, your account is made for you from your Google or Apple name and email; after that, one tap brings you back. You can add a password later under **My account, Set a password** if you'd also like to sign in with your email.
 - **Sign in.** There is one sign-in page for everyone. Use the same email and password on the website and the app; the archive recognises your account and opens the right place for you (the research team goes straight to the dashboard).
 - **Forgot your password?** Choose **Forgot your password?** on the sign-in page. A link arrives by email and works for 30 minutes.
 - **After 5 wrong passwords** your account is locked for 15 minutes. Wait, or reset your password.

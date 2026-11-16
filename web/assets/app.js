@@ -1613,8 +1613,15 @@
     html(parts, qs) {
       if (me()) { setTimeout(() => go("#/home")); return ""; }
       const up = qs.get("tab") === "up";
-      return `<div class="stage">${head("Welcome aboard", "Everyone signs in with their own account, on the website or the app.", true)}
+      return `<div class="stage">${head("Welcome aboard", "One sign-in for everyone, on the website or the app. Just visiting? Continue with Google or Apple: no new password to remember.", true)}
         <div class="panel auth-card">
+          <div class="quick-in" id="quickIn" hidden>
+            <p class="quick-k">${ic("sparkles")}Quickest: no password needed</p>
+            <div class="quick-btns"><div id="gBtn" class="g-btn"></div>
+              <button type="button" class="apple-btn" id="aBtn" hidden><svg viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg><span>Continue with Apple</span></button></div>
+            <div class="err" id="qerr" role="alert"></div>
+            <p class="quick-or"><span>or use your email</span></p>
+          </div>
           <div class="tabs" role="tablist"><button class="${up ? "" : "on"}" data-tab="in" role="tab" aria-selected="${!up}">Sign in</button><button class="${up ? "on" : ""}" data-tab="up" role="tab" aria-selected="${up}">Create account</button></div>
           <form id="inForm" ${up ? "hidden" : ""}><div class="field"><label for="le">Email</label><input id="le" type="email" required autocomplete="username"></div>
             <div class="field"><label for="lp">Password</label><input id="lp" type="password" required autocomplete="current-password"></div>
@@ -1631,7 +1638,11 @@
     },
     after() {
       if (!$("#inForm")) return;
-      $$("[data-tab]").forEach((b) => (b.onclick = () => { $$("[data-tab]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); }); $("#inForm").hidden = b.dataset.tab !== "in"; $("#upForm").hidden = b.dataset.tab !== "up"; }));
+      quickSignIn();
+      $$("[data-tab]").forEach((b) => (b.onclick = () => {
+        $$("[data-tab]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); }); $("#inForm").hidden = b.dataset.tab !== "in"; $("#upForm").hidden = b.dataset.tab !== "up";
+        if (b.dataset.tab === "up" && !$("#quickIn").hidden) tip("Just visiting now and then? Continue with Google or Apple above instead: nothing new to remember.", "sparkles", { anchor: $("#quickIn"), once: "quick-up" });
+      }));
       $("#inForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#lbtn"); busy(btn, true, "Signing in"); $("#lerr").textContent = "";
         try { await API.login($("#le").value.trim(), $("#lp").value); signedIn(); }
@@ -1655,6 +1666,53 @@
       };
     }
   };
+  /* ----- Sign in with Google or Apple (shown only when the archive has them set up) ----- */
+  const SCRIPTS = {};
+  const loadScript = (src) => SCRIPTS[src] || (SCRIPTS[src] = new Promise((ok, no) => {
+    const s = document.createElement("script"); s.src = src; s.async = true; s.onload = ok; s.onerror = () => { delete SCRIPTS[src]; no(new Error("Could not reach the sign-in service. Check your connection and try again.")); };
+    document.head.appendChild(s);
+  }));
+  let PROVIDERS = null;
+  async function quickSignIn() {
+    try { PROVIDERS = PROVIDERS || (await API.get("/auth/providers")); } catch (e) { return; }
+    const box = $("#quickIn"); if (!box) return;
+    const { google, apple } = PROVIDERS;
+    if (!google && !apple) return;
+    box.hidden = false;
+    const err = $("#qerr");
+    const finish = async (provider, idToken, name) => {
+      err.textContent = "";
+      box.classList.add("working");
+      try {
+        const r = await API.oauth(provider, idToken, name);
+        signedIn();
+        if (r.created) setTimeout(() => { celebrate(); tip(`Welcome aboard, ${r.user.name.split(" ")[0]}! Next time, one tap on "Continue with ${provider === "google" ? "Google" : "Apple"}" brings you straight back.`, "sparkles", { ms: 7000 }); }, 700);
+      } catch (ex) { err.textContent = ex.message; } finally { box.classList.remove("working"); }
+    };
+    if (google) {
+      loadScript("https://accounts.google.com/gsi/client").then(() => {
+        const el = $("#gBtn"); if (!el || !window.google?.accounts?.id) return;
+        window.google.accounts.id.initialize({ client_id: google.clientId, callback: (resp) => finish("google", resp.credential), ux_mode: "popup", auto_select: false, itp_support: true, context: "signin" });
+        window.google.accounts.id.renderButton(el, { theme: "filled_black", size: "large", shape: "pill", text: "continue_with", logo_alignment: "left", width: Math.min(360, el.clientWidth || 300) });
+      }).catch((e) => { err.textContent = e.message; });
+    }
+    if (apple) {
+      const btn = $("#aBtn"); btn.hidden = false;
+      btn.onclick = async () => {
+        err.textContent = "";
+        try {
+          await loadScript("https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js");
+          window.AppleID.auth.init({ clientId: apple.clientId, scope: "name email", redirectURI: apple.redirectUri, usePopup: true });
+          const r = await window.AppleID.auth.signIn();
+          const n = r.user?.name ? [r.user.name.firstName, r.user.name.lastName].filter(Boolean).join(" ") : "";
+          await finish("apple", r.authorization.id_token, n);
+        } catch (ex) {
+          if (ex && (ex.error === "popup_closed_by_user" || ex.error === "user_cancelled_authorize")) return;
+          err.textContent = ex?.message || "Sign in with Apple did not go through. Try again.";
+        }
+      };
+    }
+  }
   function signedIn() {
     const u = me(); VOCAB = null; FACETS = null;
     toast(`Welcome, ${u.name.split(" ")[0]}`, "life-buoy");
@@ -1699,7 +1757,7 @@
         ${head(esc(u.name), `${esc(u.email)}<br>${roleName(u.role)} since ${date(u.createdAt)}${u.organisation ? ", " + esc(u.organisation) : ""}`, true)}
         ${orbRow([
           { icon: "pencil", label: "Edit profile", desc: "Change your name or organisation.", act: () => editProfile(u), primary: true },
-          { icon: "key-round", label: "Password", desc: "Change your password. You'll sign in again everywhere.", act: changePassword },
+          { icon: "key-round", label: me().hasPassword === false ? "Set a password" : "Password", desc: me().hasPassword === false ? "You sign in with Google or Apple. Add a password to sign in with your email too." : "Change your password. You'll sign in again everywhere.", act: changePassword },
           { icon: "folder-open", label: "My submissions", desc: "What you've sent and its review status.", act: mySubmissions },
           { icon: "shield", label: "Sign out everywhere", desc: "Ends your sessions on every device, including this one.", act: signOutEverywhere },
           { icon: "log-out", label: "Sign out", desc: "Signs you out on this device.", act: signOut },
@@ -1718,23 +1776,25 @@
     });
   }
   function changePassword() {
-    modal("key-round", "Change password", `<form id="pwForm"><div class="field"><label for="p1">Current password</label><input id="p1" type="password" required autocomplete="current-password"></div>
+    // Accounts made with Google or Apple have no password until they choose one.
+    const first = me() && me().hasPassword === false;
+    modal("key-round", first ? "Set a password" : "Change password", `<form id="pwForm">${first ? `<p class="muted">You sign in with Google or Apple. Add a password too if you'd like to sign in with your email as well.</p>` : `<div class="field"><label for="p1">Current password</label><input id="p1" type="password" required autocomplete="current-password"></div>`}
       <div class="field"><label for="p2">New password</label><input id="p2" type="password" minlength="8" required autocomplete="new-password"><div class="hint">At least 8 characters, with a letter and a number. You'll be signed out on every device.</div></div>
       <div class="err" id="pwErr"></div><button class="btn" id="pwbtn">${ic("check")}Change password</button></form>`, () => {
       $("#pwForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#pwbtn"); busy(btn, true, "Saving");
-        try { await API.post("/auth/change-password", { currentPassword: $("#p1").value, newPassword: $("#p2").value }); API.clear(); closeModal(); toast("Password changed. Sign in with your new password.", "key-round"); go("#/login"); }
+        try { await API.post("/auth/change-password", { ...(!first && { currentPassword: $("#p1").value }), newPassword: $("#p2").value }); API.clear(); closeModal(); toast(first ? "Password saved. Sign in again." : "Password changed. Sign in with your new password.", "key-round"); go("#/login"); }
         catch (ex) { busy(btn, false); $("#pwErr").textContent = ex.message; }
       };
     });
   }
   function closeAccount() {
     modal("ban", "Close your account?", `<p class="muted">This can't be undone. Your name, email and organisation are erased and you can't sign in again. Submissions still waiting for review are withdrawn and their files deleted. Material already accepted into the archive stays in it.</p>
-      <form id="caForm"><div class="field"><label for="cap">Your password</label><input id="cap" type="password" required autocomplete="current-password"></div>
+      <form id="caForm">${me() && me().hasPassword === false ? "" : `<div class="field"><label for="cap">Your password</label><input id="cap" type="password" required autocomplete="current-password"></div>`}
       <div class="err" id="caErr" role="alert"></div><div class="row"><button class="btn danger" id="caBtn">${ic("ban")}Close my account</button><button type="button" class="btn ghost" data-close>Keep my account</button></div></form>`, () => {
       $("#caForm").onsubmit = async (e) => {
         e.preventDefault(); const btn = $("#caBtn"); busy(btn, true, "Closing");
-        try { await API.post("/auth/delete-account", { password: $("#cap").value }); API.clear(); closeModal(); toast("Your account is closed", "ban"); go("#/home"); render(); }
+        try { await API.post("/auth/delete-account", $("#cap") ? { password: $("#cap").value } : {}); API.clear(); closeModal(); toast("Your account is closed", "ban"); go("#/home"); render(); }
         catch (ex) { busy(btn, false); $("#caErr").textContent = ex.message; }
       };
     });

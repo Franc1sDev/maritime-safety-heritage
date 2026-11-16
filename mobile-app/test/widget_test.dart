@@ -38,4 +38,9 @@ void main() {
     expect(m.reply, 'Monday to Friday');
     expect(m.isNew, isTrue);
   });
+
+  test('knows when an account has no password yet (made with Google or Apple)', () {
+    expect(AppUser.fromJson({'id': 'u1', 'name': 'Wanjiru Kamau', 'hasPassword': false}).hasPassword, isFalse);
+    expect(AppUser.fromJson({'id': 'u2', 'name': 'Otieno'}).hasPassword, isTrue);
+  });
 }

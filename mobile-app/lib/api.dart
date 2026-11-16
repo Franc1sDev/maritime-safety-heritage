@@ -161,6 +161,13 @@ class Api {
     return s['user'] as Map<String, dynamic>;
   }
 
+  /// Sign in with Google or Apple: the server checks the ID token they gave the app. The answer also says whether the account is new.
+  Future<Map<String, dynamic>> oauth(String provider, String idToken, {String? name}) async {
+    final s = await request('POST', '/auth/oauth/$provider', body: {'idToken': idToken, if (name != null && name.trim().isNotEmpty) 'name': name.trim()}) as Map<String, dynamic>;
+    _setSession(s);
+    return s;
+  }
+
   Future<Map<String, dynamic>> register(Map<String, Object?> data) async {
     final s = await request('POST', '/auth/register', body: data) as Map<String, dynamic>;
     _setSession(s);

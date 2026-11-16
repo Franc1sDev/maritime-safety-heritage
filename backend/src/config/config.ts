@@ -114,6 +114,16 @@ export const config = {
   /** Public catalogue pages (/items) with titles and summaries, so search engines can find the archive. */
   publicPreviews: (process.env.PUBLIC_PREVIEWS ?? 'true') === 'true',
   allowRegistration: (process.env.ALLOW_REGISTRATION ?? 'true') === 'true',
+  /**
+   * Sign in with Google and Apple. Each list holds every client id whose tokens the server accepts; the first one is the
+   * one the website (and, for Google, the Android app) uses. See docs/DEPLOYMENT.md, "Sign in with Google and Apple".
+   */
+  oauth: {
+    googleClientIds: (process.env.GOOGLE_CLIENT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    /** Services ID first (website and Android), then the iOS bundle id. */
+    appleClientIds: (process.env.APPLE_CLIENT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    androidPackage: process.env.ANDROID_PACKAGE ?? 'ke.rememberingthewaters.maritime_heritage',
+  },
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
   /** Folder with the website, served from the same address as the API. Empty string turns it off. */

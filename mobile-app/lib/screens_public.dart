@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'alerts.dart';
 import 'main.dart';
 import 'motion.dart';
+import 'social.dart';
 import 'state.dart';
 import 'ui.dart';
 
@@ -124,9 +125,19 @@ class _SignInScreenState extends State<SignInScreen> {
       showBack: true,
       background: const PageBg(Icons.support_rounded),
       body: ListView(padding: const EdgeInsets.fromLTRB(20, 12, 20, 40), children: [
-        const PageTitle('Welcome aboard', sub: 'Everyone signs in with their own account, on the website or the app.'),
+        const PageTitle('Welcome aboard', sub: 'One sign-in for everyone. Just visiting? Continue with Google or Apple: no new password to remember.'),
         const SizedBox(height: 18),
         Glass(child: AutofillGroup(child: Form(key: _form, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (s.hasServer) QuickSignIn(onDone: (created, provider) {
+            toast(context, 'Welcome, ${s.me!.first}', Icons.support_rounded);
+            Nav.tab.value = s.isStaff ? 4 : 0;
+            Navigator.of(context).popUntil((r) => r.isFirst);
+            if (created) {
+              final c = navContext;
+              if (c != null) celebrate(c);
+              tip('Welcome aboard! Next time, one tap on "Continue with ${provider == 'google' ? 'Google' : 'Apple'}" brings you straight back.', Icons.auto_awesome_rounded);
+            }
+          }),
           SegmentedButton<bool>(
             segments: const [ButtonSegment(value: false, label: Text('Sign in')), ButtonSegment(value: true, label: Text('Create account'))],
             selected: {_create},

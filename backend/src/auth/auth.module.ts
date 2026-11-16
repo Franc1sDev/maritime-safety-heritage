@@ -5,11 +5,12 @@ import { MailService } from '../common/mail.service';
 import { PasswordResetToken, RefreshToken, User } from '../database/entities';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { OAuthService } from './oauth.service';
 
 @Module({
   imports: [JwtModule.register({}), TypeOrmModule.forFeature([User, RefreshToken, PasswordResetToken])],
   controllers: [AuthController],
-  providers: [AuthService, MailService],
-  exports: [AuthService, MailService, JwtModule],
+  providers: [AuthService, OAuthService, MailService],
+  exports: [AuthService, OAuthService, MailService, JwtModule],
 })
 export class AuthModule {}

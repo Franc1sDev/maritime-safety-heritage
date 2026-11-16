@@ -1,7 +1,8 @@
 import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { CookieOptions, Request, Response } from 'express';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Repository } from 'typeorm';
 import { AuthUser, CurrentUser, Meta, Public, RequestMeta } from '../common/decorators';
 import { LoginLimit, RegisterLimit, ResetLimit } from '../common/rate-limits';
@@ -9,6 +10,13 @@ import { config } from '../config/config';
 import { User } from '../database/entities';
 import { ChangePasswordDto, EmailField, LoginDto, publicUser, RefreshDto, RegisterDto, ResetPasswordDto, UpdateProfileDto } from '../users/user.dto';
 import { AuthService, Session } from './auth.service';
+import { OAuthService } from './oauth.service';
+
+class OAuthDto {
+  @ApiProperty({ description: 'The ID token (JWT) from Google or Apple' }) @IsString() @MaxLength(8000) idToken: string;
+  /** Apple only shares the person's name once, with the app rather than in the token. */
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(120) name?: string;
+}
 
 export const REFRESH_COOKIE = 'msh_refresh';
 const cookieOptions = (expires?: Date): CookieOptions => ({
@@ -28,7 +36,7 @@ function readCookie(req: Request, name: string): string | undefined {
 @ApiTags('Account')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService, @InjectRepository(User) private readonly users: Repository<User>) {}
+  constructor(private readonly auth: AuthService, private readonly oauth: OAuthService, @InjectRepository(User) private readonly users: Repository<User>) {}
 
   private send(req: Request, res: Response, s: Session) {
     const body = { accessToken: s.accessToken, expiresIn: s.expiresIn, user: s.user } as Record<string, unknown>;
@@ -54,6 +62,39 @@ export class AuthController {
   @ApiOperation({ summary: 'Sign in' })
   async login(@Body() dto: LoginDto, @Meta() meta: RequestMeta, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     return this.send(req, res, await this.auth.login(dto.email, dto.password, meta));
+  }
+
+  @Public() @Get('providers')
+  @ApiOperation({ summary: 'Which quick sign-in options (Google, Apple) this archive offers, with their public client ids' })
+  providers() { return this.oauth.publicConfig(); }
+
+  @Public() @LoginLimit() @Post('oauth/google') @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in (or create an account) with a Google ID token' })
+  async google(@Body() dto: OAuthDto, @Meta() meta: RequestMeta, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const s = await this.oauth.signIn('google', dto.idToken, dto, meta);
+    return { ...this.send(req, res, s), created: s.created };
+  }
+
+  @Public() @LoginLimit() @Post('oauth/apple') @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in (or create an account) with an Apple ID token' })
+  async apple(@Body() dto: OAuthDto, @Meta() meta: RequestMeta, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const s = await this.oauth.signIn('apple', dto.idToken, dto, meta);
+    return { ...this.send(req, res, s), created: s.created };
+  }
+
+  /**
+   * Apple sends its answer here (a form post) when someone signs in with Apple from the Android app.
+   * This hands the answer straight back to the app; the app then posts the ID token to oauth/apple.
+   */
+  @Public() @LoginLimit() @Post('oauth/apple/callback')
+  @ApiOperation({ summary: 'Return address for Sign in with Apple on Android (hands the result back to the app)' })
+  appleCallback(@Body() body: Record<string, unknown>, @Res() res: Response) {
+    const q = new URLSearchParams();
+    for (const k of ['code', 'id_token', 'state', 'user', 'error']) {
+      const v = body?.[k];
+      if (typeof v === 'string' && v.length < 8000) q.set(k, v);
+    }
+    res.redirect(303, `intent://callback?${q.toString()}#Intent;package=${config.oauth.androidPackage};scheme=signinwithapple;end`);
   }
 
   @Public() @LoginLimit() @Post('refresh') @HttpCode(200)

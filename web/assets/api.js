@@ -75,6 +75,8 @@
 
     async login(email, password) { this.setSession(await this.request("POST", "/auth/login", { body: { email, password } })); return this.user; },
     async register(data) { this.setSession(await this.request("POST", "/auth/register", { body: data })); return this.user; },
+    /** Sign in with Google or Apple: the ID token they give the browser is checked by the server. Answers { created } too. */
+    async oauth(provider, idToken, name) { const r = await this.request("POST", `/auth/oauth/${provider}`, { body: { idToken, ...(name && { name }) } }); this.setSession(r); return r; },
     async logout() { try { await this.request("POST", "/auth/logout", { body: {} }); } catch (e) { /* signed out locally anyway */ } this.clear(); },
 
     /** Multipart upload with progress (fetch cannot report upload progress). */
