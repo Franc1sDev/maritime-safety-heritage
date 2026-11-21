@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 700 of 1190 items ticked, 230 partly done**
+**Progress: 702 of 1190 items ticked, 229 partly done**
 
 How to read it:
 
@@ -851,7 +851,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] Legal pages: a privacy policy, terms of use, rules and a cookie notice, linked from sign-in, ABOUT and the app stores, and accepted on first sign-in. — *Left: privacy policy, terms, rules and cookie notice are on the website and in the app, linked from sign-in and ABOUT, and accepted on first sign-in; app store links and legal review at go-live*
 - [x] Data minimisation: only data needed for the platform is collected. Admin ID/passport numbers are collected only if strictly necessary, stored encrypted and separately, and visible only to Super Admins.
 - [x] User rights: users can see, correct, download and delete their data (MY PROFILE).
-- [~] Consent: stories told on behalf of others require a consent confirmation; faces can be blurred; anonymous posting is available for sensitive incidents. — *Left: consent confirmation and anonymous posting are enforced by the server; face blurring is a tool in the website and apps (stages 2 and 3)*
+- [~] Consent: stories told on behalf of others require a consent confirmation; faces can be blurred; anonymous posting is available for sensitive incidents. — *Left: consent confirmation and anonymous posting are enforced by the server; faces can be blurred on the phone before sending (the app uses the phone’s own face finder; the website does it where the browser can find faces); face blurring still to be tried on real phones*
 - [x] Consent records: for testimonies collected by the project, the consent form, the storyteller’s choices (for example anonymous, or no downloads) and the validation date are stored with the item, visible only to admins, so that participants keep control over how their stories are shared.
 - [ ] Institutional policies: the platform’s rules and moderation are consistent with the project’s institutional policies on safeguarding, anti-bullying, and diversity and inclusion.
 - [x] Age requirement: a minimum age is set and confirmed at first sign-in.
@@ -859,7 +859,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 4.5 Encryption
 
-- [x] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds. — *Note: HSTS in production; Caddy issues certificates; Android and iOS release builds block plain HTTP by default*
+- [x] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds. — *Note: HSTS in production; Caddy issues certificates; store builds of the Android app (-PstoreRelease) and the iPhone app allow HTTPS only*
 - [~] At rest: media files encrypted with AES-256; database on encrypted disks; sensitive fields (e.g. ID numbers, MFA secrets) encrypted separately. — *Left: media files are encrypted with AES-256 and sensitive fields separately; encrypted database disks depend on the production host (stage 5)*
 - [x] Backups: encrypted before they leave the server (Section 7.4). — *Note: AES-256, proven in the restore drill; runs once the production server is set up*
 - [x] File access: files are never public. Each file link is signed and expires (e.g. after one hour), and is issued only to users allowed to see the item.
@@ -945,7 +945,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Web security**: Helmet, NestJS Throttler, class-validator | Security headers, rate limits, input validation
 - [~] **Virus scanning**: ClamAV | Scan every upload — *Left: ClamAV is switched on and tested on the production server in stage 5 (Deployment)*
 - [x] **Code and dependency scanning**: GitHub Dependabot, npm audit, GitHub secret scanning, CodeQL | Find vulnerable packages, leaked secrets and code flaws — *Note: Dependabot, npm audit, CodeQL, and GitHub secret scanning on the public repository*
-- [ ] **Security testing**: OWASP ZAP | Automated web vulnerability scans
+- [x] **Security testing**: OWASP ZAP | Automated web vulnerability scans — *Note: OWASP ZAP baseline scan of the running site in every automatic build; findings and decisions in docs/SECURITY.md*
 - [ ] **Edge protection**: Cloudflare (firewall, DDoS protection, bot control) | Block attacks and scraping
 - [ ] **Search ownership**: Google Search Console, canonical tags | Prove the official site and detect copies
 
@@ -1331,11 +1331,11 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] **Backend**: Jest, Supertest | Unit and API end-to-end tests — *Note: Jest and Supertest; Vitest, Testing Library and Playwright*
 - [x] **Website**: Vitest, React Testing Library, Playwright | Component and browser tests — *Note: Jest and Supertest; Vitest, Testing Library and Playwright*
-- [~] **Apps**: flutter_test, integration_test, Firebase Test Lab | Widget, integration and device tests — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
+- [~] **Apps**: flutter_test, integration_test, Firebase Test Lab | Widget, integration and device tests — *Left: flutter_test (network layer, helpers, face blurring) and Android and iOS builds on every change; integration tests and devices still to come*
 - [~] **Accessibility**: axe-core, Lighthouse, TalkBack, VoiceOver | Automated and manual checks — *Left: axe-core and Lighthouse automated; TalkBack and VoiceOver by hand still to come*
-- [~] **Load**: k6 | Load and stress tests — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
-- [~] **Security**: OWASP ZAP, Dependabot, CodeQL | Vulnerability scans — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
-- [~] **Tracking**: GitHub Issues and GitHub Projects | Defects and test progress — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
+- [~] **Load**: k6 | Load and stress tests — *Left: a Node load test on every change; the k6 script with the same journeys is in tests/load for larger runs*
+- [x] **Security**: OWASP ZAP, Dependabot, CodeQL | Vulnerability scans — *Note: OWASP ZAP, npm audit, Dependabot and CodeQL, all automatic*
+- [~] **Tracking**: GitHub Issues and GitHub Projects | Defects and test progress — *Left: GitHub Issues named for defects in docs/TESTING.md; in use from user acceptance testing*
 
 ## SECTION 11: DELIVERY PLAN AND SUPPORTING DELIVERABLES
 
