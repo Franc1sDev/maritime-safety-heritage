@@ -19,6 +19,8 @@ The automatic build on GitHub (`.github/workflows/ci.yml`) runs all of these on 
 | **Lighthouse** | A simulated mid-range phone on a slow connection: performance 80 or more; accessibility, best practices and SEO 95 or more | `tests/perf/lighthouse.cjs` | — |
 | **Load test** | 200 simulated people browsing, reacting, commenting, posting and messaging for 30 seconds. 95% of requests must be under 300 ms, with no server errors | `tests/load/node-load.mjs` | — |
 | **Code scanning** | CodeQL security analysis; weekly and on every change to `main` | `.github/workflows/codeql.yml` | — |
+| **Web vulnerability scan** | OWASP ZAP baseline (passive) scan of the running site; any high-risk finding fails the build. The report is kept with each build | `.github/workflows/ci.yml` | — |
+| **Known vulnerabilities** | `npm audit` of the server's and website's packages; any high or critical one fails the build | `.github/workflows/ci.yml` | — |
 | **Dependency updates** | Dependabot proposes updates weekly; each passes the same tests before it is merged | `.github/dependabot.yml` | — |
 
 To run them yourself, see each folder's README and the commands at the top of each test file.

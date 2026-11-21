@@ -181,7 +181,7 @@ A testimony row is ready only when it has the storyteller's name, the type of co
 
 **Analytics** shows live figures: published stories, testimonies and historical records, stories with audio or video, stories not in English, incidents documented, counties and water bodies represented, Contributors and active users, visitors, safety concerns, resource views and downloads, story downloads and citations.
 
-**AI quality** shows AI checks today, RED items and how many were reviewed within 24 hours, the override rate, how often admins agreed with RED flags, and AI flags by language, watched so that no language is flagged unfairly.
+**AI quality** shows AI checks today, RED items and how many were reviewed within 24 hours, the override rate, how often admins agreed with RED flags, AI flags by language, watched so that no language is flagged unfairly, and overrides by guideline, which show where the AI's guidance needs adjusting.
 
 **PDF reports**: choose the period and the charts to include, then **Generate PDF report**. A monthly report is generated automatically on the first day of each month. Earlier reports stay in the list.
 

@@ -56,6 +56,7 @@ Use the **AI quality** figures at the quarterly review:
 | **AI override rate** and **Wrongly blocked (overridden)** | A rising rate means the AI is blocking too much |
 | **Admins agreed with RED flags** | A falling share means the same |
 | **AI flags by language** | No language should be flagged much more than the others |
+| **Overrides by guideline** | A high share overridden on one guideline means its guidance needs adjusting |
 
 **Recalibrate** changes the scores at which a story becomes YELLOW or RED (20% and 70% by default). Change them only after a review, by small steps, and note the reason in the review record.
 

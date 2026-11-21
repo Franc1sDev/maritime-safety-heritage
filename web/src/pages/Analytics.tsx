@@ -7,6 +7,12 @@ import { Chart } from '../components/Chart';
 import { Icon } from '../components/Icon';
 import { fmtDate, Problem, Skeleton } from '../components/ui';
 
+/** The AI review guidelines (Section 5.2), named as in the rules. */
+const GUIDELINE_NAMES: Record<string, string> = {
+  safety: 'Safety', privacy: 'Privacy', harassment: 'Harassment and hate speech', misinformation: 'Misinformation',
+  political: 'Political campaigning', spam: 'Spam and impersonation', inappropriate: 'Graphic or inappropriate content', unknown: 'Not recorded',
+};
+
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 /** Live analytics: the measures the project reports, and charts by day, week, month or year that update as things happen. */
 export default function Analytics({ canCalibrate }: { canCalibrate?: boolean }) {
@@ -57,6 +63,15 @@ function AiQuality({ canCalibrate }: { canCalibrate?: boolean }) {
     <section className="card" style={{ marginTop: '.8rem' }}>
       <h3 style={{ marginTop: 0 }}>{t('AI quality')}</h3>
       <div className="statgrid"><div className="stat"><b>{a.agreementPercent ?? '—'}{a.agreementPercent != null && '%'}</b><span>{t('Admins agreed with RED flags')}</span></div><div className="stat"><b>{a.wronglyBlockedPercent}%</b><span>{t('Wrongly blocked (overridden)')}</span></div><div className="stat"><b>{a.red}</b><span>{t('RED items')}</span></div><div className="stat"><b>{(a.usageToday ?? []).reduce((n: number, x: any) => n + x.calls, 0)}</b><span>{t('AI checks today')} · {a.provider}</span></div></div>
+      {a.byGuideline?.length > 0 && (
+        <div className="scroll-x"><table className="table" style={{ marginBottom: '.6rem' }}>
+          <caption className="small" style={{ textAlign: 'start' }}>{t('Overrides by guideline, last 90 days. A high share on one guideline means its guidance needs adjusting.')}</caption>
+          <thead><tr><th>{t('Guideline')}</th><th>{t('RED stories')}</th><th>{t('Overridden')}</th><th>{t('Share overridden')}</th></tr></thead>
+          <tbody>{a.byGuideline.map((g: { guideline: string; red: number; overridden: number; overridePercent: number }) => (
+            <tr key={g.guideline} style={{ cursor: 'default' }}><td>{t(GUIDELINE_NAMES[g.guideline] ?? g.guideline)}</td><td>{g.red}</td><td>{g.overridden}</td><td>{g.overridePercent}%</td></tr>
+          ))}</tbody>
+        </table></div>
+      )}
       <p className="small">{t('GREEN up to {g}, YELLOW above {g} and below {r}, RED from {r}.', { g: a.thresholds.yellowAbove, r: a.thresholds.redFrom })}</p>
       {canCalibrate && (
         <form className="row" onSubmit={async (e) => { e.preventDefault(); try { const r = await api('/admin/analytics/ai/thresholds', { method: 'PUT', body: th }); toast(r?.message ?? t('Thresholds saved.')); void q.refetch(); } catch (er: any) { toast(er.message, 'error'); } }}>

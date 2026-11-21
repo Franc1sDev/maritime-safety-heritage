@@ -71,6 +71,22 @@ jobs:
         run: NODE_PATH=/tmp/e2e/node_modules LIGHTHOUSE=/tmp/e2e/node_modules/.bin/lighthouse node tests/perf/lighthouse.cjs http://localhost:4000/
       - name: Load test (200 people for 30 seconds; 95% of requests must be under 300 ms with no server errors)
         run: node tests/load/node-load.mjs --users 200 --seconds 30 --think 2000
+      - name: OWASP ZAP baseline scan (passive web vulnerability scan; any high-risk finding fails the build)
+        run: |
+          mkdir -p zap && chmod 777 zap
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:4000/ -m 2 -I -J zap.json -r zap.html || true
+          python3 -c "
+          import json, sys
+          d = json.load(open('zap/zap.json'))
+          alerts = [a for s in d.get('site', []) for a in s.get('alerts', [])]
+          for a in sorted(alerts, key=lambda a: -int(a['riskcode'])): print(f\"risk {a['riskcode']}: {a['name']} ({a.get('count', '?')})\")
+          high = [a for a in alerts if int(a['riskcode']) >= 3]
+          sys.exit(f'{len(high)} high-risk findings' if high else 0)
+          "
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: zap-report, path: zap/, if-no-files-found: ignore }
       - if: failure()
         run: tail -n 80 server.log
 

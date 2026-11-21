@@ -785,6 +785,15 @@ describe('analytics, PDF reports and the audit log', () => {
     await request(http).put(`${api}/stories/${anyId}/reaction`).set(bearer(boss.token)).send({ type: 'heart' }).expect(403);
     await request(http).get(`${api}/stories/${anyId}`).set(bearer(boss.token)).expect(200);
     expect((await request(http).get(`${api}/admin/analytics/ai`).set(bearer(boss.token)).expect(200)).body).toMatchObject({ provider: 'rules', thresholds: { yellowAbove: 20, redFrom: 70 } });
+    // Overrides by guideline (Section 5.3): RED stories are counted under their highest-scoring guideline.
+    const quality = (await request(http).get(`${api}/admin/analytics/ai`).set(bearer(boss.token)).expect(200)).body;
+    expect(Array.isArray(quality.byGuideline)).toBe(true);
+    expect(quality.byGuideline.length).toBeGreaterThan(0);
+    for (const g of quality.byGuideline) {
+      expect(g).toEqual({ guideline: expect.any(String), red: expect.any(Number), overridden: expect.any(Number), overridePercent: expect.any(Number) });
+      expect(g.overridden).toBeLessThanOrEqual(g.red);
+    }
+    expect(quality.byGuideline.reduce((n: number, g: any) => n + g.overridden, 0)).toBeGreaterThan(0);
   });
   it('generates a PDF report in the background', async () => {
     const today = new Date().toISOString().slice(0, 10), from = new Date(Date.now() - 20 * 86400_000).toISOString().slice(0, 10);

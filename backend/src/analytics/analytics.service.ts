@@ -176,7 +176,18 @@ export class AnalyticsService implements OnModuleInit {
               count(*) FILTER (WHERE admin_action = 'override' AND approved)::int AS overridden,
               count(*) FILTER (WHERE admin_action IN ('confirm_block','remove') AND ai_flag = 'RED')::int AS confirmed FROM moderation_decisions WHERE target_type = 'story' AND created_at > now() - interval '90 days'`);
     const decided = (q?.overridden ?? 0) + (q?.confirmed ?? 0);
-    return { ...q, agreementPercent: decided ? Math.round(((q?.confirmed ?? 0) / decided) * 100) : null, wronglyBlockedPercent: q?.red ? Math.round(((q?.overridden ?? 0) / q.red) * 100) : 0,
+    // Overrides by guideline (Section 5.3): a high share on one guideline signals that its guidance needs adjusting.
+    // Each RED story is counted under the guideline with the highest score.
+    const byGuideline = await this.db.q(
+      `WITH red AS (
+         SELECT DISTINCT ON (target_id) target_id,
+                (SELECT g->>'key' FROM jsonb_array_elements(coalesce(ai_explanation->'guidelines', '[]'::jsonb)) g ORDER BY (g->>'score')::numeric DESC NULLS LAST LIMIT 1) AS guideline
+           FROM moderation_decisions WHERE target_type = 'story' AND ai_flag = 'RED' AND admin_action = '' AND created_at > now() - interval '90 days'
+          ORDER BY target_id, created_at DESC)
+       SELECT coalesce(guideline, 'unknown') AS guideline, count(*)::int AS red,
+              count(*) FILTER (WHERE EXISTS (SELECT 1 FROM moderation_decisions d WHERE d.target_type = 'story' AND d.target_id = red.target_id AND d.admin_action = 'override' AND d.approved))::int AS overridden
+         FROM red GROUP BY 1 ORDER BY 2 DESC, 1`);
+    return { ...q, byGuideline: byGuideline.map((g) => ({ ...g, overridePercent: g.red ? Math.round((g.overridden / g.red) * 100) : 0 })), agreementPercent: decided ? Math.round(((q?.confirmed ?? 0) / decided) * 100) : null, wronglyBlockedPercent: q?.red ? Math.round(((q?.overridden ?? 0) / q.red) * 100) : 0,
       thresholds: await this.ai.thresholds(), provider: this.ai.provider, usageToday: await this.ai.usageToday() };
   }
   /** Recalibration: the flag thresholds are reviewed on a schedule using the record of admin decisions. */
