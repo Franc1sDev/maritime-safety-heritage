@@ -66,5 +66,9 @@
 "The story you wrote while offline is waiting. Open it to check it and send it?": "Hadithi uliyoandika bila mtandao inasubiri. Ifungue uikague na kuituma?",
 "Open my story": "Fungua hadithi yangu",
 "Waiting for Wi-Fi to upload.": "Inasubiri Wi-Fi ili kupakia.",
-"Upload now": "Pakia sasa"
+"Upload now": "Pakia sasa",
+"No faces were found in {name}.": "Hakuna nyuso zilizopatikana kwenye {name}.",
+"{n} faces blurred in {name}.": "Nyuso {n} zimetiwa ukungu kwenye {name}.",
+"Faces could not be blurred on this phone, so {name} was not added.": "Nyuso hazikuweza kutiwa ukungu kwenye simu hii, kwa hiyo {name} haikuongezwa.",
+"Looking for faces…": "Inatafuta nyuso…"
 }

@@ -52,6 +52,8 @@ dependencies:
   flutter_tts: ^4.2.0
   record: ^6.0.0
   path_provider: ^2.1.5
+  # Blurring faces in photos before they are sent (pure Dart; the faces are found by the phone itself)
+  image: ^4.2.0
   app_links: ^6.3.3
   # Knowing when the phone is on Wi-Fi (for “Upload only on Wi-Fi”)
   connectivity_plus: ^6.1.0

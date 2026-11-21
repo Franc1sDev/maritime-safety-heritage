@@ -78,3 +78,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // On-device face finding for “Blur faces in the photos I add next”, through Google Play services (small download).
+    implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")
+}

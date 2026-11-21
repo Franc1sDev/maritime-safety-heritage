@@ -11,6 +11,7 @@ import 'package:record/record.dart';
 
 import 'api.dart';
 import 'core.dart';
+import 'faces.dart';
 import 'pages.dart';
 import 'stories.dart';
 
@@ -49,6 +50,7 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
       suggestTitle = TextEditingController(), suggestDetails = TextEditingController(), storyteller = TextEditingController();
   final source = {for (final k in ['institution', 'reference', 'originalDate', 'creator', 'rightsStatement', 'obtained']) k: TextEditingController()};
   final slots = <_Slot>[];
+  bool blurFaces = false, blurring = false;
   late final Uploads _uploads;
   late final AppState _app;
   bool _handedOver = false;
@@ -203,7 +205,21 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
       if (kind == 'image') {
         // Photos are made smaller on the phone before they are sent.
         final list = camera ? [await picker.pickImage(source: ImageSource.camera, maxWidth: 2560, imageQuality: 86)].whereType<XFile>().toList() : await picker.pickMultiImage(maxWidth: 2560, imageQuality: 86);
-        for (final x in list) { await _add(x.path, x.name, await x.length()); }
+        for (final x in list) {
+          if (!blurFaces) { await _add(x.path, x.name, await x.length()); continue; }
+          // The person asked for faces to be hidden: a photo that cannot be checked is not sent.
+          try {
+            if (mounted) setState(() => blurring = true);
+            final r = await FaceBlur.blur(x.path);
+            final name = '${x.name.replaceAll(RegExp(r'\.[^.]+$'), '')}.jpg';
+            await _add(r.path, name, await File(r.path).length());
+            if (mounted) toast(context, r.faces == 0 ? t('No faces were found in {name}.', {'name': x.name}) : t('{n} faces blurred in {name}.', {'n': r.faces, 'name': x.name}));
+          } catch (_) {
+            if (mounted) toast(context, t('Faces could not be blurred on this phone, so {name} was not added.', {'name': x.name}), error: true);
+          } finally {
+            if (mounted) setState(() => blurring = false);
+          }
+        }
       } else if (kind == 'video') {
         final x = await picker.pickVideo(source: camera ? ImageSource.camera : ImageSource.gallery, maxDuration: Duration(minutes: num0(limits['videoMinutes'] ?? 5)));
         if (x != null) await _add(x.path, x.name, await x.length());
@@ -317,6 +333,8 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
         Text(t('Tell it by voice or add files'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         if (recording) Note('${t('Recording')} · ${recSeconds ~/ 60}:${(recSeconds % 60).toString().padLeft(2, '0')}', color: C.red, child: Align(alignment: Alignment.centerLeft, child: FilledButton(onPressed: _record, child: Text(t('Stop and keep'))))),
         _fileRow('video', Icons.videocam_outlined, t('Video')), _fileRow('audio', Icons.graphic_eq, t('Audio')), _fileRow('document', Icons.description_outlined, t('Documents')), _fileRow('image', Icons.image_outlined, t('Images')),
+        CheckboxListTile(dense: true, contentPadding: EdgeInsets.zero, controlAffinity: ListTileControlAffinity.leading, value: blurFaces, onChanged: (v) => setState(() => blurFaces = v ?? false),
+          title: Text(t('Blur faces in the photos I add next')), subtitle: blurring ? Text(t('Looking for faces…')) : null),
         Text(t('Hidden location data is removed from photos automatically. Limits: video {v} MB and {m} minutes, audio {a} MB, images and documents {i} MB each.', {'v': maxMb('video'), 'm': limits['videoMinutes'] ?? 5, 'a': maxMb('audio'), 'i': maxMb('image')}), style: const TextStyle(fontSize: 12)),
         Text(t('Pictures or stories that identify a child need the agreement of a parent or guardian.'), style: const TextStyle(fontSize: 12)),
         for (final sl in slots) ListTile(dense: true, contentPadding: EdgeInsets.zero,

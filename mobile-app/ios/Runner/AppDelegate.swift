@@ -1,6 +1,8 @@
 import Flutter
 import UIKit
 import UserNotifications
+import Vision
+import ImageIO
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -15,6 +17,42 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "MshAlerts") {
       AppDelegate.registerAlerts(messenger: registrar.messenger())
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "MshFaces") {
+      AppDelegate.registerFaces(messenger: registrar.messenger())
+    }
+  }
+
+  /// Finds faces in a photo so the app can blur them before it is sent (“Blur faces in the photos I add next”).
+  /// Uses Apple's Vision framework on the phone; nothing leaves the device. Answers [left, top, width, height]
+  /// boxes in the photo's pixels, measured from the top left.
+  static func registerFaces(messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(name: "msh/faces", binaryMessenger: messenger)
+    channel.setMethodCallHandler { call, result in
+      guard call.method == "find", let path = (call.arguments as? [String: Any])?["path"] as? String else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      DispatchQueue.global(qos: .userInitiated).async {
+        guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+          DispatchQueue.main.async { result(FlutterError(code: "unreadable", message: "The photo could not be read.", details: nil)) }
+          return
+        }
+        let width = CGFloat(image.width), height = CGFloat(image.height)
+        let request = VNDetectFaceRectanglesRequest()
+        do {
+          // The app saves the photo upright before asking, so the pixels and the boxes share one orientation.
+          try VNImageRequestHandler(cgImage: image, orientation: .up, options: [:]).perform([request])
+          let boxes: [[Int]] = (request.results ?? []).map { face in
+            let b = face.boundingBox // normalised, origin at the bottom left
+            return [Int(b.minX * width), Int((1 - b.maxY) * height), Int(b.width * width), Int(b.height * height)]
+          }
+          DispatchQueue.main.async { result(boxes) }
+        } catch {
+          DispatchQueue.main.async { result(FlutterError(code: "unavailable", message: error.localizedDescription, details: nil)) }
+        }
+      }
     }
   }
 

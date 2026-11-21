@@ -43,5 +43,10 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+        // Face finding for “Blur faces in the photos I add next” (see Faces.kt).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "msh/faces").setMethodCallHandler { call, result ->
+            val path = call.argument<String>("path")
+            if (call.method == "find" && path != null) Faces.find(this, path, result) else result.notImplemented()
+        }
     }
 }
