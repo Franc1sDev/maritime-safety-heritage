@@ -2,8 +2,10 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Reminders: show a notification when one is due (Android 13 and later ask first) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Voice-first sharing: record a story with the microphone -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
-        android:label="Maritime Heritage"
+        android:label="Remembering the Waters"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
@@ -27,6 +29,17 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Deep links: a shared story, incident or resource link opens in the app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="maritime-heritage.onrender.com"/>
+                <data android:pathPrefix="/stories/"/>
+                <data android:pathPrefix="/incidents/"/>
+                <data android:pathPrefix="/resources/"/>
+                <data android:pathPrefix="/contributors/"/>
             </intent-filter>
         </activity>
         <!-- Sign in with Apple on Android: Apple's web page hands the result back to the app here -->

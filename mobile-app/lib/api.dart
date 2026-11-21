@@ -8,7 +8,10 @@ import 'package:http/http.dart' as http;
 class ApiError implements Exception {
   final int status;
   final String message;
-  ApiError(this.status, this.message);
+  /// The server's short code for the error (for example account_suspended) and any extra details.
+  final String code;
+  final dynamic details;
+  ApiError(this.status, this.message, {this.code = '', this.details});
   @override
   String toString() => message;
 }
@@ -32,6 +35,9 @@ class Api {
   String? _refresh;
   Future<bool>? _refreshing;
   void Function()? onSignedOut;
+  /// The reader's language, so the server answers in it.
+  String language = 'en';
+  static const appVersion = '2.0.0';
 
   static const _store = FlutterSecureStorage();
   static const _refreshKey = 'msh_refresh_token';
@@ -56,6 +62,8 @@ class Api {
 
   Map<String, String> _headers({bool json = false}) => {
         'X-Client': 'app',
+        'X-App-Version': appVersion,
+        'X-Language': language,
         'Accept': 'application/json',
         if (json) 'Content-Type': 'application/json',
         if (_access != null) 'Authorization': 'Bearer $_access',
@@ -146,20 +154,18 @@ class Api {
       onSignedOut?.call();
     }
     final data = _decode(res.body);
-    if (res.statusCode >= 400) throw ApiError(res.statusCode, _message(data, res.statusCode));
+    if (res.statusCode >= 400) throw ApiError(res.statusCode, _message(data, res.statusCode), code: data is Map ? '${data['code'] ?? ''}' : '', details: data is Map ? data['details'] : null);
     return data;
   }
 
   Future<dynamic> get(String path, [Map<String, Object?>? query]) => request('GET', path, query: query);
   Future<dynamic> post(String path, [Object? body]) => request('POST', path, body: body ?? const {});
   Future<dynamic> patch(String path, Object body) => request('PATCH', path, body: body);
-  Future<dynamic> delete(String path) => request('DELETE', path);
+  Future<dynamic> put(String path, [Object? body]) => request('PUT', path, body: body ?? const {});
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final s = await request('POST', '/auth/login', body: {'email': email, 'password': password}) as Map<String, dynamic>;
-    _setSession(s);
-    return s['user'] as Map<String, dynamic>;
-  }
+  /// Starts a session from a sign-in answer (Google, Apple, admin code, restored account).
+  void useSession(Map<String, dynamic> s) => _setSession(s);
+  Future<dynamic> delete(String path) => request('DELETE', path);
 
   /// Sign in with Google or Apple: the server checks the ID token they gave the app. The answer also says whether the account is new.
   Future<Map<String, dynamic>> oauth(String provider, String idToken, {String? name}) async {
@@ -168,16 +174,10 @@ class Api {
     return s;
   }
 
-  Future<Map<String, dynamic>> register(Map<String, Object?> data) async {
-    final s = await request('POST', '/auth/register', body: data) as Map<String, dynamic>;
-    _setSession(s);
-    return s['user'] as Map<String, dynamic>;
-  }
-
   Future<void> logout({bool everywhere = false}) async {
     try {
       if (everywhere) {
-        await request('POST', '/auth/logout-all', body: const {});
+        await request('POST', '/auth/sessions/end-all', body: const {});
       } else if (_refresh != null) {
         await request('POST', '/auth/logout', body: {'refreshToken': _refresh});
       }
@@ -188,9 +188,13 @@ class Api {
   /// Ends the session on this phone only (for example after a password change).
   Future<void> forget() => _clear();
 
-  /// Multipart upload with progress. [fileField] is "files" for submissions and "file" for admin uploads.
+  /// Uploads one file (story, comment, message, avatar, concern …) and returns the stored file.
+  Future<Map<String, dynamic>> uploadFile(LocalFile f, String purpose, {void Function(double)? onProgress, String path = '/media', String field = 'file'}) async =>
+      (await upload(path, {'purpose': purpose}, [f], fileField: field, onProgress: onProgress)) as Map<String, dynamic>;
+
+  /// Multipart upload with progress.
   Future<dynamic> upload(String path, Map<String, String> fields, List<LocalFile> files,
-      {String fileField = 'files', void Function(double)? onProgress}) async {
+      {String fileField = 'file', void Function(double)? onProgress}) async {
     await _ensureFresh();
     final mr = http.MultipartRequest('POST', _uri(path))..fields.addAll(fields);
     for (final f in files) {
@@ -215,7 +219,7 @@ class Api {
       throw ApiError(0, 'The upload was interrupted. Check your connection and try again.');
     }
     final data = _decode(res.body);
-    if (res.statusCode >= 400) throw ApiError(res.statusCode, _message(data, res.statusCode));
+    if (res.statusCode >= 400) throw ApiError(res.statusCode, _message(data, res.statusCode), code: data is Map ? '${data['code'] ?? ''}' : '', details: data is Map ? data['details'] : null);
     return data;
   }
 }

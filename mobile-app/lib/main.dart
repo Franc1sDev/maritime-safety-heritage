@@ -1,233 +1,142 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import 'alerts.dart';
-import 'motion.dart';
-import 'screens_admin.dart';
-import 'screens_main.dart';
-import 'screens_public.dart';
-import 'state.dart';
-import 'ui.dart';
+import 'admin.dart';
+import 'auth.dart';
+import 'core.dart';
+import 'pages.dart';
+import 'stories.dart';
 
-/// Maritime Safety Heritage Archive: the Android and iOS app.
-/// Uses the same secure API, accounts and archive as the website.
+/// Remembering the Waters: the Android and iOS app. Same API, accounts and design as the website.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light));
   final state = AppState();
-  MenuHook.entries = navEntries;
   runApp(AppScope(state: state, child: const HeritageApp()));
-  await state.load();
+  await state.start();
 }
 
 class HeritageApp extends StatelessWidget {
   const HeritageApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    final mode = !s.ready ? ThemeMode.system : s.theme == 'dark' ? ThemeMode.dark : s.theme == 'light' ? ThemeMode.light : ThemeMode.system;
     return MaterialApp(
-      title: 'Maritime Heritage',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      navigatorKey: appNavigator,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(s.largeText ? 1.15 : 1)),
-        child: AlertsLayer(child: CoachLayer(child: child!)),
-      ),
-      home: !s.ready
-          ? const Scaffold(body: Center(child: LoadingView(text: 'Opening the archive')))
-          : s.me == null ? const LandingScreen() : const Shell(),
+      title: 'Remembering the Waters', debugShowCheckedModeBanner: false, themeMode: mode,
+      theme: appTheme(dark: false, highContrast: s.ready && s.highContrast), darkTheme: appTheme(dark: true, highContrast: s.ready && s.highContrast),
+      builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(textScaler: TextScaler.linear((s.ready ? s.textScale : 1.0) * MediaQuery.of(c).textScaler.scale(1)), disableAnimations: (s.ready && s.reducedMotion) || MediaQuery.of(c).disableAnimations),
+          child: Directionality(textDirection: I18n.code == 'ar' ? TextDirection.rtl : TextDirection.ltr, child: child!)),
+      home: s.ready ? const Shell() : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Common page frame: background, top bar (your name opens My account, and Sign out),
-// and the round Menu button at the bottom left. There is no side menu: every option is round
-// and inside the page.
-// ---------------------------------------------------------------------------
-class AppPage extends StatelessWidget {
-  final Widget background;
-  final Widget body;
-  final bool showBack;
-  /// The welcome orbit is itself the menu, so it hides the Menu button.
-  final bool showMenu;
-  const AppPage({super.key, required this.background, required this.body, this.showBack = false, this.showMenu = true});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = AppScope.of(context);
-    final u = s.me;
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        titleSpacing: 12,
-        title: Row(children: [
-          if (showBack)
-            IconButton(onPressed: () => Navigator.of(context).maybePop(), icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Back')
-          else
-            const Padding(padding: EdgeInsets.only(left: 4, right: 10), child: CircleIcon(Icons.support_rounded, size: 34)),
-          if (!showBack) const Flexible(child: Text('Maritime Heritage', overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17))),
-        ]),
-        actions: [
-          if (u != null) ...[
-            const AlertButtons(),
-            Tooltip(message: 'My account', child: InkWell(
-              borderRadius: BorderRadius.circular(99),
-              onTap: () => u.isStaff ? push(context, const AccountScreen(asPage: true)) : Nav.goTab(context, 4),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  CircleAvatar(radius: 16, backgroundColor: C.blue, child: Text(u.initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white))),
-                  if (MediaQuery.of(context).size.width > 380) ...[
-                    const SizedBox(width: 8),
-                    Text(u.first, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                  ],
-                ]),
-              ),
-            )),
-            IconButton(tooltip: 'Sign out', icon: const Icon(Icons.logout_rounded), onPressed: () => confirmSignOut(context)),
-          ] else
-            TextButton.icon(onPressed: () => push(context, const SignInScreen()), icon: const Icon(Icons.login_rounded, color: Colors.white),
-                label: const Text('Sign in', style: TextStyle(color: Colors.white))),
-          const SizedBox(width: 6),
-        ],
-      ),
-      body: Stack(fit: StackFit.expand, children: [
-        background,
-        // Things still to do sit in a strip at the top; the page moves down to make room.
-        SafeArea(child: ListenableBuilder(
-          listenable: s.alerts,
-          builder: (_, child) => AnimatedPadding(
-            duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic,
-            padding: EdgeInsets.only(top: u != null && s.alerts.hasStrip ? 52 : 0), child: child),
-          child: body,
-        )),
-        if (showMenu) const Positioned(left: 16, bottom: 18, child: SafeArea(child: MenuFab())),
-      ]),
-    );
-  }
-}
-
-Future<void> confirmSignOut(BuildContext context, {bool everywhere = false}) async {
-  final s = AppScope.read(context);
-  if (everywhere && !await confirm(context, title: 'Sign out everywhere?', body: "You'll be signed out on every phone and computer, including this one.", action: 'Sign out everywhere', icon: Icons.shield_outlined)) return;
-  if (!context.mounted) return;
-  toast(context, everywhere ? 'Signed out on every device' : 'Signed out', Icons.logout_rounded);
-  Navigator.of(context).popUntil((r) => r.isFirst);
-  Nav.tab.value = 0;
-  await s.signOut(everywhere: everywhere);
-}
-
-// ---------------------------------------------------------------------------
-// The menu: what this person can do, in the order they are most likely to want it.
-// ---------------------------------------------------------------------------
-List<NavEntry> navEntries(BuildContext context) {
-  final s = AppScope.read(context);
-  final u = s.me;
-  final list = <NavEntry>[];
-  // The option the guide recommends next.
-  String? next;
-  if (u == null) {
-    next = 'login';
-  } else if (u.isStaff && s.pending > 0) {
-    next = 'review';
-  } else {
-    next = ['browse', 'map', 'listen', 'share'].firstWhere((k) => !MenuHook.visited.contains(k), orElse: () => 'search');
-  }
-  const hints = {
-    'login': 'Start here: sign in, or create a free account next to it.',
-    'review': 'Submissions are waiting for your review.',
-    'browse': 'Try this first: browse everything in the archive.',
-    'map': 'Next, see where each story happened on the map.',
-    'listen': "Listen to oral histories in people's own voices.",
-    'share': 'Have a story or photo? Share it with the research team.',
-    'search': 'Search for a place, a year or a word someone said.',
-  };
-  void add(String key, IconData icon, String label, String desc, VoidCallback run, {bool primary = false, int badge = 0}) =>
-      list.add(NavEntry(key, OrbItem(icon, label, desc, run, primary: primary, badge: badge), hint: key == next ? hints[key] : null));
-
-  if (u == null) {
-    add('login', Icons.login_rounded, 'Sign in', 'Sign in with your own account to explore the archive.', () => push(context, const SignInScreen()), primary: true);
-    add('signup', Icons.person_add_alt_rounded, 'Create account', 'Open a free account in under a minute.', () => push(context, const SignInScreen(create: true)));
-  } else {
-    add('search', Icons.search_rounded, 'Search', 'Search titles, transcripts, documents and places.', () => quickSearch(context), primary: !u.isStaff);
-    add('browse', Icons.grid_view_rounded, 'Browse', 'Explore every item, filtered by type, water and decade.', () => Nav.goTab(context, 1));
-    add('map', Icons.map_outlined, 'Incident map', 'See where each story happened, from Likoni to Lake Turkana.', () => Nav.goTab(context, 2));
-    add('listen', Icons.headphones_outlined, 'Listen', 'Play oral histories in the voices of those who lived them.', () => Nav.goTab(context, 1, type: 'oral', setType: true));
-    add('share', Icons.volunteer_activism_outlined, 'Share a story', 'Send a recording, photo or document to the research team.', () => Nav.goTab(context, 3));
-    add('reminders', Icons.alarm_rounded, 'Reminders', 'Set a reminder with a subject, a note, a date and a time.', () => push(context, const RemindersScreen()));
-    if (!u.isAdmin) add('enquiries', Icons.chat_bubble_outline_rounded, 'Enquiries', 'Your questions to the research team, and their replies.', () => push(context, const EnquiriesScreen()), badge: s.alerts.enquiries);
-    if (u.isStaff) {
-      add('admin', Icons.insert_chart_outlined_rounded, 'Dashboard', 'Usage, collection health and recent activity.', () => Nav.goTab(context, 4), primary: true);
-      add('records', Icons.inventory_2_outlined, 'Records', 'Edit, publish, unpublish or restore catalogue records.', () => push(context, const RecordsAdminScreen()));
-      add('upload', Icons.upload_rounded, 'Upload', 'Add a new item and catalogue its metadata.', () => push(context, const RecordFormScreen()));
-      add('review', Icons.inbox_outlined, 'Review', 'Approve or decline material sent in by the public.', () => push(context, const SubmissionsScreen()), badge: s.pending);
-    }
-    if (u.isAdmin) {
-      add('users', Icons.group_outlined, 'Users', 'Create accounts, change roles, suspend accounts.', () => push(context, const UsersScreen()));
-      add('messages', Icons.mail_outline_rounded, 'Messages', 'Messages from the contact form.', () => push(context, const MessagesScreen()), badge: s.unread);
-      add('reports', Icons.monitor_heart_outlined, 'Reports', 'Usage, the audit log and CSV exports.', () => push(context, const ReportsScreen()));
-    }
-  }
-  add('about', Icons.anchor_rounded, 'About', 'Who is behind the archive, privacy and terms.', () => push(context, const AboutScreen()));
-  add('contact', Icons.mail_outline_rounded, 'Contact', 'Send a message to the research team.', () => push(context, const ContactScreen()));
-  add('display', Icons.tune_rounded, 'Display', 'Larger text, light mode for slow connections, and the helper hints.', () => displayOptions(context));
-  add('server', Icons.dns_outlined, 'Server', 'The address of the archive this app connects to.', () => changeServer(context));
-  return list;
-}
-
-/// Larger text, light mode and the guide, as three round switches.
-void displayOptions(BuildContext context) {
-  showDialog(context: context, builder: (ctx) {
-    final s = AppScope.of(ctx);
-    return AlertDialog(
-      icon: const CircleIcon(Icons.tune_rounded, size: 52),
-      title: const Text('Display'),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('Saved on this phone only.', style: TextStyle(color: C.muted)),
-        OrbRow([
-          OrbItem(Icons.text_fields_rounded, s.largeText ? 'Larger text: on' : 'Larger text', '', s.toggleLargeText, on: s.largeText),
-          OrbItem(Icons.wifi_off_rounded, s.lowBw ? 'Light mode: on' : 'Light mode', '', s.toggleLowBw, on: s.lowBw),
-          OrbItem(Icons.auto_awesome_rounded, s.hints ? 'Hints: on' : 'Hints: off', '', s.toggleHints, on: s.hints),
-        ], size: 60),
-      ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done'))],
-    );
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Signed-in shell. Page 0 is the welcome orbit; the others are reached from it or the Menu button.
-// ---------------------------------------------------------------------------
-class Shell extends StatelessWidget {
+/// The main screen: five round icons at the top with STORIES in the centre, and the stories below.
+class Shell extends StatefulWidget {
   const Shell({super.key});
-  static const _keys = ['home', 'browse', 'map', 'share', 'admin'];
+  @override
+  State<Shell> createState() => _ShellState();
+}
+
+class _ShellState extends State<Shell> {
+  final stories = GlobalKey<StoriesScreenState>();
+  StreamSubscription<Uri>? _links;
+
+  @override
+  void initState() {
+    super.initState();
+    // Deep links: a shared story link opens directly in the app.
+    try { _links = AppLinks().uriLinkStream.listen(_openLink, onError: (_) {}); } catch (_) {}
+  }
+  @override
+  void dispose() { _links?.cancel(); super.dispose(); }
+
+  void _openLink(Uri u) => openPath(u.path + (u.hasQuery ? '?${u.query}' : ''));
+
+  /// Opens a place in the app from a path such as /stories/MS-2026-00001 or /inbox (used by links and notifications).
+  void openPath(String path) {
+    final u = Uri.parse(path.replaceFirst(RegExp(r'^https?://[^/]+'), ''));
+    final seg = u.pathSegments;
+    final app = AppScope.read(context);
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    void go(Widget w) => Navigator.push(context, MaterialPageRoute(builder: (_) => w));
+    if (seg.isEmpty) return;
+    switch (seg.first) {
+      case 'stories': if (seg.length > 1) stories.currentState?.openStory(seg[1]);
+      case 'incidents': if (seg.length > 1) go(IncidentPage(seg[1]));
+      case 'contributors': if (seg.length > 1) go(ContributorPage(seg[1]));
+      case 'resources': go(AboutPage(tab: 1, resource: seg.length > 1 ? seg[1] : null));
+      case 'about': go(const AboutPage());
+      case 'safety': go(const SafetyConcernPage());
+      case 'inbox': if (app.signedIn) go(InboxPage(open: seg.length > 1 ? seg[1] : null));
+      case 'announcements': go(const AnnouncementsPage());
+      case 'profile': if (app.signedIn) go(ProfilePage(section: seg.length > 1 ? seg[1] : null));
+      case 'responsibilities': if (app.isAdmin) go(const ResponsibilitiesPage());
+      case 'reports': if (app.isSuper) { go(const SuperPage(area: 'reports')); } else if (app.isAdmin) { go(const AdminPage(tab: 'analytics')); }
+      case 'admin':
+        if (seg.length > 1 && seg[1] == 'register') { go(AdminRegisterPage(invite: u.queryParameters['invite'])); }
+        else if (app.isAdmin) { go(AdminPage(tab: seg.length > 1 ? (seg[1] == 'export' ? 'import' : seg[1]) : 'moderation')); }
+        else if (!app.signedIn) { go(const AdminSignInPage()); }
+      case 'super': if (app.isSuper) go(SuperPage(area: seg.length > 1 ? seg[1] : 'analytics'));
+      case 'privacy' || 'terms' || 'rules': go(LegalPage(seg.first));
+    }
+  }
+
+  Widget _round(IconData icon, String label, VoidCallback onTap, {int count = 0, bool centre = false, bool on = false}) {
+    final cs = Theme.of(context).colorScheme;
+    final size = centre ? 62.0 : 52.0;
+    return Semantics(button: true, selected: on, label: count > 0 ? '$label: $count' : label, excludeSemantics: true, child: InkResponse(onTap: onTap, radius: 36, child: Stack(clipBehavior: Clip.none, children: [
+      Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: on ? cs.primary : cs.surface, border: Border.all(color: cs.primary, width: 2)),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(icon, size: centre ? 24 : 20, color: on ? Colors.white : cs.primary),
+            Text(label, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.clip, style: TextStyle(fontSize: centre ? 7.5 : 6.2, height: 1, fontWeight: FontWeight.w800, color: on ? Colors.white : cs.primary)),
+          ])),
+      if (count > 0) Positioned(right: -4, top: -4, child: Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1), decoration: BoxDecoration(color: C.red, borderRadius: BorderRadius.circular(10)), child: Text(count > 99 ? '99+' : '$count', style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)))),
+    ])));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final admin = s.isStaff;
-    return ValueListenableBuilder<int>(
-      valueListenable: Nav.tab,
-      builder: (context, i, _) {
-        MenuHook.current = i == 4 && !admin ? null : _keys[i];
-        return PopScope(
-          // The back button returns to the welcome orbit before leaving the app.
-          canPop: i == 0,
-          onPopInvokedWithResult: (didPop, _) { if (!didPop) Nav.tab.value = 0; },
-          child: Scaffold(
-            body: IndexedStack(index: i, children: [
-              const CoachTab(tab: 0, child: WelcomeScreen()),
-              const CoachTab(tab: 1, child: BrowseScreen()),
-              CoachTab(tab: 2, child: MapScreen(active: i == 2)),
-              const CoachTab(tab: 3, child: ShareScreen()),
-              CoachTab(tab: 4, child: admin ? const DashboardScreen() : const AccountScreen()),
-            ]),
-          ),
-        );
-      },
+    void go(Widget w) => Navigator.push(context, MaterialPageRoute(builder: (_) => w)).then((_) => s.refresh());
+    // Priority notifications float in the centre once after sign-in, then stay pinned at the top.
+    if (s.signedIn && s.priority.isNotEmpty && !s.floated && s.me?['profileComplete'] != false) {
+      s.floated = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) _float(s); });
+    }
+    final storiesIcon = _round(Icons.auto_stories, t('STORIES'), () { Navigator.of(context).popUntil((r) => r.isFirst); stories.currentState?.open('trending'); }, centre: true, on: true);
+    final icons = !s.signedIn
+        ? [_round(Icons.info_outline, t('ABOUT & RESOURCES'), () => go(const AboutPage())), storiesIcon, _round(Icons.login, t('SIGN IN'), () => go(const SignInPage()))]
+        : s.isSuper
+            ? [_round(Icons.person, t('MY PROFILE'), () => go(const ProfilePage())), _round(Icons.insights, t('LIVE ANALYTICS'), () => go(const SuperPage(area: 'analytics'))), storiesIcon,
+                _round(Icons.picture_as_pdf, t('REPORTS'), () => go(const SuperPage(area: 'reports'))), _round(Icons.admin_panel_settings, t('MANAGE ADMINS'), () => go(const SuperPage(area: 'admins')), count: num0(s.counts['priority']))]
+            : [_round(Icons.person, t('MY PROFILE'), () => go(const ProfilePage())), _round(Icons.info_outline, t('ABOUT & RESOURCES'), () => go(const AboutPage())), storiesIcon,
+                _round(Icons.mail_outline, t('INBOX'), () => go(const InboxPage()), count: num0(s.counts['inbox'])), _round(Icons.campaign, t('ANNOUNCEMENTS'), () => go(const AnnouncementsPage()), count: num0(s.counts['announcements'])),
+                if (s.isAdmin) _round(Icons.checklist, t('MY RESP.'), () => go(const ResponsibilitiesPage()), count: num0(s.counts['priority']))];
+    return Scaffold(
+      body: SafeArea(child: Column(children: [
+        Padding(padding: const EdgeInsets.fromLTRB(6, 6, 6, 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: icons)),
+        if (s.updateRequired) MaterialBanner(content: Text(t('Please update the app to continue.')), actions: [TextButton(onPressed: () => launchUrl(Uri.parse(s.api.base), mode: LaunchMode.externalApplication), child: Text(t('Update now')))]),
+        if (!s.online) Container(width: double.infinity, color: C.yellow, padding: const EdgeInsets.all(6), child: Text(t('You are offline. Some features are unavailable.'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5))),
+        if (s.priority.isNotEmpty) SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
+          for (final n in s.priority.take(4)) Padding(padding: const EdgeInsets.only(right: 6), child: ActionChip(avatar: const Icon(Icons.notifications_active, size: 16), label: Text(str(n['title']), style: const TextStyle(fontSize: 12)), onPressed: () => _openNotice(s, n))),
+        ])),
+        Expanded(child: StoriesScreen(key: stories)),
+        if (s.isAdmin) SafeArea(top: false, child: Padding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 6), child: FilledButton.icon(onPressed: () => openAdminPanel(context), icon: const Icon(Icons.tune), label: Text(t('ADMINISTRATIVE CONTROLS'))))),
+      ])),
     );
   }
+
+  void _openNotice(AppState s, J n) { s.api.post('/me/notifications/${n['id']}/read').catchError((_) => null); openPath(str(n['link'], '/')); }
+
+  void _float(AppState s) => showDialog<void>(context: context, builder: (c) => AlertDialog(
+        title: Text(t('Needs your action')),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          for (final n in s.priority.take(4)) Card(child: ListTile(title: Text(str(n['title']), style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(str(n['body'])), onTap: () { Navigator.pop(c); _openNotice(s, n); })),
+        ])),
+        actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(t('Not now')))],
+      ));
 }
