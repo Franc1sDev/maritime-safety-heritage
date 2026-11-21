@@ -20,13 +20,15 @@ const secretsFile = join(dir, 'demo-secrets.json');
 const port = Number(process.env.DEMO_DB_PORT || 55432);
 const fresh = !existsSync(join(dir, 'data', 'PG_VERSION'));
 mkdirSync(dir, { recursive: true });
+// When run as root (containers), the database runs as its own user and needs to be able to create its folder here.
+if (process.getuid?.() === 0) { const { chmodSync } = await import('node:fs'); chmodSync(dir, 0o777); }
 if (!existsSync(secretsFile)) {
   const r = () => randomBytes(36).toString('base64url');
   writeFileSync(secretsFile, JSON.stringify({ db: r(), access: r(), refresh: r(), media: r() }));
 }
 const s = JSON.parse(readFileSync(secretsFile, 'utf8'));
 if (!s.enc) { s.enc = randomBytes(36).toString('base64url'); writeFileSync(secretsFile, JSON.stringify(s)); }
-const pg = new EmbeddedPostgres({ databaseDir: join(dir, 'data'), user: 'postgres', password: s.db, port, persistent: true, onLog: () => {} });
+const pg = new EmbeddedPostgres({ databaseDir: join(dir, 'data'), user: 'postgres', password: s.db, port, persistent: true, postgresFlags: process.platform === 'win32' ? [] : ['-c', 'unix_socket_directories='], onLog: (m) => { if (process.env.PG_DEBUG) console.log(m); }, onError: (m) => { if (process.env.PG_DEBUG) console.error(m); } });
 
 if (fresh) { log('Creating the demo database (first run takes a minute)...'); await pg.initialise(); }
 await pg.start();
@@ -36,7 +38,7 @@ log('Database running. Preparing tables and sample content...');
 const env = {
   ...process.env, NODE_ENV: 'development', DB_HOST: 'localhost', DB_PORT: String(port), DB_USER: 'postgres', DB_PASSWORD: s.db, DB_NAME: 'maritime_demo',
   JWT_ACCESS_SECRET: s.access, JWT_REFRESH_SECRET: s.refresh, MEDIA_SIGNING_SECRET: s.media, MEDIA_ENCRYPTION_KEY: s.enc, STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: join(dir, 'storage'),
-  SEED_ADMIN_EMAIL: 'admin@demo.ke', SEED_ADMIN_PASSWORD: 'admin1234', SEED_SAMPLE_DATA: 'true', PORT: process.env.PORT || '4000',
+  DEMO_SIGN_IN: 'true', NEW_ACCOUNT_DAILY_STORIES: '50', SEED_ADMIN_EMAIL: 'admin@demo.ke', SEED_ADMIN_PASSWORD: 'admin1234', SEED_SAMPLE_DATA: 'true', PORT: process.env.PORT || '4000',
 };
 const run = (file) => new Promise((res, rej) => spawn(process.execPath, [join(root, 'dist', file)], { stdio: 'inherit', env }).on('exit', (c) => (c ? rej(new Error(file + ' failed')) : res())));
 await run('database/migrate.js');

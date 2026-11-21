@@ -1,5 +1,13 @@
 # Maritime Safety Heritage Archive: API and website in one image.
 # Build:  docker build -t maritime-heritage .
+# The website (React) is built first; the API then serves the finished files.
+FROM node:22-alpine AS web
+WORKDIR /app/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY web/ ./
+RUN npm run build
+
 FROM node:22-alpine AS build
 WORKDIR /app/backend
 COPY backend/package.json backend/package-lock.json ./
@@ -15,7 +23,7 @@ WORKDIR /app/backend
 COPY --from=build --chown=node:node /app/backend/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/backend/dist ./dist
 COPY --from=build --chown=node:node /app/backend/package.json ./
-COPY --chown=node:node web/ /app/web/
+COPY --from=web --chown=node:node /app/web/dist /app/web/dist
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s CMD wget -qO- http://127.0.0.1:4000/api/v1/health || exit 1

@@ -28,6 +28,8 @@ export class InboxController {
   read(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.inbox.read(id, me); }
   @Post(':id/accept') @HttpCode(200) @ApiOperation({ summary: 'Accept a message request' })
   accept(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.inbox.accept(id, me); }
+  @Post(':id/decline') @HttpCode(200) @ApiOperation({ summary: 'Decline a message request' })
+  decline(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.inbox.decline(id, me); }
 }
 
 @Global()

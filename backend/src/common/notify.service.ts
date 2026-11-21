@@ -85,7 +85,7 @@ export class Notify {
               (SELECT count(*)::int FROM notifications WHERE user_id = $1 AND priority AND done_at IS NULL) AS priority,
               (SELECT count(*)::int FROM announcements a WHERE a.deleted_at IS NULL AND a.sort_at >= (SELECT created_at FROM users WHERE id = $1) - interval '30 days'
                  AND NOT EXISTS (SELECT 1 FROM announcement_reads r WHERE r.announcement_id = a.id AND r.user_id = $1 AND r.read_at >= a.sort_at)) AS announcements,
-              (SELECT count(*)::int FROM dm_messages m JOIN conversation_members cm ON cm.conversation_id = m.conversation_id AND cm.user_id = $1
+              (SELECT count(*)::int FROM dm_messages m JOIN conversation_members cm ON cm.conversation_id = m.conversation_id AND cm.user_id = $1 AND cm.declined_at IS NULL
                  WHERE m.status = 'sent' AND m.sender_id IS DISTINCT FROM $1 AND (cm.last_read_at IS NULL OR m.created_at > cm.last_read_at)) AS inbox`, [userId]);
     return r ?? { notifications: 0, priority: 0, announcements: 0, inbox: 0 };
   }

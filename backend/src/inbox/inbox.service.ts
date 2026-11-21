@@ -35,7 +35,7 @@ export class InboxService {
               (SELECT ${personSql('u', 'ap')} FROM conversation_members om JOIN users u ON u.id = om.user_id LEFT JOIN admin_profiles ap ON ap.user_id = u.id
                 WHERE om.conversation_id = c.id AND om.user_id <> $1 ORDER BY (u.role = 'contributor') DESC LIMIT 1) AS other
          FROM conversations c JOIN conversation_members m ON m.conversation_id = c.id AND m.user_id = $1
-        WHERE EXISTS (SELECT 1 FROM dm_messages x WHERE x.conversation_id = c.id AND x.status = 'sent')
+        WHERE m.declined_at IS NULL AND EXISTS (SELECT 1 FROM dm_messages x WHERE x.conversation_id = c.id AND x.status = 'sent')
         ORDER BY c.last_message_at DESC LIMIT 200`, [user.id]);
     const shape = (c: Row) => ({
       id: c.id, kind: c.kind, topic: c.topic, issueType: c.issueType, issueRef: c.issueRef, unread: c.unread, lastMessage: c.last, lastMessageAt: c.lastMessageAt,
@@ -82,6 +82,13 @@ export class InboxService {
   async accept(conversationId: string, user: AuthUser) {
     await this.member(conversationId, user);
     await this.db.q(`UPDATE conversation_members SET is_request = false WHERE conversation_id = $1 AND user_id = $2`, [conversationId, user.id]);
+    return { ok: true };
+  }
+
+  /** Declines a message request: it leaves the list and the sender is not told. */
+  async decline(conversationId: string, user: AuthUser) {
+    await this.member(conversationId, user);
+    await this.db.q(`UPDATE conversation_members SET declined_at = now(), last_read_at = now() WHERE conversation_id = $1 AND user_id = $2 AND is_request`, [conversationId, user.id]);
     return { ok: true };
   }
 

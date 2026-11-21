@@ -94,6 +94,16 @@ try {
 
   Step '4/4  Building the API, creating tables and loading sample content'
   & npm run build 2>&1 | Tee-Object -FilePath $log -Append | Select-Object -Last 2
+  # The website is built into web\dist, which the API serves.
+  $web = Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent) 'web'
+  if (Test-Path (Join-Path $web 'package.json')) {
+    Push-Location $web
+    & npm install --no-audit --no-fund 2>&1 | Tee-Object -FilePath $log -Append | Select-Object -Last 2
+    & npm run build 2>&1 | Tee-Object -FilePath $log -Append | Select-Object -Last 2
+    $webExit = $LASTEXITCODE
+    Pop-Location
+    if ($webExit -ne 0) { Fail 'Building the website failed. Check the log.' }
+  }
   if ($LASTEXITCODE -ne 0) { Fail 'The build failed. See the log.' }
   & npm run setup-db 2>&1 | Tee-Object -FilePath $log -Append
   if ($LASTEXITCODE -ne 0) { Fail 'Creating the tables failed. See the log.' }

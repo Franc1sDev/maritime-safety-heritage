@@ -175,7 +175,7 @@ export const config = {
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
   /** Folder with the website, served from the same address as the API. Empty string turns it off. */
-  webDir: process.env.WEB_DIR ?? require('path').resolve(__dirname, '../../../web'),
+  webDir: process.env.WEB_DIR ?? require('path').resolve(__dirname, '../../../web/dist'),
   /** Number of reverse proxies in front of the API ("true" = 1). Needed for correct visitor addresses in logs and rate limits. */
   trustProxy: ((v) => (v === 'true' ? 1 : Math.max(0, parseInt(v, 10) || 0)))(process.env.TRUST_PROXY ?? 'false'),
   security: {

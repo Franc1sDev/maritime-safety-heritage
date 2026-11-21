@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 249 of 1190 items ticked, 70 partly done**
+**Progress: 496 of 1190 items ticked, 89 partly done**
 
 How to read it:
 
@@ -297,40 +297,40 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 
 #### 3.1.1 Design Language
 
-- [ ] Colours: a blue-and-white theme. Engagement icons are transparent by default and turn blue and white when pressed.
-- [ ] Main icons: round, animated icons at the top of the page. Tabs (“Stories by”) use soft-edged rectangular icons, which take less space than circles.
-- [ ] Grouping: related icons sit together in smooth, rounded containers.
-- [ ] Design system: colours, type sizes, spacing, icons, buttons and animations will be defined once as shared design tokens and used by the website and both apps, so they stay identical.
+- [x] Colours: a blue-and-white theme. Engagement icons are transparent by default and turn blue and white when pressed.
+- [x] Main icons: round, animated icons at the top of the page. Tabs (“Stories by”) use soft-edged rectangular icons, which take less space than circles.
+- [x] Grouping: related icons sit together in smooth, rounded containers.
+- [~] Design system: colours, type sizes, spacing, icons, buttons and animations will be defined once as shared design tokens and used by the website and both apps, so they stay identical. — *Left: the tokens are defined once in the website; the apps take the same values in stages 3 and 4*
 
 #### 3.1.2 Themes: Light, Dark and Auto
 
-- [ ] Users choose Light, Dark or Auto on first sign-in and in MY PROFILE. Auto follows the device’s system setting and switches automatically when it changes.
-- [ ] The choice is saved to the account, so it carries across the website and the apps.
-- [ ] The blue-and-white theme, the GREEN / YELLOW / RED flags, charts and animated icons all have a dark-mode version with sufficient contrast. A High-contrast option is also offered.
+- [x] Users choose Light, Dark or Auto on first sign-in and in MY PROFILE. Auto follows the device’s system setting and switches automatically when it changes.
+- [x] The choice is saved to the account, so it carries across the website and the apps.
+- [x] The blue-and-white theme, the GREEN / YELLOW / RED flags, charts and animated icons all have a dark-mode version with sufficient contrast. A High-contrast option is also offered.
 
 #### 3.1.3 Animation, Focus Mode and Reduced Motion
 
-- [ ] Animation: the interface will be highly animated, including guided on-screen hints, icons that appear when needed and disappear when not in use, and animations for successful actions, failed actions and celebrations where appropriate.
-- [ ] Focus mode: while a user is viewing a story, animations pause so they can focus on reading, viewing and engaging. Icons around the story stay still until the user hovers over them.
-- [ ] Reduced motion: the platform respects the device’s “reduce motion” setting and offers its own toggle. When on, animations are replaced with simple fades. This also saves battery on low-end phones.
+- [~] Animation: the interface will be highly animated, including guided on-screen hints, icons that appear when needed and disappear when not in use, and animations for successful actions, failed actions and celebrations where appropriate. — *Left: animated icons, transitions, the favourites and success animations are built; guided on-screen hints are not yet*
+- [~] Focus mode: while a user is viewing a story, animations pause so they can focus on reading, viewing and engaging. Icons around the story stay still until the user hovers over them. — *Left: the main icons stop moving when another page is open; they do not yet pause while a story is being read*
+- [x] Reduced motion: the platform respects the device’s “reduce motion” setting and offers its own toggle. When on, animations are replaced with simple fades. This also saves battery on low-end phones.
 
 #### 3.1.4 Accessibility
 
-- [ ] The website and apps must meet WCAG 2.2 level AA.
-- [ ] Screen-reader labels on all round icons, tabs and engagement icons; full keyboard navigation on the website; visible focus states.
-- [ ] Captions for videos (generated from transcripts), and alt text for images: contributors are prompted to add it, and AI suggests a description.
-- [ ] Adjustable text size without breaking layouts, and colour contrast that passes in both themes.
-- [ ] Listening and speaking: a Listen button reads a story aloud, and contributors can tell a story by voice first, with typing optional, so that people who prefer speaking to reading and writing are included (delivery phase in Section 11.1).
+- [~] The website and apps must meet WCAG 2.2 level AA. — *Left: the website is built to the standard (labels, keyboard, focus, contrast, text size); a formal audit is part of testing*
+- [x] Screen-reader labels on all round icons, tabs and engagement icons; full keyboard navigation on the website; visible focus states.
+- [~] Captions for videos (generated from transcripts), and alt text for images: contributors are prompted to add it, and AI suggests a description. — *Left: captions come from the transcript; the prompt for alt text when adding a photo is not yet on the share form*
+- [x] Adjustable text size without breaking layouts, and colour contrast that passes in both themes.
+- [x] Listening and speaking: a Listen button reads a story aloud, and contributors can tell a story by voice first, with typing optional, so that people who prefer speaking to reading and writing are included (delivery phase in Section 11.1).
 
 #### 3.1.5 Languages
 
-- [ ] **Justification.** This is a platform for maritime stories. The sea connects communities that speak many different languages: the Kenyan coast was shaped by Swahili, Arabic, Gujarati and Portuguese contact, and the safety lessons and heritage of coastal people elsewhere in the world are just as relevant to Kenyan fishers, sailors and ferry passengers. Offering the languages most spoken in the world’s maritime zones lets people tell their stories in the language they lived them in, lets stories travel between coasts through translation, and positions the platform as a global maritime heritage archive rather than a local site only. Dholuo is included because the fishing and boat-transport communities of Lake Victoria are among the project’s primary beneficiaries, and engagement must pay “attention to language”.
+- [x] **Justification.** This is a platform for maritime stories. The sea connects communities that speak many different languages: the Kenyan coast was shaped by Swahili, Arabic, Gujarati and Portuguese contact, and the safety lessons and heritage of coastal people elsewhere in the world are just as relevant to Kenyan fishers, sailors and ferry passengers. Offering the languages most spoken in the world’s maritime zones lets people tell their stories in the language they lived them in, lets stories travel between coasts through translation, and positions the platform as a global maritime heritage archive rather than a local site only. Dholuo is included because the fishing and boat-transport communities of Lake Victoria are among the project’s primary beneficiaries, and engagement must pay “attention to language”.
 
 The platform will support the following 20 interface languages:
 
-- [ ] **1**: English | Worldwide | The working language of international shipping; IMO Standard Marine Communication Phrases are in English. Default language.
-- [ ] **2**: Kiswahili | Kenya, Tanzania, northern Mozambique, Comoros | The platform's home coast. Swahili culture itself grew out of Indian Ocean seafaring and trade.
-- [ ] **3**: Dholuo (Luo) | Lake Victoria: Kisumu, Homa Bay, Migori and Siaya counties; also the Ugandan and Tanzanian shores | The main language of Kenya’s Lake Victoria fishing and boat-transport communities, who are among the project’s primary beneficiaries. Translated with community reviewers.
+- [x] **1**: English | Worldwide | The working language of international shipping; IMO Standard Marine Communication Phrases are in English. Default language.
+- [x] **2**: Kiswahili | Kenya, Tanzania, northern Mozambique, Comoros | The platform's home coast. Swahili culture itself grew out of Indian Ocean seafaring and trade.
+- [~] **3**: Dholuo (Luo) | Lake Victoria: Kisumu, Homa Bay, Migori and Siaya counties; also the Ugandan and Tanzanian shores | The main language of Kenya’s Lake Victoria fishing and boat-transport communities, who are among the project’s primary beneficiaries. Translated with community reviewers. — *Left: Dholuo is selectable and falls back to English until a Dholuo translator supplies the text*
 - [ ] **4**: Arabic | Red Sea, Arabian Gulf, Oman, Mediterranean, Horn of Africa | Centuries of dhow trade link Oman, Yemen and the Gulf to Lamu, Mombasa and Zanzibar. Needs right-to-left layout.
 - [ ] **5**: French | Madagascar, Comoros, Seychelles, Mauritius, Réunion, Djibouti, West and Central Africa, Pacific, Caribbean | Covers most of the western Indian Ocean islands and the Atlantic coast of Africa.
 - [ ] **6**: Portuguese | Mozambique, Angola, Cape Verde, Guinea-Bissau, São Tomé, Brazil, Portugal | Long coastlines across three continents; the Portuguese era is part of Mombasa’s own maritime history (Fort Jesus).
@@ -351,331 +351,331 @@ The platform will support the following 20 interface languages:
 
 ##### Language requirements
 
-- [ ] Choosing a language: detected from the device on first sign-in and changeable at any time in MY PROFILE. The whole interface (menus, rules frame, notifications, emails and PDF reports) is translated.
-- [ ] Story language: every story, comment and message is tagged with its language. Story content is not limited to the 20 interface languages: contributors can also tag local languages such as Mijikenda languages (e.g. Giriama, Digo), Bajuni, Pokomo, Suba, Luhya languages or Swahili dialects.
-- [ ] Translate button: stories, comments and transcripts show a “Translate” button that translates into the reader’s language on demand, marked as machine-translated, with a link back to the original.
-- [ ] Right-to-left layout: Arabic switches the whole layout to right-to-left, including the icon row, story frame and comment threads.
-- [ ] Fonts: fonts must cover every supported script (Latin, Arabic, Devanagari, Gujarati, Bengali, Chinese, Japanese, Greek and Cyrillic), for example the Noto font family.
-- [ ] Translation quality: English, Kiswahili and Dholuo are translated and reviewed by people for launch, Dholuo with reviewers from the Lake Victoria communities because machine translation for it is limited. The other 17 start as machine translation and are reviewed by native speakers in later phases.
+- [x] Choosing a language: detected from the device on first sign-in and changeable at any time in MY PROFILE. The whole interface (menus, rules frame, notifications, emails and PDF reports) is translated.
+- [x] Story language: every story, comment and message is tagged with its language. Story content is not limited to the 20 interface languages: contributors can also tag local languages such as Mijikenda languages (e.g. Giriama, Digo), Bajuni, Pokomo, Suba, Luhya languages or Swahili dialects.
+- [~] Translate button: stories, comments and transcripts show a “Translate” button that translates into the reader’s language on demand, marked as machine-translated, with a link back to the original. — *Left: on stories and transcripts; not yet on individual comments on the website*
+- [~] Right-to-left layout: Arabic switches the whole layout to right-to-left, including the icon row, story frame and comment threads. — *Left: the layout switches direction for Arabic; it will be checked when Arabic text is added in Phase 2*
+- [~] Fonts: fonts must cover every supported script (Latin, Arabic, Devanagari, Gujarati, Bengali, Chinese, Japanese, Greek and Cyrillic), for example the Noto font family. — *Left: Noto Sans is used; the other scripts load when those languages are added*
+- [~] Translation quality: English, Kiswahili and Dholuo are translated and reviewed by people for launch, Dholuo with reviewers from the Lake Victoria communities because machine translation for it is limited. The other 17 start as machine translation and are reviewed by native speakers in later phases. — *Left: Kiswahili is written and needs review by a native speaker; Dholuo needs a translator*
 
 #### 3.1.6 Cross-Platform Consistency
 
-- [ ] UI components and screen layouts must be consistent across the website and the Android and iOS apps, adapting only where a platform requires it (e.g. swipe gestures on phones).
-- [ ] All text comes from one shared translation source, so wording is identical everywhere.
+- [~] UI components and screen layouts must be consistent across the website and the Android and iOS apps, adapting only where a platform requires it (e.g. swipe gestures on phones). — *Left: done on the website; the apps follow in stages 3 and 4*
+- [~] All text comes from one shared translation source, so wording is identical everywhere. — *Left: done on the website; the apps follow in stages 3 and 4*
 
 #### 3.1.7 Global Behaviours
 
-- [ ] Progress indicators: a progress spinner (or progress bar for uploads) for any action that takes time. Skeleton placeholders while content loads.
-- [ ] Empty states: tabs with no content show a friendly message and a prompt to share a story.
-- [ ] Priority notifications: when a user signs in, items that need their action appear as floating, animated notifications in the centre of the screen. Selecting one takes the user to that item; clicking anywhere else sends it floating to the top of the screen, where it stays until the user acts on it.
-- [ ] Persistent STORIES page: the STORIES page never fully closes. Other pages open on another side of the screen, and the STORIES page is blurred while they are active. Selecting the blurred STORIES page makes it active again; it blurs again whenever another page becomes active.
-- [ ] Standard messages: every confirmation, warning and error uses the wording in Appendix A.4, in the user’s language.
-- [ ] Media behaviour: videos autoplay muted. Playback pauses when the STORIES page is blurred, when a story scrolls off screen, and while a priority notification is shown (playback of the first trending story starts only after the notification is dismissed).
+- [x] Progress indicators: a progress spinner (or progress bar for uploads) for any action that takes time. Skeleton placeholders while content loads.
+- [x] Empty states: tabs with no content show a friendly message and a prompt to share a story.
+- [x] Priority notifications: when a user signs in, items that need their action appear as floating, animated notifications in the centre of the screen. Selecting one takes the user to that item; clicking anywhere else sends it floating to the top of the screen, where it stays until the user acts on it.
+- [x] Persistent STORIES page: the STORIES page never fully closes. Other pages open on another side of the screen, and the STORIES page is blurred while they are active. Selecting the blurred STORIES page makes it active again; it blurs again whenever another page becomes active.
+- [x] Standard messages: every confirmation, warning and error uses the wording in Appendix A.4, in the user’s language.
+- [x] Media behaviour: videos autoplay muted. Playback pauses when the STORIES page is blurred, when a story scrolls off screen, and while a priority notification is shown (playback of the first trending story starts only after the notification is dismissed).
 
 ### 3.2 Front End – Website and Web App
 
 #### 3.2.1 Web Technology
 
-- [ ] The website will be served by the backend at the same address as the API, so sign-in, links and security policies stay simple.
-- [ ] It will be a responsive single-page application built with React and TypeScript, adapting from large desktop screens to phones.
-- [ ] Open access: published stories, incident records, collections, the map, search and learning resources are available to visitors without an account or payment.
-- [ ] Public story pages will be rendered on the server, so that shared links show rich previews and the archive can be found through search engines.
-- [ ] Web app (PWA): the website can be installed to a home screen, works partly offline (Section 8), and receives push notifications.
-- [ ] Link previews: shared and copied links show a title, image and contributor name when pasted into WhatsApp, Facebook, email and other apps.
-- [ ] Supported browsers: the latest two versions of Chrome, Edge, Firefox and Safari, and Chrome on Android.
+- [x] The website will be served by the backend at the same address as the API, so sign-in, links and security policies stay simple.
+- [x] It will be a responsive single-page application built with React and TypeScript, adapting from large desktop screens to phones.
+- [x] Open access: published stories, incident records, collections, the map, search and learning resources are available to visitors without an account or payment.
+- [x] Public story pages will be rendered on the server, so that shared links show rich previews and the archive can be found through search engines.
+- [~] Web app (PWA): the website can be installed to a home screen, works partly offline (Section 8), and receives push notifications. — *Left: installable and works partly offline; push needs the push keys to be set on the server*
+- [x] Link previews: shared and copied links show a title, image and contributor name when pasted into WhatsApp, Facebook, email and other apps.
+- [~] Supported browsers: the latest two versions of Chrome, Edge, Firefox and Safari, and Chrome on Android. — *Left: tested in Chrome/Chromium on desktop and phone sizes; Edge, Firefox and Safari checks are part of testing*
 
 #### 3.2.2 Visitor Access, Sign-In and Account Setup
 
-- [ ] Visitors: the archive opens on the STORIES page without signing in. A visitor can use every “Stories by” tab except Following and Favorites, open stories, incident records, collections, the map, the timeline and the learning resources, read comments, listen, translate, share, copy links, cite, download where the contributor allows it, and report a safety concern.
-- [ ] Sign-in prompt: when a visitor tries to post, react, comment, message, add a favourite, follow or report content, a prompt explains that an account is needed and offers “Continue with Google”, “Continue with Apple” and “Not now”.
-- [ ] Contributors sign in only with a Google or Apple account. There is no other sign-up method and no registration form. The sign-in page also offers the language choice, the privacy policy and terms, and links to Admin sign-in and Admin registration (Section 4.2).
-- [ ] If sign-in is cancelled or fails, the user sees a message and can try again.
-- [ ] On first sign-in, the Contributor sets up their profile by either creating a username and choosing an avatar or a real face photo, or keeping the name and photo from their Google or Apple account.
-- [ ] The username is checked for availability as it is typed (“✓ Username available”). Reserved names are refused (Section 2.6).
-- [ ] The Contributor also confirms their language and theme, and accepts the rules, privacy policy and terms (Section 4.4). The system confirms, validates and stores these details, then opens the Contributor’s Page.
-- [ ] Account messages at sign-in: a suspended account sees the suspension end date and reason, with “Ask Why”; an account deleted within the last 30 days is offered “Restore my account”; when a session expires, the user is asked to sign in again; and on the apps, an outdated version asks the user to update (Section 9.5).
+- [x] Visitors: the archive opens on the STORIES page without signing in. A visitor can use every “Stories by” tab except Following and Favorites, open stories, incident records, collections, the map, the timeline and the learning resources, read comments, listen, translate, share, copy links, cite, download where the contributor allows it, and report a safety concern.
+- [x] Sign-in prompt: when a visitor tries to post, react, comment, message, add a favourite, follow or report content, a prompt explains that an account is needed and offers “Continue with Google”, “Continue with Apple” and “Not now”.
+- [~] Contributors sign in only with a Google or Apple account. There is no other sign-up method and no registration form. The sign-in page also offers the language choice, the privacy policy and terms, and links to Admin sign-in and Admin registration (Section 4.2). — *Left: built; Google and Apple buttons appear once their client IDs are set on the server (a test sign-in is shown on test servers until then)*
+- [x] If sign-in is cancelled or fails, the user sees a message and can try again.
+- [x] On first sign-in, the Contributor sets up their profile by either creating a username and choosing an avatar or a real face photo, or keeping the name and photo from their Google or Apple account.
+- [x] The username is checked for availability as it is typed (“✓ Username available”). Reserved names are refused (Section 2.6).
+- [x] The Contributor also confirms their language and theme, and accepts the rules, privacy policy and terms (Section 4.4). The system confirms, validates and stores these details, then opens the Contributor’s Page.
+- [x] Account messages at sign-in: a suspended account sees the suspension end date and reason, with “Ask Why”; an account deleted within the last 30 days is offered “Restore my account”; when a session expires, the user is asked to sign in again; and on the apps, an outdated version asks the user to update (Section 9.5).
 
 #### 3.2.3 Contributor’s Page – Main Icons
 
-- [ ] The Contributor’s Page has five round, animated icons at the top: STORIES (centre), MY PROFILE, ABOUT & RESOURCES, INBOX and ANNOUNCEMENTS. INBOX and ANNOUNCEMENTS show unread counts. Visitors see STORIES, ABOUT & RESOURCES and a SIGN IN icon.
-- [ ] STORIES is the centre icon and its page opens by default. Selecting any other icon opens that page alongside the STORIES page, which stays open but blurred (Section 3.1.7).
+- [x] The Contributor’s Page has five round, animated icons at the top: STORIES (centre), MY PROFILE, ABOUT & RESOURCES, INBOX and ANNOUNCEMENTS. INBOX and ANNOUNCEMENTS show unread counts. Visitors see STORIES, ABOUT & RESOURCES and a SIGN IN icon.
+- [x] STORIES is the centre icon and its page opens by default. Selecting any other icon opens that page alongside the STORIES page, which stays open but blurred (Section 3.1.7).
 
 #### 3.2.4 STORIES
 
-- [ ] The STORIES page shows the story frame. Above the story frame is a row of “Stories by” tabs, each with its own soft-edged rectangular icon.
+- [x] The STORIES page shows the story frame. Above the story frame is a row of “Stories by” tabs, each with its own soft-edged rectangular icon.
 
 ##### Stories By Tabs
 
-- [ ] Trending (default tab): opens by default, with the top story already playing. Stories are ranked from most to least trending (Section 2.6).
-- [ ] Following: stories from Contributors the user follows; if they follow no one, a prompt suggests following contributors.
-- [ ] Map, Timeline and Collections: Map Explore with the incident layer, stories by decade and year, and curated collections (Section 3.2.14).
-- [ ] Location: the user selects a location from a drop-down list or types it. As the user types, the field checks for matches in real time and auto-completes from the coastal places list. If there is no match, the field shows “No stories for this location.”
-- [ ] Incidents: a list of incident records, searchable by name, year, water body and type. Selecting one opens the incident page (Section 3.2.14).
-- [ ] Contributors: a drop-down list showing the username and profile image of every Contributor who has posted at least one story, with search as the user types. If there are several matches, the user picks one. If there is no match, it shows “No Contributor with this username has posted a story, or their stories may have been deleted.”
-- [ ] Favorites: all stories the user has added to Favorites. Adding a story plays an animation of the story moving into the Favorites folder, followed by “Added to Favorites.” The icon then changes to “Remove from Favorites.”
+- [x] Trending (default tab): opens by default, with the top story already playing. Stories are ranked from most to least trending (Section 2.6).
+- [x] Following: stories from Contributors the user follows; if they follow no one, a prompt suggests following contributors.
+- [x] Map, Timeline and Collections: Map Explore with the incident layer, stories by decade and year, and curated collections (Section 3.2.14).
+- [x] Location: the user selects a location from a drop-down list or types it. As the user types, the field checks for matches in real time and auto-completes from the coastal places list. If there is no match, the field shows “No stories for this location.”
+- [x] Incidents: a list of incident records, searchable by name, year, water body and type. Selecting one opens the incident page (Section 3.2.14).
+- [x] Contributors: a drop-down list showing the username and profile image of every Contributor who has posted at least one story, with search as the user types. If there are several matches, the user picks one. If there is no match, it shows “No Contributor with this username has posted a story, or their stories may have been deleted.”
+- [x] Favorites: all stories the user has added to Favorites. Adding a story plays an animation of the story moving into the Favorites folder, followed by “Added to Favorites.” The icon then changes to “Remove from Favorites.”
 
 ##### Story Frame
 
 Every story, from any tab, appears in its own interactive story frame. Two icons sit at its top corners:
 
-- [ ] “+” (top right) – Share My Story: replaces the story frame with the share-story frame. A close button returns to the stories.
-- [ ] “Rules” (top left): replaces the story frame with the rules frame. A close button returns to the stories.
+- [x] “+” (top right) – Share My Story: replaces the story frame with the share-story frame. A close button returns to the stories.
+- [x] “Rules” (top left): replaces the story frame with the rules frame. A close button returns to the stories.
 
 The story frame also contains:
 
-- [ ] Main content area: the story content (text, images, audio, video, documents). Any text appears first, followed by attachments; users scroll down for more files. The contributor, place, time posted and (where given) the date the event happened are shown at the top. Audio and video show their transcript beneath.
-- [ ] Story type and source: each item is labelled as a community story, a testimony collected by the project, or a historical record. A historical record shows its source, archive reference, original date and rights. An item linked to an incident shows the incident’s name, which opens the incident page.
-- [ ] Engagement icons: transparent by default, blue and white when pressed, placed on one or both sides of the content depending on website or app, with related icons grouped in rounded containers:
-  - [ ] Where It Happened: opens an incident map (Google Maps) in a frame the same size as the content area; an X at the top centre closes it.
-  - [ ] Reactions: Heart, Heartbreak and Laugh, grouped in one container, all always visible.
-  - [ ] Comments: a standalone icon. Comments can be sorted by most reactions (default), most recent or oldest; users can tag others; replies are indented in threads, each showing who it replies to; a comment can contain text, a file, or both.
-  - [ ] Share: the device’s share menu on phones; WhatsApp, Facebook, X, Gmail and Copy Link on the website (see Appendix B on TikTok and Instagram).
-  - [ ] Copy Link and Cite: in one container. Copy Link copies the story’s permanent link (“Link copied.”); Cite opens “Cite this story” with ready-made citations (Section 3.2.14).
-  - [ ] Download: creates a ZIP file of all the story’s content (text as a text file, audio, video, documents, images). Shown only where the contributor’s usage rights allow it.
-  - [ ] Add to Favorites: toggles the story in the Favorites tab.
-  - [ ] Translate: shown when the story is in a language other than the reader’s.
-  - [ ] Listen: reads the story text or transcript aloud.
-  - [ ] Report: opens a report form for the story or its Contributor (a Contributor can also be reported from their username or profile image). The user picks one or more of five preset reasons (Appendix A) and/or types a description. The reporter receives a confirmation in INBOX.
-  - [ ] Safety concern: opens the “Report a safety concern” form (Section 3.2.6).
-- [ ] Sensitive stories: a story marked as sensitive shows a notice before it opens, with “View story” and “Go back” (Appendix C).
-- [ ] Removed stories: when an admin removes a story, its Contributor sees a notice with “Ask Why” (Section 2.6).
-- [ ] Scrolling past the end of a story moves to the next story in the current tab (similar to TikTok or Instagram Reels); all engagement icons then apply to the new story.
+- [x] Main content area: the story content (text, images, audio, video, documents). Any text appears first, followed by attachments; users scroll down for more files. The contributor, place, time posted and (where given) the date the event happened are shown at the top. Audio and video show their transcript beneath.
+- [x] Story type and source: each item is labelled as a community story, a testimony collected by the project, or a historical record. A historical record shows its source, archive reference, original date and rights. An item linked to an incident shows the incident’s name, which opens the incident page.
+- [x] Engagement icons: transparent by default, blue and white when pressed, placed on one or both sides of the content depending on website or app, with related icons grouped in rounded containers:
+  - [x] Where It Happened: opens an incident map (Google Maps) in a frame the same size as the content area; an X at the top centre closes it.
+  - [x] Reactions: Heart, Heartbreak and Laugh, grouped in one container, all always visible.
+  - [x] Comments: a standalone icon. Comments can be sorted by most reactions (default), most recent or oldest; users can tag others; replies are indented in threads, each showing who it replies to; a comment can contain text, a file, or both.
+  - [x] Share: the device’s share menu on phones; WhatsApp, Facebook, X, Gmail and Copy Link on the website (see Appendix B on TikTok and Instagram).
+  - [x] Copy Link and Cite: in one container. Copy Link copies the story’s permanent link (“Link copied.”); Cite opens “Cite this story” with ready-made citations (Section 3.2.14).
+  - [x] Download: creates a ZIP file of all the story’s content (text as a text file, audio, video, documents, images). Shown only where the contributor’s usage rights allow it.
+  - [x] Add to Favorites: toggles the story in the Favorites tab.
+  - [x] Translate: shown when the story is in a language other than the reader’s.
+  - [x] Listen: reads the story text or transcript aloud.
+  - [x] Report: opens a report form for the story or its Contributor (a Contributor can also be reported from their username or profile image). The user picks one or more of five preset reasons (Appendix A) and/or types a description. The reporter receives a confirmation in INBOX.
+  - [x] Safety concern: opens the “Report a safety concern” form (Section 3.2.6).
+- [x] Sensitive stories: a story marked as sensitive shows a notice before it opens, with “View story” and “Go back” (Appendix C).
+- [x] Removed stories: when an admin removes a story, its Contributor sees a notice with “Ask Why” (Section 2.6).
+- [x] Scrolling past the end of a story moves to the next story in the current tab (similar to TikTok or Instagram Reels); all engagement icons then apply to the new story.
 
 ##### Rules Frame
 
-- [ ] The rules frame sets out the rules and netiquette for sharing and engaging with stories (Appendix A), and explains moderation: every story is reviewed by AI and given a GREEN, YELLOW or RED flag; RED stories are blocked and reviewed by human admins; admins can also delete stories and lock or hide comments; and if an admin deletes your story, you can select “Ask Why” to find out the reason.
+- [x] The rules frame sets out the rules and netiquette for sharing and engaging with stories (Appendix A), and explains moderation: every story is reviewed by AI and given a GREEN, YELLOW or RED flag; RED stories are blocked and reviewed by human admins; admins can also delete stories and lock or hide comments; and if an admin deletes your story, you can select “Ask Why” to find out the reason.
 
 ##### Sharing a Story
 
-- [ ] Selecting “+” replaces the story frame with the share-story frame. A story may include text (optional, any length), one video, one audio file, up to four documents or PDFs and up to 20 images, each with a counter (e.g. “Images 7 / 20”).
-- [ ] Story details: where it happened (location from the places list or a pin on the map), when it happened (exact or approximate date), category, vessel name, tags and language.
-- [ ] Linked incident: the contributor can link the story to an incident record (e.g. “Mtongwe ferry disaster, 1994”), chosen from a searchable list, or suggest a new incident for the admins to add.
-- [ ] Posting options: post as myself, “as told by” another person (with consent confirmation and optional consent form), or anonymously; usage rights (e.g. All rights reserved, or a Creative Commons licence).
-- [ ] Recording: on phones, contributors can record audio or video directly in the share-story frame.
-- [ ] Voice-first sharing: a contributor can tell the whole story by voice. The recording is transcribed, and the contributor can check the transcript before sending; typing is optional.
-- [ ] Sensitive content: the contributor can mark the story as sensitive.
-- [ ] Privacy tools: optional face blurring on images. Hidden location data is removed from photos automatically.
-- [ ] Each file is compressed individually, with a progress indicator. The story can be saved as a draft at any time.
-- [ ] Messages while sharing: file limits reached, file too large, unsupported file type, file blocked by the virus scan, an empty story, missing consent for an “as told by” story, and offline queueing (Appendix A.4).
+- [x] Selecting “+” replaces the story frame with the share-story frame. A story may include text (optional, any length), one video, one audio file, up to four documents or PDFs and up to 20 images, each with a counter (e.g. “Images 7 / 20”).
+- [x] Story details: where it happened (location from the places list or a pin on the map), when it happened (exact or approximate date), category, vessel name, tags and language.
+- [x] Linked incident: the contributor can link the story to an incident record (e.g. “Mtongwe ferry disaster, 1994”), chosen from a searchable list, or suggest a new incident for the admins to add.
+- [x] Posting options: post as myself, “as told by” another person (with consent confirmation and optional consent form), or anonymously; usage rights (e.g. All rights reserved, or a Creative Commons licence).
+- [x] Recording: on phones, contributors can record audio or video directly in the share-story frame.
+- [x] Voice-first sharing: a contributor can tell the whole story by voice. The recording is transcribed, and the contributor can check the transcript before sending; typing is optional.
+- [x] Sensitive content: the contributor can mark the story as sensitive.
+- [~] Privacy tools: optional face blurring on images. Hidden location data is removed from photos automatically. — *Left: location data is always removed; face blurring is offered only in browsers that can detect faces*
+- [x] Each file is compressed individually, with a progress indicator. The story can be saved as a draft at any time.
+- [x] Messages while sharing: file limits reached, file too large, unsupported file type, file blocked by the virus scan, an empty story, missing consent for an “as told by” story, and offline queueing (Appendix A.4).
 
 ##### After SEND / SUBMIT
 
-- [ ] The story is reviewed by AI (Section 5.2) in no more than 3 minutes, with a progress indicator.
-- [ ] GREEN: the story is posted with a success animation. YELLOW: the story is posted, and the user receives a warning explaining what to avoid. RED: the story is blocked, the user receives a detailed explanation, and the story waits for admin review.
+- [x] The story is reviewed by AI (Section 5.2) in no more than 3 minutes, with a progress indicator.
+- [x] GREEN: the story is posted with a success animation. YELLOW: the story is posted, and the user receives a warning explaining what to avoid. RED: the story is blocked, the user receives a detailed explanation, and the story waits for admin review.
 
 #### 3.2.5 MY PROFILE
 
-- [ ] Change my profile: update the username and profile picture (avatar or photo), or switch back to the Google or Apple name and photo.
-- [ ] My Stories: each story the user has posted with all its engagement and views; delete a story with the Recycle Bin icon (with a confirmation pop-up); edit a story; add a new story; continue drafts.
-- [ ] Reminders: the user’s reminders.
-- [ ] Settings: theme, high contrast, text size, reduced motion, language, low-data mode, upload only on Wi-Fi (apps), read receipts, notification settings with quiet hours, blocked and muted users, and Send feedback (Section 11.9).
-- [ ] Drafts: unfinished stories and stories waiting to be sent while offline.
-- [ ] Download my data: download all the user’s stories, comments and profile data.
-- [ ] DELETE ACCOUNT: the user picks one preset reason and may type their own (Appendix A). A confirmation pop-up explains that the account is removed at once and permanently erased after 30 days.
+- [x] Change my profile: update the username and profile picture (avatar or photo), or switch back to the Google or Apple name and photo.
+- [x] My Stories: each story the user has posted with all its engagement and views; delete a story with the Recycle Bin icon (with a confirmation pop-up); edit a story; add a new story; continue drafts.
+- [x] Reminders: the user’s reminders.
+- [x] Settings: theme, high contrast, text size, reduced motion, language, low-data mode, upload only on Wi-Fi (apps), read receipts, notification settings with quiet hours, blocked and muted users, and Send feedback (Section 11.9).
+- [x] Drafts: unfinished stories and stories waiting to be sent while offline.
+- [x] Download my data: download all the user’s stories, comments and profile data.
+- [x] DELETE ACCOUNT: the user picks one preset reason and may type their own (Appendix A). A confirmation pop-up explains that the account is removed at once and permanently erased after 30 days.
 
 #### 3.2.6 ABOUT & RESOURCES
 
-- [ ] This page has three parts: About, Learning resources and Report a safety concern. It is open to visitors.
-- [ ] About: the platform’s role, the Remembering the Waters project and the organisations behind it, contact details, and links to the privacy policy, terms of use and rules.
-- [ ] Acknowledgements: the organisations supporting and running the project are acknowledged here and in the page footer.
-- [ ] Learning resources: a library of the project’s policy briefs, learning summaries, educational materials for schools, community groups and training institutions, the contributor handbook, and online exhibitions. Resources can be filtered by type, audience and language, read on screen, downloaded and shared; each shows its publication date and a suggested citation.
-- [ ] Online exhibitions: curated pages that present stories, photographs and records on a theme, complementing the project’s public exhibitions.
-- [ ] Report a safety concern: any user or visitor can tell the project team about a current safety risk on the water (for example an overloaded boat or missing life jackets), with the place, a description and an optional photo. The form states that it is not an emergency service and shows the emergency numbers; the sender receives a confirmation.
-- [ ] Suggest an improvement: a feedback form about the archive itself (also in MY PROFILE › Settings).
+- [x] This page has three parts: About, Learning resources and Report a safety concern. It is open to visitors.
+- [~] About: the platform’s role, the Remembering the Waters project and the organisations behind it, contact details, and links to the privacy policy, terms of use and rules. — *Left: the page is built; the names of the organisations and the contact details still need to be supplied*
+- [~] Acknowledgements: the organisations supporting and running the project are acknowledged here and in the page footer. — *Left: the page is built; the names of the organisations and the contact details still need to be supplied*
+- [x] Learning resources: a library of the project’s policy briefs, learning summaries, educational materials for schools, community groups and training institutions, the contributor handbook, and online exhibitions. Resources can be filtered by type, audience and language, read on screen, downloaded and shared; each shows its publication date and a suggested citation.
+- [x] Online exhibitions: curated pages that present stories, photographs and records on a theme, complementing the project’s public exhibitions.
+- [x] Report a safety concern: any user or visitor can tell the project team about a current safety risk on the water (for example an overloaded boat or missing life jackets), with the place, a description and an optional photo. The form states that it is not an emergency service and shows the emergency numbers; the sender receives a confirmation.
+- [x] Suggest an improvement: a feedback form about the archive itself (also in MY PROFILE › Settings).
 
 #### 3.2.7 INBOX
 
-- [ ] Opens the user’s direct messages with admins and other Contributors.
-- [ ] Each sender, or each conversation about a particular issue, appears in its own circular bubble. Selecting a bubble opens the full correspondence.
-- [ ] The unread count decreases as each message is opened. Messages from people the user does not follow appear under requests.
-- [ ] Users can attach files, block a sender from inside a conversation, and turn read receipts on or off.
+- [x] Opens the user’s direct messages with admins and other Contributors.
+- [x] Each sender, or each conversation about a particular issue, appears in its own circular bubble. Selecting a bubble opens the full correspondence.
+- [x] The unread count decreases as each message is opened. Messages from people the user does not follow appear under requests.
+- [x] Users can attach files, block a sender from inside a conversation, and turn read receipts on or off.
 
 #### 3.2.8 ANNOUNCEMENTS
 
-- [ ] Announcements are arranged from most recent to oldest, by when each was created or last edited; an edited announcement moves back up the list and is labelled “Edited”.
-- [ ] Each announcement shows a summary and the full description. If it includes dates, an animated calendar is shown with it.
-- [ ] The unread count decreases as each announcement is opened.
+- [x] Announcements are arranged from most recent to oldest, by when each was created or last edited; an edited announcement moves back up the list and is labelled “Edited”.
+- [x] Each announcement shows a summary and the full description. If it includes dates, an animated calendar is shown with it.
+- [x] The unread count decreases as each announcement is opened.
 
 #### 3.2.9 Admin Experience – Main Icons
 
-- [ ] Admins have the same round icons as Contributors (STORIES, MY PROFILE, ABOUT & RESOURCES, INBOX, ANNOUNCEMENTS), plus a MY RESPONSIBILITIES icon. Admins can view and engage with stories in the same way as Contributors.
+- [x] Admins have the same round icons as Contributors (STORIES, MY PROFILE, ABOUT & RESOURCES, INBOX, ANNOUNCEMENTS), plus a MY RESPONSIBILITIES icon. Admins can view and engage with stories in the same way as Contributors.
 
 #### 3.2.10 Administrative Controls Panel
 
 One side of the admin’s screen is dedicated to administrative controls, which can be expanded to full screen and returned to half screen. It has tabs for Moderation, Reports, Safety concerns, Approvals, Company stories, Collections, Incidents, Import, Resources, Announcements, Analytics and Audit log, and provides:
 
-- [ ] Story ID and AI flag: each story shows its unique ID and its AI flag at the top centre.
-- [ ] Delete story: a Recycle Bin icon at the top centre of each story. The Contributor sees a notice with an “Ask Why” button.
-- [ ] Override AI ban: the admin must give a justification and sees a warning that overrides are irreversible, feed into the AI review guidance and may weaken it, and should be made only when certain. The override goes to the approval engine (Section 2.7).
-- [ ] Lock comments and Hide comments, each with a stated reason shown to Contributors.
-- [ ] Sort and filter stories: by flag (Green, Yellow, Red), most recent or oldest, pending review, AI-blocked not overridden, and AI-blocked overridden.
-- [ ] Add a company story: created by one admin and published under “Admin” with the platform logo once approved (Section 2.7).
-- [ ] Collections: curate themed collections of stories, published once approved.
-- [ ] Incidents: create and edit incident records (name, date, place on the map, water body, vessel, type, summary, outcome and sources) and link stories and records to them.
-- [ ] Import: upload many files at once with a metadata spreadsheet (title, type, date, place, incident, language, source, rights, consent and validation). The system checks every row, shows what is ready and what needs attention, and submits the batch for approval as one request.
-- [ ] Resources: add, edit and remove learning resources and online exhibitions.
-- [ ] Safety concerns: a queue of concerns raised by users, with status, internal notes and a record of any referral to the responsible authority.
-- [ ] Live analytics and PDF reports (Section 2.10).
-- [ ] Reports queue and account actions: dismiss, warn, drop story, suspend for a set period, or delete permanently, with internal notes and the account holder kept informed (Section 2.8).
-- [ ] Announcements: create, edit and delete announcements, with a summary, full description, dates for the animated calendar, and an option to also send a push notification.
-- [ ] Approvals: all approval requests waiting for the admin’s decision (also listed in MY RESPONSIBILITIES).
-- [ ] Audit log view of the admin’s own actions.
+- [x] Story ID and AI flag: each story shows its unique ID and its AI flag at the top centre.
+- [x] Delete story: a Recycle Bin icon at the top centre of each story. The Contributor sees a notice with an “Ask Why” button.
+- [x] Override AI ban: the admin must give a justification and sees a warning that overrides are irreversible, feed into the AI review guidance and may weaken it, and should be made only when certain. The override goes to the approval engine (Section 2.7).
+- [x] Lock comments and Hide comments, each with a stated reason shown to Contributors.
+- [x] Sort and filter stories: by flag (Green, Yellow, Red), most recent or oldest, pending review, AI-blocked not overridden, and AI-blocked overridden.
+- [x] Add a company story: created by one admin and published under “Admin” with the platform logo once approved (Section 2.7).
+- [x] Collections: curate themed collections of stories, published once approved.
+- [x] Incidents: create and edit incident records (name, date, place on the map, water body, vessel, type, summary, outcome and sources) and link stories and records to them.
+- [x] Import: upload many files at once with a metadata spreadsheet (title, type, date, place, incident, language, source, rights, consent and validation). The system checks every row, shows what is ready and what needs attention, and submits the batch for approval as one request.
+- [x] Resources: add, edit and remove learning resources and online exhibitions.
+- [x] Safety concerns: a queue of concerns raised by users, with status, internal notes and a record of any referral to the responsible authority.
+- [x] Live analytics and PDF reports (Section 2.10).
+- [x] Reports queue and account actions: dismiss, warn, drop story, suspend for a set period, or delete permanently, with internal notes and the account holder kept informed (Section 2.8).
+- [x] Announcements: create, edit and delete announcements, with a summary, full description, dates for the animated calendar, and an option to also send a push notification.
+- [x] Approvals: all approval requests waiting for the admin’s decision (also listed in MY RESPONSIBILITIES).
+- [x] Audit log view of the admin’s own actions.
 
 #### 3.2.11 Admin Identity, Profile and Responsibilities
 
-- [ ] Identity: company stories appear under “Admin” with the platform logo. Each admin comments and replies under their own admin name (e.g. “Admin – Grace”) with the logo and an ADMIN badge.
-- [ ] MY PROFILE (Admin): change the verification email and password; manage multi-factor authentication. The admin name, Admin ID and profile image cannot be changed. Admins can delete their own account in the same way as Contributors.
-- [ ] MY RESPONSIBILITIES: Reminders, Notifications, and a list of pending approvals waiting for the admin’s decision. Messages from Contributors arrive in INBOX.
+- [x] Identity: company stories appear under “Admin” with the platform logo. Each admin comments and replies under their own admin name (e.g. “Admin – Grace”) with the logo and an ADMIN badge.
+- [x] MY PROFILE (Admin): change the verification email and password; manage multi-factor authentication. The admin name, Admin ID and profile image cannot be changed. Admins can delete their own account in the same way as Contributors.
+- [x] MY RESPONSIBILITIES: Reminders, Notifications, and a list of pending approvals waiting for the admin’s decision. Messages from Contributors arrive in INBOX.
 
 #### 3.2.12 Super Admin Experience
 
-- [ ] A Super Admin is a senior member of the project team who signs in the same way as admins. Super Admins do not moderate stories.
-- [ ] Their areas are: MY PROFILE, LIVE ANALYTICS, REPORTS (PDF, including the list of previous and automatic monthly reports) and MANAGE ADMINS.
-- [ ] MANAGE ADMINS: approve or decline admin registrations; add an admin by invitation (the invited person completes registration and sets up MFA); remove an admin, with confirmation; add a Super Admin from the existing admins, with confirmation; and view the full audit log.
-- [ ] If the majority approval rule is chosen (Appendix B), Super Admins also decide approvals that pass their deadline.
-- [ ] If a Super Admin is the only one remaining, account deletion is blocked with the message “You are the only Super Admin. The system must always have at least one Super Admin. Add another Super Admin first.”
+- [x] A Super Admin is a senior member of the project team who signs in the same way as admins. Super Admins do not moderate stories.
+- [x] Their areas are: MY PROFILE, LIVE ANALYTICS, REPORTS (PDF, including the list of previous and automatic monthly reports) and MANAGE ADMINS.
+- [x] MANAGE ADMINS: approve or decline admin registrations; add an admin by invitation (the invited person completes registration and sets up MFA); remove an admin, with confirmation; add a Super Admin from the existing admins, with confirmation; and view the full audit log.
+- [x] If the majority approval rule is chosen (Appendix B), Super Admins also decide approvals that pass their deadline.
+- [x] If a Super Admin is the only one remaining, account deletion is blocked with the message “You are the only Super Admin. The system must always have at least one Super Admin. Add another Super Admin first.”
 
 #### 3.2.13 Social Features
 
-- [ ] Block and mute: from a profile, story, comment or conversation. This is required by the Apple App Store and Google Play for apps with user-generated content.
-- [ ] Follow: follow contributors and see their stories in the Following tab.
-- [ ] Mentions: users are notified when tagged.
-- [ ] Views: contributors see view counts on their own stories.
+- [~] Block and mute: from a profile, story, comment or conversation. This is required by the Apple App Store and Google Play for apps with user-generated content. — *Left: from a profile, a conversation and Settings; not yet directly from a story or comment*
+- [x] Follow: follow contributors and see their stories in the Following tab.
+- [x] Mentions: users are notified when tagged.
+- [x] Views: contributors see view counts on their own stories.
 
 #### 3.2.14 Heritage and Archive Features
 
-- [ ] Map Explore: a map of all stories, grouped into clusters when zoomed out, with filters by category, date and language.
-- [ ] Incident records: each documented incident has its own page with its date, place, water body, vessel, a summary of what happened, the outcome, its sources, a map, and every story, testimony and historical record linked to it. Incidents appear as a separate layer on Map Explore and on the Timeline.
-- [ ] Historical records: newspaper articles, reports, photographs and official records are shown in the story frame with a “Historical record” label, their source, archive reference, original date and rights.
-- [ ] Validated testimonies: testimonies collected by the project show “Shared with consent”, and are published only after the storyteller has confirmed how their contribution is represented.
-- [ ] Timeline: browse stories by decade and year of the event.
-- [ ] Transcripts: shown under audio and video, correctable by the contributor, searchable and translatable.
-- [ ] Collections and online exhibitions: admin-curated themed exhibits (e.g. “Likoni Ferry Stories”, “Women of the Lake”, “Lamu Ferry Stories”).
-- [ ] Citation and permanent links: each story has a permanent link and a “Cite this story” option for students and researchers.
-- [ ] Edited stories: show an “Edited” label with edit history.
+- [x] Map Explore: a map of all stories, grouped into clusters when zoomed out, with filters by category, date and language.
+- [x] Incident records: each documented incident has its own page with its date, place, water body, vessel, a summary of what happened, the outcome, its sources, a map, and every story, testimony and historical record linked to it. Incidents appear as a separate layer on Map Explore and on the Timeline.
+- [x] Historical records: newspaper articles, reports, photographs and official records are shown in the story frame with a “Historical record” label, their source, archive reference, original date and rights.
+- [x] Validated testimonies: testimonies collected by the project show “Shared with consent”, and are published only after the storyteller has confirmed how their contribution is represented.
+- [x] Timeline: browse stories by decade and year of the event.
+- [x] Transcripts: shown under audio and video, correctable by the contributor, searchable and translatable.
+- [x] Collections and online exhibitions: admin-curated themed exhibits (e.g. “Likoni Ferry Stories”, “Women of the Lake”, “Lamu Ferry Stories”).
+- [x] Citation and permanent links: each story has a permanent link and a “Cite this story” option for students and researchers.
+- [x] Edited stories: show an “Edited” label with edit history.
 
 #### 3.2.15 Desktop and Laptop Wireframes
 
-- [ ] The wireframes below illustrate the layout and key interactions described in Section 3.2. They are low-fidelity layouts to guide design and development, not final visual designs. Numbers, sample names, addresses and organisation details are placeholders. The final visual designs will be produced from these wireframes and the design system (Section 3.1.1) before development of each screen.
+- [x] The wireframes below illustrate the layout and key interactions described in Section 3.2. They are low-fidelity layouts to guide design and development, not final visual designs. Numbers, sample names, addresses and organisation details are placeholders. The final visual designs will be produced from these wireframes and the design system (Section 3.1.1) before development of each screen. — *Note: built to follow the wireframe*
 
 **Desktop and laptop wireframes – index**
 
-- [ ] **D1**: Sign-in page for Contributors (Google or Apple only), with the link to browse without signing in, links for admins, and the sign-in failure message | All | 3.2.2, 4.2
-- [ ] **D2**: First-time profile setup: username or Google/Apple identity, picture, language, theme and acceptance of the rules, with username checks | Contributor | 3.2.2, 2.6
-- [ ] **D3**: Account messages at sign-in: suspended account, restoring an account within 30 days of deletion, and session expiry | All | 3.2.2, 2.6, 4.2
-- [ ] **D4**: Admin registration form, and the confirmation that the registration awaits Super Admin approval | Admin, Super Admin | 4.2, 3.2.12
-- [ ] **D5**: Admin and Super Admin sign-in with multi-factor authentication, and its error and lockout messages | Admin, Super Admin | 4.2
-- [ ] **D6**: Contributor’s Page: STORIES (Trending, default) with the “Stories by” tabs, story frame, Rules and “+” icons and all engagement icons | Contributor | 3.2.3–3.2.4
-- [ ] **D7**: Priority notifications: floating in the centre on sign-in, then pinned at the top until the user acts on them | All | 3.1.7, 2.9
-- [ ] **D8**: Location and Contributors tabs: real-time auto-complete, several matches, and the no-match messages | Contributor, Admin | 3.2.4
-- [ ] **D9**: Following and Favorites tabs, with adding and removing a favorite and the empty states | Contributor, Admin | 3.2.4, 3.2.13, 3.1.7
-- [ ] **D10**: Map Explore and Timeline tabs: stories grouped on a map, and stories by decade and year of the event | Contributor, Admin | 3.2.14
-- [ ] **D11**: Collections tab: curated collections, and a collection opened in the story frame | Contributor, Admin | 3.2.14
-- [ ] **D12**: “Where It Happened”: the incident map opens in a frame the same size as the content area, with ✕ at the top centre to close it | Contributor, Admin | 3.2.4
-- [ ] **D13**: Comments: sorting, threaded replies, tagging with suggestions, attachments and admin replies, plus the locked and hidden states | Contributor, Admin | 3.2.4, 3.2.11
-- [ ] **D14**: Share options on the website, Copy Link, and “Cite this story” with the permanent link | Contributor, Admin | 3.2.4, 3.2.14
-- [ ] **D15**: Download as ZIP (preparing and ready, or not offered when the contributor does not allow it) and Translate | Contributor, Admin | 3.2.4, 3.1.5
-- [ ] **D16**: Report a story or a Contributor: preset reasons and description, the confirmation and the validation message | Contributor, Admin | 3.2.4, 2.8
-- [ ] **D17**: Sensitive-story notice, the notice shown when an admin removes a story, and the “Ask Why” form with its confirmation | Contributor | 3.2.4, Appendix C, 2.6
-- [ ] **D18**: Rules frame: rules and netiquette and how moderation works; it replaces the story frame and closes back to the stories | Contributor, Admin | 3.2.4, Appendix A.3
-- [ ] **D19**: Share-story frame (1 of 2): text, files with counters, and story details – place, date, category, vessel, tags and language | Contributor | 3.2.4
-- [ ] **D20**: Share-story frame (2 of 2): posting as myself, “as told by” with consent, or anonymously; usage rights; sensitive content; and face blurring | Contributor | 3.2.4, 4.4, 4.11
-- [ ] **D21**: Share-story messages: draft saved, file limits, size and type errors, virus blocked, empty story, and offline sending | Contributor | 3.2.4, 4.6, 8.3
-- [ ] **D22**: After SEND / SUBMIT: AI review in progress, then the GREEN, YELLOW and RED outcomes | Contributor | 3.2.4, 5.2
-- [ ] **D23**: Another Contributor’s profile (opened from a username or picture): Follow, and the ⋯ menu to block, mute or report, with the block confirmation | Contributor, Admin | 3.2.13, 3.2.4
-- [ ] **D24**: MY PROFILE: My Stories with engagement and views, editing and deleting (with confirmation), adding a story, and Change my profile | Contributor | 3.2.5
-- [ ] **D25**: Editing a posted story, the review after editing, and the edit history behind the “Edited” label | Contributor | 3.2.5, 3.2.14
-- [ ] **D26**: Reminders in MY PROFILE: list, new or edited reminder, saved message, and the reminder pop-up when due | Contributor, Admin | 3.2.5, 3.2.11
-- [ ] **D27**: Settings in MY PROFILE: theme, contrast, motion, text size, language, low-data mode, privacy, notification channels and quiet hours, and blocked or muted users | Contributor (admins see the same settings) | 3.2.5, 3.1.2–3.1.5, 8.2, 2.9
-- [ ] **D28**: Download my data, Delete account (reason, warning and confirmation), and the feedback form | All | 3.2.5, 2.6, 7.7, 11.9
-- [ ] **D29**: ABOUT & RESOURCES – About: the archive, the project, contact details, links to all policies, and acknowledgement of the organisations behind the project | All, including visitors | 3.2.6, 4.11
-- [ ] **D30**: INBOX beside the blurred STORIES page: bubbles per sender or issue, unread counts, a conversation with attachments and read receipts, message requests, and offline sending | Contributor, Admin | 3.2.7, 2.9, 8.3
-- [ ] **D31**: ANNOUNCEMENTS: newest or most recently edited first, summaries, unread count, animated calendars, and the full description | All except Super Admin | 3.2.8
-- [ ] **D32**: System states: offline and back-online banners, loading skeletons, low-data placeholders, empty states and the general error with Retry | All | 3.1.7, 8.2, 8.6
-- [ ] **D33**: Dark theme (selected, or automatic when the device is in dark mode): the STORIES page | All | 3.1.2
-- [ ] **D34**: Admin page: the same icons plus MY RESPONSIBILITIES, the story with its ID and AI flag, and the administrative controls panel (Moderation tab) on half of the screen | Admin | 3.2.9–3.2.10
-- [ ] **D35**: Admin story controls: delete story, lock comments and hide comments, each with a reason, and their confirmations | Admin | 3.2.10, 2.6
-- [ ] **D36**: Override AI ban: warning, required justification and approval progress; the override takes effect only when the approval rule is met | Admin | 3.2.10, 2.7, Appendix A.4
-- [ ] **D37**: Reports tab (controls expanded to full screen): reports queue with escalation, report details, internal notes, actions and the account holder’s progress | Admin | 3.2.10, 2.8
-- [ ] **D38**: Report actions: dismiss, warn, drop story, suspend for a set period, and propose permanent deletion (which needs approval), with confirmations | Admin | 3.2.10, 2.7–2.8, Appendix C
-- [ ] **D39**: MY RESPONSIBILITIES: pending approvals, reminders and notifications, and the approval decision with written justification | Admin | 3.2.11, 2.7
-- [ ] **D40**: Company stories and Collections: creating them, approval progress, and the decision buttons for other admins | Admin | 3.2.10, 3.2.14, 2.7
-- [ ] **D41**: Announcements management: creating, editing and deleting announcements, with dates for the animated calendar | Admin | 3.2.10, 2.9
-- [ ] **D42**: Live analytics (admins, and Super Admins in Figure D46): stories posted and RED, GREEN and YELLOW flags, active users, reports and engagement | Admin, Super Admin | 2.10, 3.2.10
-- [ ] **D43**: PDF reports: choosing the period and contents, generation in the background, and the finished report with preview | Admin, Super Admin | 2.10, 5.4
-- [ ] **D44**: Admin INBOX: replying to an “Ask Why” request; and admins commenting under their own admin names with the ADMIN badge | Admin | 3.2.7, 3.2.11, 2.6
-- [ ] **D45**: Admin MY PROFILE (email, password, MFA and devices; locked identity fields; delete account) and the admin’s own audit log | Admin | 3.2.11, 4.2, 4.8
-- [ ] **D46**: Super Admin: the four areas (MY PROFILE, LIVE ANALYTICS, REPORTS, MANAGE ADMINS) and the live analytics page; Super Admins do not moderate stories | Super Admin | 3.2.12, 2.10
-- [ ] **D47**: Super Admin REPORTS: generating PDF reports and the list of previous reports | Super Admin | 3.2.12, 2.10, 11.9
-- [ ] **D48**: MANAGE ADMINS: admins, pending registrations, Super Admins and the full audit log, with adding and removing admins and adding a Super Admin | Super Admin | 3.2.12, 4.2, 4.8
-- [ ] **D49**: Adding a Super Admin, and approvals that passed their deadline (shown only if the majority approval rule in Appendix B is chosen) | Super Admin | 3.2.12, 2.7, Appendix B
-- [ ] **D50**: Super Admin MY PROFILE, and DELETE ACCOUNT – blocked when they are the only Super Admin | Super Admin | 3.2.12, 2.6
-- [ ] **D51**: Visitor view (open access, no sign-in): the STORIES page with the visitor icons and tabs, and the sign-in prompt shown when a visitor tries an action that needs an account | Visitor | 3.2.2, 4.3
-- [ ] **D52**: Incidents tab: searchable list of incident records, and an incident page with its facts, map, sources and every linked testimony, story and historical record | Visitor, Contributor, Admin | 3.2.4, 3.2.14
-- [ ] **D53**: Story types in the story frame: a historical record with its source, reference, date and rights, and a validated testimony with the Listen player; both linked to an incident record | Visitor, Contributor, Admin | 3.2.4, 3.2.14, 3.1.4
-- [ ] **D54**: ABOUT & RESOURCES – Learning resources: policy briefs, learning summaries, educational materials, the handbook and online exhibitions, with a resource opened | All, including visitors | 3.2.6, 11.6
-- [ ] **D55**: ABOUT & RESOURCES – Report a safety concern: the emergency notice, the form (open to visitors) and its confirmation | All, including visitors | 3.2.6, Appendix C
-- [ ] **D56**: Admin – Incidents: the list of incident records, incidents suggested by contributors, and creating or editing an incident and linking stories and records to it | Admin | 3.2.10, 2.3
-- [ ] **D57**: Admin – Import: bulk upload of collected materials with a metadata spreadsheet, the check of every row (consent, validation, place, incident), and submission of the batch for approval | Admin | 3.2.10, 11.4
-- [ ] **D58**: Admin – Safety concerns queue (acknowledge, notes, referral) and Resources (adding, editing and removing learning resources and online exhibitions) | Admin | 3.2.10, Appendix C
-- [ ] **Wireframe D1**: Sign-in page for Contributors (Google or Apple only), with the link to browse without signing in, links for admins, and the sign-in failure message (All; Sections 3.2.2, 4.2)
-- [ ] **Wireframe D2**: First-time profile setup: username or Google/Apple identity, picture, language, theme and acceptance of the rules, with username checks (Contributor; Sections 3.2.2, 2.6)
-- [ ] **Wireframe D3**: Account messages at sign-in: suspended account, restoring an account within 30 days of deletion, and session expiry (All; Sections 3.2.2, 2.6, 4.2)
-- [ ] **Wireframe D4**: Admin registration form, and the confirmation that the registration awaits Super Admin approval (Admin, Super Admin; Sections 4.2, 3.2.12)
-- [ ] **Wireframe D5**: Admin and Super Admin sign-in with multi-factor authentication, and its error and lockout messages (Admin, Super Admin; Section 4.2)
-- [ ] **Wireframe D6**: Contributor’s Page: STORIES (Trending, default) with the “Stories by” tabs, story frame, Rules and “+” icons and all engagement icons (Contributor; Section 3.2.3–3.2.4)
-- [ ] **Wireframe D7**: Priority notifications: floating in the centre on sign-in, then pinned at the top until the user acts on them (All; Sections 3.1.7, 2.9)
-- [ ] **Wireframe D8**: Location and Contributors tabs: real-time auto-complete, several matches, and the no-match messages (Contributor, Admin; Section 3.2.4)
-- [ ] **Wireframe D9**: Following and Favorites tabs, with adding and removing a favorite and the empty states (Contributor, Admin; Sections 3.2.4, 3.2.13, 3.1.7)
-- [ ] **Wireframe D10**: Map Explore and Timeline tabs: stories grouped on a map, and stories by decade and year of the event (Contributor, Admin; Section 3.2.14)
-- [ ] **Wireframe D11**: Collections tab: curated collections, and a collection opened in the story frame (Contributor, Admin; Section 3.2.14)
-- [ ] **Wireframe D12**: “Where It Happened”: the incident map opens in a frame the same size as the content area, with ✕ at the top centre to close it (Contributor, Admin; Section 3.2.4)
-- [ ] **Wireframe D13**: Comments: sorting, threaded replies, tagging with suggestions, attachments and admin replies, plus the locked and hidden states (Contributor, Admin; Sections 3.2.4, 3.2.11)
-- [ ] **Wireframe D14**: Share options on the website, Copy Link, and “Cite this story” with the permanent link (Contributor, Admin; Sections 3.2.4, 3.2.14)
-- [ ] **Wireframe D15**: Download as ZIP (preparing and ready, or not offered when the contributor does not allow it) and Translate (Contributor, Admin; Sections 3.2.4, 3.1.5)
-- [ ] **Wireframe D16**: Report a story or a Contributor: preset reasons and description, the confirmation and the validation message (Contributor, Admin; Sections 3.2.4, 2.8)
-- [ ] **Wireframe D17**: Sensitive-story notice, the notice shown when an admin removes a story, and the “Ask Why” form with its confirmation (Contributor; Sections 3.2.4, 2.6; Appendix C)
-- [ ] **Wireframe D18**: Rules frame: rules and netiquette and how moderation works; it replaces the story frame and closes back to the stories (Contributor, Admin; Section 3.2.4; Appendix A.3)
-- [ ] **Wireframe D19**: Share-story frame (1 of 2): text, files with counters, and story details – place, date, category, vessel, tags and language (Contributor; Section 3.2.4)
-- [ ] **Wireframe D20**: Share-story frame (2 of 2): posting as myself, “as told by” with consent, or anonymously; usage rights; sensitive content; and face blurring (Contributor; Sections 3.2.4, 4.4, 4.11)
-- [ ] **Wireframe D21**: Share-story messages: draft saved, file limits, size and type errors, virus blocked, empty story, and offline sending (Contributor; Sections 3.2.4, 4.6, 8.3)
-- [ ] **Wireframe D22**: After SEND / SUBMIT: AI review in progress, then the GREEN, YELLOW and RED outcomes (Contributor; Sections 3.2.4, 5.2)
-- [ ] **Wireframe D23**: Another Contributor’s profile (opened from a username or picture): Follow, and the ⋯ menu to block, mute or report, with the block confirmation (Contributor, Admin; Sections 3.2.13, 3.2.4)
-- [ ] **Wireframe D24**: MY PROFILE: My Stories with engagement and views, editing and deleting (with confirmation), adding a story, and Change my profile (Contributor; Section 3.2.5)
-- [ ] **Wireframe D25**: Editing a posted story, the review after editing, and the edit history behind the “Edited” label (Contributor; Sections 3.2.5, 3.2.14)
-- [ ] **Wireframe D26**: Reminders in MY PROFILE: list, new or edited reminder, saved message, and the reminder pop-up when due (Contributor, Admin; Sections 3.2.5, 3.2.11)
-- [ ] **Wireframe D27**: Settings in MY PROFILE: theme, contrast, motion, text size, language, low-data mode, privacy, notification channels and quiet hours, and blocked or muted users (Contributor (admins see the same settings); Sections 3.2.5, 3.1.2–3.1.5, 8.2, 2.9)
-- [ ] **Wireframe D28**: Download my data, Delete account (reason, warning and confirmation), and the feedback form (All; Sections 3.2.5, 2.6, 7.7, 11.9)
-- [ ] **Wireframe D29**: ABOUT & RESOURCES – About: the archive, the project, contact details, links to all policies, and acknowledgement of the organisations behind the project (All, including visitors; Sections 3.2.6, 4.11)
-- [ ] **Wireframe D30**: INBOX beside the blurred STORIES page: bubbles per sender or issue, unread counts, a conversation with attachments and read receipts, message requests, and offline sending (Contributor, Admin; Sections 3.2.7, 2.9, 8.3)
-- [ ] **Wireframe D31**: ANNOUNCEMENTS: newest or most recently edited first, summaries, unread count, animated calendars, and the full description (All except Super Admin; Section 3.2.8)
-- [ ] **Wireframe D32**: System states: offline and back-online banners, loading skeletons, low-data placeholders, empty states and the general error with Retry (All; Sections 3.1.7, 8.2, 8.6)
-- [ ] **Wireframe D33**: Dark theme (selected, or automatic when the device is in dark mode): the STORIES page (All; Section 3.1.2)
-- [ ] **Wireframe D34**: Admin page: the same icons plus MY RESPONSIBILITIES, the story with its ID and AI flag, and the administrative controls panel (Moderation tab) on half of the screen (Admin; Section 3.2.9–3.2.10)
-- [ ] **Wireframe D35**: Admin story controls: delete story, lock comments and hide comments, each with a reason, and their confirmations (Admin; Sections 3.2.10, 2.6)
-- [ ] **Wireframe D36**: Override AI ban: warning, required justification and approval progress; the override takes effect only when the approval rule is met (Admin; Sections 3.2.10, 2.7; Appendix A.4)
-- [ ] **Wireframe D37**: Reports tab (controls expanded to full screen): reports queue with escalation, report details, internal notes, actions and the account holder’s progress (Admin; Sections 3.2.10, 2.8)
-- [ ] **Wireframe D38**: Report actions: dismiss, warn, drop story, suspend for a set period, and propose permanent deletion (which needs approval), with confirmations (Admin; Sections 3.2.10, 2.7–2.8; Appendix C)
-- [ ] **Wireframe D39**: MY RESPONSIBILITIES: pending approvals, reminders and notifications, and the approval decision with written justification (Admin; Sections 3.2.11, 2.7)
-- [ ] **Wireframe D40**: Company stories and Collections: creating them, approval progress, and the decision buttons for other admins (Admin; Sections 3.2.10, 3.2.14, 2.7)
-- [ ] **Wireframe D41**: Announcements management: creating, editing and deleting announcements, with dates for the animated calendar (Admin; Sections 3.2.10, 2.9)
-- [ ] **Wireframe D42**: Live analytics (admins, and Super Admins in Figure D46): stories posted and RED, GREEN and YELLOW flags, active users, reports and engagement (Admin, Super Admin; Sections 2.10, 3.2.10)
-- [ ] **Wireframe D43**: PDF reports: choosing the period and contents, generation in the background, and the finished report with preview (Admin, Super Admin; Sections 2.10, 5.4)
-- [ ] **Wireframe D44**: Admin INBOX: replying to an “Ask Why” request; and admins commenting under their own admin names with the ADMIN badge (Admin; Sections 3.2.7, 3.2.11, 2.6)
-- [ ] **Wireframe D45**: Admin MY PROFILE (email, password, MFA and devices; locked identity fields; delete account) and the admin’s own audit log (Admin; Sections 3.2.11, 4.2, 4.8)
-- [ ] **Wireframe D46**: Super Admin: the four areas (MY PROFILE, LIVE ANALYTICS, REPORTS, MANAGE ADMINS) and the live analytics page; Super Admins do not moderate stories (Super Admin; Sections 3.2.12, 2.10)
-- [ ] **Wireframe D47**: Super Admin REPORTS: generating PDF reports and the list of previous reports (Super Admin; Sections 3.2.12, 2.10, 11.9)
-- [ ] **Wireframe D48**: MANAGE ADMINS: admins, pending registrations, Super Admins and the full audit log, with adding and removing admins and adding a Super Admin (Super Admin; Sections 3.2.12, 4.2, 4.8)
-- [ ] **Wireframe D49**: Adding a Super Admin, and approvals that passed their deadline (shown only if the majority approval rule in Appendix B is chosen) (Super Admin; Sections 3.2.12, 2.7; Appendix B)
-- [ ] **Wireframe D50**: Super Admin MY PROFILE, and DELETE ACCOUNT – blocked when they are the only Super Admin (Super Admin; Sections 3.2.12, 2.6)
-- [ ] **Wireframe D51**: Visitor view (open access, no sign-in): the STORIES page with the visitor icons and tabs, and the sign-in prompt shown when a visitor tries an action that needs an account (Visitor; Sections 3.2.2, 4.3)
-- [ ] **Wireframe D52**: Incidents tab: searchable list of incident records, and an incident page with its facts, map, sources and every linked testimony, story and historical record (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.14)
-- [ ] **Wireframe D53**: Story types in the story frame: a historical record with its source, reference, date and rights, and a validated testimony with the Listen player; both linked to an incident record (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.14, 3.1.4)
-- [ ] **Wireframe D54**: ABOUT & RESOURCES – Learning resources: policy briefs, learning summaries, educational materials, the handbook and online exhibitions, with a resource opened (All, including visitors; Sections 3.2.6, 11.6)
-- [ ] **Wireframe D55**: ABOUT & RESOURCES – Report a safety concern: the emergency notice, the form (open to visitors) and its confirmation (All, including visitors; Section 3.2.6; Appendix C)
-- [ ] **Wireframe D56**: Admin – Incidents: the list of incident records, incidents suggested by contributors, and creating or editing an incident and linking stories and records to it (Admin; Sections 3.2.10, 2.3)
-- [ ] **Wireframe D57**: Admin – Import: bulk upload of collected materials with a metadata spreadsheet, the check of every row (consent, validation, place, incident), and submission of the batch for approval (Admin; Sections 3.2.10, 11.4)
-- [ ] **Wireframe D58**: Admin – Safety concerns queue (acknowledge, notes, referral) and Resources (adding, editing and removing learning resources and online exhibitions) (Admin; Section 3.2.10; Appendix C)
+- [x] **D1**: Sign-in page for Contributors (Google or Apple only), with the link to browse without signing in, links for admins, and the sign-in failure message | All | 3.2.2, 4.2 — *Note: built to follow the wireframe*
+- [x] **D2**: First-time profile setup: username or Google/Apple identity, picture, language, theme and acceptance of the rules, with username checks | Contributor | 3.2.2, 2.6 — *Note: built to follow the wireframe*
+- [x] **D3**: Account messages at sign-in: suspended account, restoring an account within 30 days of deletion, and session expiry | All | 3.2.2, 2.6, 4.2 — *Note: built to follow the wireframe*
+- [x] **D4**: Admin registration form, and the confirmation that the registration awaits Super Admin approval | Admin, Super Admin | 4.2, 3.2.12 — *Note: built to follow the wireframe*
+- [x] **D5**: Admin and Super Admin sign-in with multi-factor authentication, and its error and lockout messages | Admin, Super Admin | 4.2 — *Note: built to follow the wireframe*
+- [x] **D6**: Contributor’s Page: STORIES (Trending, default) with the “Stories by” tabs, story frame, Rules and “+” icons and all engagement icons | Contributor | 3.2.3–3.2.4 — *Note: built to follow the wireframe*
+- [x] **D7**: Priority notifications: floating in the centre on sign-in, then pinned at the top until the user acts on them | All | 3.1.7, 2.9 — *Note: built to follow the wireframe*
+- [x] **D8**: Location and Contributors tabs: real-time auto-complete, several matches, and the no-match messages | Contributor, Admin | 3.2.4 — *Note: built to follow the wireframe*
+- [x] **D9**: Following and Favorites tabs, with adding and removing a favorite and the empty states | Contributor, Admin | 3.2.4, 3.2.13, 3.1.7 — *Note: built to follow the wireframe*
+- [x] **D10**: Map Explore and Timeline tabs: stories grouped on a map, and stories by decade and year of the event | Contributor, Admin | 3.2.14 — *Note: built to follow the wireframe*
+- [x] **D11**: Collections tab: curated collections, and a collection opened in the story frame | Contributor, Admin | 3.2.14 — *Note: built to follow the wireframe*
+- [x] **D12**: “Where It Happened”: the incident map opens in a frame the same size as the content area, with ✕ at the top centre to close it | Contributor, Admin | 3.2.4 — *Note: built to follow the wireframe*
+- [x] **D13**: Comments: sorting, threaded replies, tagging with suggestions, attachments and admin replies, plus the locked and hidden states | Contributor, Admin | 3.2.4, 3.2.11 — *Note: built to follow the wireframe*
+- [x] **D14**: Share options on the website, Copy Link, and “Cite this story” with the permanent link | Contributor, Admin | 3.2.4, 3.2.14 — *Note: built to follow the wireframe*
+- [x] **D15**: Download as ZIP (preparing and ready, or not offered when the contributor does not allow it) and Translate | Contributor, Admin | 3.2.4, 3.1.5 — *Note: built to follow the wireframe*
+- [x] **D16**: Report a story or a Contributor: preset reasons and description, the confirmation and the validation message | Contributor, Admin | 3.2.4, 2.8 — *Note: built to follow the wireframe*
+- [x] **D17**: Sensitive-story notice, the notice shown when an admin removes a story, and the “Ask Why” form with its confirmation | Contributor | 3.2.4, Appendix C, 2.6 — *Note: built to follow the wireframe*
+- [x] **D18**: Rules frame: rules and netiquette and how moderation works; it replaces the story frame and closes back to the stories | Contributor, Admin | 3.2.4, Appendix A.3 — *Note: built to follow the wireframe*
+- [x] **D19**: Share-story frame (1 of 2): text, files with counters, and story details – place, date, category, vessel, tags and language | Contributor | 3.2.4 — *Note: built to follow the wireframe*
+- [x] **D20**: Share-story frame (2 of 2): posting as myself, “as told by” with consent, or anonymously; usage rights; sensitive content; and face blurring | Contributor | 3.2.4, 4.4, 4.11 — *Note: built to follow the wireframe*
+- [x] **D21**: Share-story messages: draft saved, file limits, size and type errors, virus blocked, empty story, and offline sending | Contributor | 3.2.4, 4.6, 8.3 — *Note: built to follow the wireframe*
+- [x] **D22**: After SEND / SUBMIT: AI review in progress, then the GREEN, YELLOW and RED outcomes | Contributor | 3.2.4, 5.2 — *Note: built to follow the wireframe*
+- [x] **D23**: Another Contributor’s profile (opened from a username or picture): Follow, and the ⋯ menu to block, mute or report, with the block confirmation | Contributor, Admin | 3.2.13, 3.2.4 — *Note: built to follow the wireframe*
+- [x] **D24**: MY PROFILE: My Stories with engagement and views, editing and deleting (with confirmation), adding a story, and Change my profile | Contributor | 3.2.5 — *Note: built to follow the wireframe*
+- [x] **D25**: Editing a posted story, the review after editing, and the edit history behind the “Edited” label | Contributor | 3.2.5, 3.2.14 — *Note: built to follow the wireframe*
+- [x] **D26**: Reminders in MY PROFILE: list, new or edited reminder, saved message, and the reminder pop-up when due | Contributor, Admin | 3.2.5, 3.2.11 — *Note: built to follow the wireframe*
+- [x] **D27**: Settings in MY PROFILE: theme, contrast, motion, text size, language, low-data mode, privacy, notification channels and quiet hours, and blocked or muted users | Contributor (admins see the same settings) | 3.2.5, 3.1.2–3.1.5, 8.2, 2.9 — *Note: built to follow the wireframe*
+- [x] **D28**: Download my data, Delete account (reason, warning and confirmation), and the feedback form | All | 3.2.5, 2.6, 7.7, 11.9 — *Note: built to follow the wireframe*
+- [x] **D29**: ABOUT & RESOURCES – About: the archive, the project, contact details, links to all policies, and acknowledgement of the organisations behind the project | All, including visitors | 3.2.6, 4.11 — *Note: built to follow the wireframe*
+- [x] **D30**: INBOX beside the blurred STORIES page: bubbles per sender or issue, unread counts, a conversation with attachments and read receipts, message requests, and offline sending | Contributor, Admin | 3.2.7, 2.9, 8.3 — *Note: built to follow the wireframe*
+- [x] **D31**: ANNOUNCEMENTS: newest or most recently edited first, summaries, unread count, animated calendars, and the full description | All except Super Admin | 3.2.8 — *Note: built to follow the wireframe*
+- [x] **D32**: System states: offline and back-online banners, loading skeletons, low-data placeholders, empty states and the general error with Retry | All | 3.1.7, 8.2, 8.6 — *Note: built to follow the wireframe*
+- [x] **D33**: Dark theme (selected, or automatic when the device is in dark mode): the STORIES page | All | 3.1.2 — *Note: built to follow the wireframe*
+- [x] **D34**: Admin page: the same icons plus MY RESPONSIBILITIES, the story with its ID and AI flag, and the administrative controls panel (Moderation tab) on half of the screen | Admin | 3.2.9–3.2.10 — *Note: built to follow the wireframe*
+- [x] **D35**: Admin story controls: delete story, lock comments and hide comments, each with a reason, and their confirmations | Admin | 3.2.10, 2.6 — *Note: built to follow the wireframe*
+- [x] **D36**: Override AI ban: warning, required justification and approval progress; the override takes effect only when the approval rule is met | Admin | 3.2.10, 2.7, Appendix A.4 — *Note: built to follow the wireframe*
+- [x] **D37**: Reports tab (controls expanded to full screen): reports queue with escalation, report details, internal notes, actions and the account holder’s progress | Admin | 3.2.10, 2.8 — *Note: built to follow the wireframe*
+- [x] **D38**: Report actions: dismiss, warn, drop story, suspend for a set period, and propose permanent deletion (which needs approval), with confirmations | Admin | 3.2.10, 2.7–2.8, Appendix C — *Note: built to follow the wireframe*
+- [x] **D39**: MY RESPONSIBILITIES: pending approvals, reminders and notifications, and the approval decision with written justification | Admin | 3.2.11, 2.7 — *Note: built to follow the wireframe*
+- [x] **D40**: Company stories and Collections: creating them, approval progress, and the decision buttons for other admins | Admin | 3.2.10, 3.2.14, 2.7 — *Note: built to follow the wireframe*
+- [x] **D41**: Announcements management: creating, editing and deleting announcements, with dates for the animated calendar | Admin | 3.2.10, 2.9 — *Note: built to follow the wireframe*
+- [x] **D42**: Live analytics (admins, and Super Admins in Figure D46): stories posted and RED, GREEN and YELLOW flags, active users, reports and engagement | Admin, Super Admin | 2.10, 3.2.10 — *Note: built to follow the wireframe*
+- [x] **D43**: PDF reports: choosing the period and contents, generation in the background, and the finished report with preview | Admin, Super Admin | 2.10, 5.4 — *Note: built to follow the wireframe*
+- [x] **D44**: Admin INBOX: replying to an “Ask Why” request; and admins commenting under their own admin names with the ADMIN badge | Admin | 3.2.7, 3.2.11, 2.6 — *Note: built to follow the wireframe*
+- [x] **D45**: Admin MY PROFILE (email, password, MFA and devices; locked identity fields; delete account) and the admin’s own audit log | Admin | 3.2.11, 4.2, 4.8 — *Note: built to follow the wireframe*
+- [x] **D46**: Super Admin: the four areas (MY PROFILE, LIVE ANALYTICS, REPORTS, MANAGE ADMINS) and the live analytics page; Super Admins do not moderate stories | Super Admin | 3.2.12, 2.10 — *Note: built to follow the wireframe*
+- [x] **D47**: Super Admin REPORTS: generating PDF reports and the list of previous reports | Super Admin | 3.2.12, 2.10, 11.9 — *Note: built to follow the wireframe*
+- [x] **D48**: MANAGE ADMINS: admins, pending registrations, Super Admins and the full audit log, with adding and removing admins and adding a Super Admin | Super Admin | 3.2.12, 4.2, 4.8 — *Note: built to follow the wireframe*
+- [x] **D49**: Adding a Super Admin, and approvals that passed their deadline (shown only if the majority approval rule in Appendix B is chosen) | Super Admin | 3.2.12, 2.7, Appendix B — *Note: built to follow the wireframe*
+- [x] **D50**: Super Admin MY PROFILE, and DELETE ACCOUNT – blocked when they are the only Super Admin | Super Admin | 3.2.12, 2.6 — *Note: built to follow the wireframe*
+- [x] **D51**: Visitor view (open access, no sign-in): the STORIES page with the visitor icons and tabs, and the sign-in prompt shown when a visitor tries an action that needs an account | Visitor | 3.2.2, 4.3 — *Note: built to follow the wireframe*
+- [x] **D52**: Incidents tab: searchable list of incident records, and an incident page with its facts, map, sources and every linked testimony, story and historical record | Visitor, Contributor, Admin | 3.2.4, 3.2.14 — *Note: built to follow the wireframe*
+- [x] **D53**: Story types in the story frame: a historical record with its source, reference, date and rights, and a validated testimony with the Listen player; both linked to an incident record | Visitor, Contributor, Admin | 3.2.4, 3.2.14, 3.1.4 — *Note: built to follow the wireframe*
+- [x] **D54**: ABOUT & RESOURCES – Learning resources: policy briefs, learning summaries, educational materials, the handbook and online exhibitions, with a resource opened | All, including visitors | 3.2.6, 11.6 — *Note: built to follow the wireframe*
+- [x] **D55**: ABOUT & RESOURCES – Report a safety concern: the emergency notice, the form (open to visitors) and its confirmation | All, including visitors | 3.2.6, Appendix C — *Note: built to follow the wireframe*
+- [x] **D56**: Admin – Incidents: the list of incident records, incidents suggested by contributors, and creating or editing an incident and linking stories and records to it | Admin | 3.2.10, 2.3 — *Note: built to follow the wireframe*
+- [x] **D57**: Admin – Import: bulk upload of collected materials with a metadata spreadsheet, the check of every row (consent, validation, place, incident), and submission of the batch for approval | Admin | 3.2.10, 11.4 — *Note: built to follow the wireframe*
+- [x] **D58**: Admin – Safety concerns queue (acknowledge, notes, referral) and Resources (adding, editing and removing learning resources and online exhibitions) | Admin | 3.2.10, Appendix C — *Note: built to follow the wireframe*
+- [x] **Wireframe D1**: Sign-in page for Contributors (Google or Apple only), with the link to browse without signing in, links for admins, and the sign-in failure message (All; Sections 3.2.2, 4.2) — *Note: built to follow the wireframe*
+- [x] **Wireframe D2**: First-time profile setup: username or Google/Apple identity, picture, language, theme and acceptance of the rules, with username checks (Contributor; Sections 3.2.2, 2.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D3**: Account messages at sign-in: suspended account, restoring an account within 30 days of deletion, and session expiry (All; Sections 3.2.2, 2.6, 4.2) — *Note: built to follow the wireframe*
+- [x] **Wireframe D4**: Admin registration form, and the confirmation that the registration awaits Super Admin approval (Admin, Super Admin; Sections 4.2, 3.2.12) — *Note: built to follow the wireframe*
+- [x] **Wireframe D5**: Admin and Super Admin sign-in with multi-factor authentication, and its error and lockout messages (Admin, Super Admin; Section 4.2) — *Note: built to follow the wireframe*
+- [x] **Wireframe D6**: Contributor’s Page: STORIES (Trending, default) with the “Stories by” tabs, story frame, Rules and “+” icons and all engagement icons (Contributor; Section 3.2.3–3.2.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D7**: Priority notifications: floating in the centre on sign-in, then pinned at the top until the user acts on them (All; Sections 3.1.7, 2.9) — *Note: built to follow the wireframe*
+- [x] **Wireframe D8**: Location and Contributors tabs: real-time auto-complete, several matches, and the no-match messages (Contributor, Admin; Section 3.2.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D9**: Following and Favorites tabs, with adding and removing a favorite and the empty states (Contributor, Admin; Sections 3.2.4, 3.2.13, 3.1.7) — *Note: built to follow the wireframe*
+- [x] **Wireframe D10**: Map Explore and Timeline tabs: stories grouped on a map, and stories by decade and year of the event (Contributor, Admin; Section 3.2.14) — *Note: built to follow the wireframe*
+- [x] **Wireframe D11**: Collections tab: curated collections, and a collection opened in the story frame (Contributor, Admin; Section 3.2.14) — *Note: built to follow the wireframe*
+- [x] **Wireframe D12**: “Where It Happened”: the incident map opens in a frame the same size as the content area, with ✕ at the top centre to close it (Contributor, Admin; Section 3.2.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D13**: Comments: sorting, threaded replies, tagging with suggestions, attachments and admin replies, plus the locked and hidden states (Contributor, Admin; Sections 3.2.4, 3.2.11) — *Note: built to follow the wireframe*
+- [x] **Wireframe D14**: Share options on the website, Copy Link, and “Cite this story” with the permanent link (Contributor, Admin; Sections 3.2.4, 3.2.14) — *Note: built to follow the wireframe*
+- [x] **Wireframe D15**: Download as ZIP (preparing and ready, or not offered when the contributor does not allow it) and Translate (Contributor, Admin; Sections 3.2.4, 3.1.5) — *Note: built to follow the wireframe*
+- [x] **Wireframe D16**: Report a story or a Contributor: preset reasons and description, the confirmation and the validation message (Contributor, Admin; Sections 3.2.4, 2.8) — *Note: built to follow the wireframe*
+- [x] **Wireframe D17**: Sensitive-story notice, the notice shown when an admin removes a story, and the “Ask Why” form with its confirmation (Contributor; Sections 3.2.4, 2.6; Appendix C) — *Note: built to follow the wireframe*
+- [x] **Wireframe D18**: Rules frame: rules and netiquette and how moderation works; it replaces the story frame and closes back to the stories (Contributor, Admin; Section 3.2.4; Appendix A.3) — *Note: built to follow the wireframe*
+- [x] **Wireframe D19**: Share-story frame (1 of 2): text, files with counters, and story details – place, date, category, vessel, tags and language (Contributor; Section 3.2.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D20**: Share-story frame (2 of 2): posting as myself, “as told by” with consent, or anonymously; usage rights; sensitive content; and face blurring (Contributor; Sections 3.2.4, 4.4, 4.11) — *Note: built to follow the wireframe*
+- [x] **Wireframe D21**: Share-story messages: draft saved, file limits, size and type errors, virus blocked, empty story, and offline sending (Contributor; Sections 3.2.4, 4.6, 8.3) — *Note: built to follow the wireframe*
+- [x] **Wireframe D22**: After SEND / SUBMIT: AI review in progress, then the GREEN, YELLOW and RED outcomes (Contributor; Sections 3.2.4, 5.2) — *Note: built to follow the wireframe*
+- [x] **Wireframe D23**: Another Contributor’s profile (opened from a username or picture): Follow, and the ⋯ menu to block, mute or report, with the block confirmation (Contributor, Admin; Sections 3.2.13, 3.2.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D24**: MY PROFILE: My Stories with engagement and views, editing and deleting (with confirmation), adding a story, and Change my profile (Contributor; Section 3.2.5) — *Note: built to follow the wireframe*
+- [x] **Wireframe D25**: Editing a posted story, the review after editing, and the edit history behind the “Edited” label (Contributor; Sections 3.2.5, 3.2.14) — *Note: built to follow the wireframe*
+- [x] **Wireframe D26**: Reminders in MY PROFILE: list, new or edited reminder, saved message, and the reminder pop-up when due (Contributor, Admin; Sections 3.2.5, 3.2.11) — *Note: built to follow the wireframe*
+- [x] **Wireframe D27**: Settings in MY PROFILE: theme, contrast, motion, text size, language, low-data mode, privacy, notification channels and quiet hours, and blocked or muted users (Contributor (admins see the same settings); Sections 3.2.5, 3.1.2–3.1.5, 8.2, 2.9) — *Note: built to follow the wireframe*
+- [x] **Wireframe D28**: Download my data, Delete account (reason, warning and confirmation), and the feedback form (All; Sections 3.2.5, 2.6, 7.7, 11.9) — *Note: built to follow the wireframe*
+- [x] **Wireframe D29**: ABOUT & RESOURCES – About: the archive, the project, contact details, links to all policies, and acknowledgement of the organisations behind the project (All, including visitors; Sections 3.2.6, 4.11) — *Note: built to follow the wireframe*
+- [x] **Wireframe D30**: INBOX beside the blurred STORIES page: bubbles per sender or issue, unread counts, a conversation with attachments and read receipts, message requests, and offline sending (Contributor, Admin; Sections 3.2.7, 2.9, 8.3) — *Note: built to follow the wireframe*
+- [x] **Wireframe D31**: ANNOUNCEMENTS: newest or most recently edited first, summaries, unread count, animated calendars, and the full description (All except Super Admin; Section 3.2.8) — *Note: built to follow the wireframe*
+- [x] **Wireframe D32**: System states: offline and back-online banners, loading skeletons, low-data placeholders, empty states and the general error with Retry (All; Sections 3.1.7, 8.2, 8.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D33**: Dark theme (selected, or automatic when the device is in dark mode): the STORIES page (All; Section 3.1.2) — *Note: built to follow the wireframe*
+- [x] **Wireframe D34**: Admin page: the same icons plus MY RESPONSIBILITIES, the story with its ID and AI flag, and the administrative controls panel (Moderation tab) on half of the screen (Admin; Section 3.2.9–3.2.10) — *Note: built to follow the wireframe*
+- [x] **Wireframe D35**: Admin story controls: delete story, lock comments and hide comments, each with a reason, and their confirmations (Admin; Sections 3.2.10, 2.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D36**: Override AI ban: warning, required justification and approval progress; the override takes effect only when the approval rule is met (Admin; Sections 3.2.10, 2.7; Appendix A.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D37**: Reports tab (controls expanded to full screen): reports queue with escalation, report details, internal notes, actions and the account holder’s progress (Admin; Sections 3.2.10, 2.8) — *Note: built to follow the wireframe*
+- [x] **Wireframe D38**: Report actions: dismiss, warn, drop story, suspend for a set period, and propose permanent deletion (which needs approval), with confirmations (Admin; Sections 3.2.10, 2.7–2.8; Appendix C) — *Note: built to follow the wireframe*
+- [x] **Wireframe D39**: MY RESPONSIBILITIES: pending approvals, reminders and notifications, and the approval decision with written justification (Admin; Sections 3.2.11, 2.7) — *Note: built to follow the wireframe*
+- [x] **Wireframe D40**: Company stories and Collections: creating them, approval progress, and the decision buttons for other admins (Admin; Sections 3.2.10, 3.2.14, 2.7) — *Note: built to follow the wireframe*
+- [x] **Wireframe D41**: Announcements management: creating, editing and deleting announcements, with dates for the animated calendar (Admin; Sections 3.2.10, 2.9) — *Note: built to follow the wireframe*
+- [x] **Wireframe D42**: Live analytics (admins, and Super Admins in Figure D46): stories posted and RED, GREEN and YELLOW flags, active users, reports and engagement (Admin, Super Admin; Sections 2.10, 3.2.10) — *Note: built to follow the wireframe*
+- [x] **Wireframe D43**: PDF reports: choosing the period and contents, generation in the background, and the finished report with preview (Admin, Super Admin; Sections 2.10, 5.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D44**: Admin INBOX: replying to an “Ask Why” request; and admins commenting under their own admin names with the ADMIN badge (Admin; Sections 3.2.7, 3.2.11, 2.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D45**: Admin MY PROFILE (email, password, MFA and devices; locked identity fields; delete account) and the admin’s own audit log (Admin; Sections 3.2.11, 4.2, 4.8) — *Note: built to follow the wireframe*
+- [x] **Wireframe D46**: Super Admin: the four areas (MY PROFILE, LIVE ANALYTICS, REPORTS, MANAGE ADMINS) and the live analytics page; Super Admins do not moderate stories (Super Admin; Sections 3.2.12, 2.10) — *Note: built to follow the wireframe*
+- [x] **Wireframe D47**: Super Admin REPORTS: generating PDF reports and the list of previous reports (Super Admin; Sections 3.2.12, 2.10, 11.9) — *Note: built to follow the wireframe*
+- [x] **Wireframe D48**: MANAGE ADMINS: admins, pending registrations, Super Admins and the full audit log, with adding and removing admins and adding a Super Admin (Super Admin; Sections 3.2.12, 4.2, 4.8) — *Note: built to follow the wireframe*
+- [x] **Wireframe D49**: Adding a Super Admin, and approvals that passed their deadline (shown only if the majority approval rule in Appendix B is chosen) (Super Admin; Sections 3.2.12, 2.7; Appendix B) — *Note: built to follow the wireframe*
+- [x] **Wireframe D50**: Super Admin MY PROFILE, and DELETE ACCOUNT – blocked when they are the only Super Admin (Super Admin; Sections 3.2.12, 2.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D51**: Visitor view (open access, no sign-in): the STORIES page with the visitor icons and tabs, and the sign-in prompt shown when a visitor tries an action that needs an account (Visitor; Sections 3.2.2, 4.3) — *Note: built to follow the wireframe*
+- [x] **Wireframe D52**: Incidents tab: searchable list of incident records, and an incident page with its facts, map, sources and every linked testimony, story and historical record (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.14) — *Note: built to follow the wireframe*
+- [x] **Wireframe D53**: Story types in the story frame: a historical record with its source, reference, date and rights, and a validated testimony with the Listen player; both linked to an incident record (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.14, 3.1.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D54**: ABOUT & RESOURCES – Learning resources: policy briefs, learning summaries, educational materials, the handbook and online exhibitions, with a resource opened (All, including visitors; Sections 3.2.6, 11.6) — *Note: built to follow the wireframe*
+- [x] **Wireframe D55**: ABOUT & RESOURCES – Report a safety concern: the emergency notice, the form (open to visitors) and its confirmation (All, including visitors; Section 3.2.6; Appendix C) — *Note: built to follow the wireframe*
+- [x] **Wireframe D56**: Admin – Incidents: the list of incident records, incidents suggested by contributors, and creating or editing an incident and linking stories and records to it (Admin; Sections 3.2.10, 2.3) — *Note: built to follow the wireframe*
+- [x] **Wireframe D57**: Admin – Import: bulk upload of collected materials with a metadata spreadsheet, the check of every row (consent, validation, place, incident), and submission of the batch for approval (Admin; Sections 3.2.10, 11.4) — *Note: built to follow the wireframe*
+- [x] **Wireframe D58**: Admin – Safety concerns queue (acknowledge, notes, referral) and Resources (adding, editing and removing learning resources and online exhibitions) (Admin; Section 3.2.10; Appendix C) — *Note: built to follow the wireframe*
 
 ### 3.3 Front End – Installable Android and iOS App
 
