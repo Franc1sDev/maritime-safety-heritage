@@ -42,6 +42,12 @@ export function configureApp(app: INestApplication) {
     crossOriginEmbedderPolicy: false,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   }));
+  // Only the features the archive uses: the camera and microphone for recording a story, location for “near me”
+  // and the map, full screen for video. Everything else (payments, USB, sensors…) is switched off for every page.
+  app.use((_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self), fullscreen=(self), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=()');
+    next();
+  });
   app.enableCors({
     origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,

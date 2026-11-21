@@ -49,6 +49,19 @@ No public website can be made impossible to copy. The aim is to make copying har
 
 Never commit `.env`, keystores or `key.properties`; the repository's ignore rules exclude them.
 
+## Automated web scan (OWASP ZAP)
+
+Every change is scanned by an OWASP ZAP baseline scan in the automatic build; a high-risk finding fails the build. The first scan (21 November 2026) found nothing high-risk. The medium and low findings, and what was done:
+
+| Finding | Decision |
+|---|---|
+| Permissions Policy header not set (low) | **Fixed:** the archive allows only the camera, microphone, location and full screen, for its own pages |
+| CSP: wildcard directive (medium) | **Accepted:** the map and sign-in images come from Google and OpenStreetMap servers whose addresses vary (`*.tile.openstreetmap.org`, `*.googleusercontent.com`). In the test build the live-update connection also allows any `ws:` address; production allows only the archive's own address |
+| CSP: style-src unsafe-inline (medium) | **Accepted:** the interface sets some styles on elements directly. Scripts remain strictly limited, which is what this protection is mainly for |
+| Cross-Origin-Embedder-Policy missing (low) | **Accepted:** turning it on would block the map tiles and sign-in pictures from other sites |
+
+Review these decisions at each yearly security review.
+
 ## Before launch checklist
 
 - [ ] All secrets are long random values, unique to production, and saved in the password manager.
