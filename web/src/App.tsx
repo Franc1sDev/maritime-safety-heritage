@@ -91,8 +91,8 @@ export default function App() {
   const openNotice = (n: Notice) => { setFloating(false); void post(`/me/notifications/${n.id}/read`).catch(() => undefined); nav(n.link.replace(/^https?:\/\/[^/]+/, '') || '/'); };
 
   const round = (to: string, key: string, icon: string, label: string, count = 0, centre = false, on = key === 'stories' ? !blurred : shown === key && blurred) => (
-    <Link key={key} to={to} className={`round ${centre ? 'centre' : ''} ${on ? 'on' : ''}`} aria-current={on ? 'page' : undefined} aria-label={count ? `${label}: ${count}` : label}>
-      <Icon name={icon} /><span>{label}</span>{count > 0 && <span className="count" aria-hidden="true">{count > 99 ? '99+' : count}</span>}
+    <Link key={key} to={to} className={`round ${centre ? 'centre' : ''} ${on ? 'on' : ''}`} aria-current={on ? 'page' : undefined}>
+      <Icon name={icon} /><span>{label}</span>{count > 0 && <span className="count"><span className="sr">: </span>{count > 99 ? '99+' : count}</span>}
     </Link>
   );
   const stories = round('/', 'stories', 'stories', t('STORIES'), 0, true);
@@ -122,7 +122,7 @@ export default function App() {
     <>
       <a className="skip" href="#main">{t('Skip to the stories')}</a>
       <header className="top">
-        <Link to="/" className="brand" aria-label={t('Remembering the Waters, home')}>REMEMBERING THE WATERS<small>{t('Kenya’s maritime and inland-water safety heritage')}</small></Link>
+        <Link to="/" className="brand">REMEMBERING THE WATERS<small>{t('Kenya’s maritime and inland-water safety heritage')}</small></Link>
         <nav className={`icons ${reducedMotion || blurred ? 'still' : ''}`} aria-label={t('Main')}>{icons}</nav>
         <div className="top-end">
           {!showFloat && priority.slice(0, 2).map((n) => <button key={n.id} className="pinned" onClick={() => openNotice(n)} title={n.body}><Icon name="bell" size={15} />{n.title}</button>)}
@@ -138,9 +138,12 @@ export default function App() {
       {update && <div className="banner on" role="status">{t('A new version is ready.')} <button className="linkbtn" onClick={update}>{t('Update now')}</button></div>}
 
       <div className={`stage ${shown ? 'split' : ''} ${wide && shown ? 'wide' : ''}`}>
-        <div id="main" className={`stories-wrap ${blurred ? 'blurred' : ''}`} data-hint={t('Select here to go back to the stories')} onClick={blurred ? () => nav('/') : undefined}
-          role={blurred ? 'button' : undefined} tabIndex={blurred ? 0 : undefined} aria-label={blurred ? t('Back to the stories') : undefined} onKeyDown={blurred ? (e) => { if (e.key === 'Enter' || e.key === ' ') nav('/'); } : undefined}>
-          {ready ? <StoriesPage paused={blurred || showFloat} /> : <div style={{ padding: '2rem' }}><Spinner label={t('Loading…')} /></div>}
+        <div id="main" className={`stories-wrap ${blurred ? 'blurred' : ''}`}>
+          {/* While another page is open the stories stay in view behind it, blurred and out of reach of the keyboard and screen readers; one button over them leads back. */}
+          <div className="stories-inner" aria-hidden={blurred || undefined} {...({ inert: blurred ? '' : undefined } as object)}>
+            {ready ? <StoriesPage paused={blurred || showFloat} /> : <div style={{ padding: '2rem' }}><Spinner label={t('Loading…')} /></div>}
+          </div>
+          {blurred && <button type="button" className="back-cover" onClick={() => nav('/')}>{t('Select here to go back to the stories')}</button>}
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {shown && (
@@ -186,7 +189,7 @@ export default function App() {
       )}
       {app.prompt && (
         <Dialog title={t('Sign in to continue')} onClose={app.closePrompt}>
-          <p>{t('You need an account to post, react, comment, message, add favorites, follow or report. Reading the archive is always free.')}</p>
+          <p>{t('Sign in to react, comment, save favourites or share your own story.')} {t('Reading the archive is always free.')}</p>
           <ProviderButtons onDone={app.closePrompt} />
           <div className="actions"><button className="btn quiet" onClick={app.closePrompt}>{t('Not now')}</button></div>
         </Dialog>

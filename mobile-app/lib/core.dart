@@ -14,7 +14,7 @@ import 'api.dart';
 // ---------- Design tokens: the same blue-and-white values as the website ----------
 class C {
   static const blue = Color(0xFF0B5FBF), blueDark = Color(0xFF5AA7FF), ink = Color(0xFF0B2540), soft = Color(0xFFE6F0FB);
-  static const green = Color(0xFF1A8A4C), yellow = Color(0xFFB98900), red = Color(0xFFC9302C);
+  static const green = Color(0xFF157A42), yellow = Color(0xFF8A6600), red = Color(0xFFC9302C); // each carries white text at a contrast of at least 4.5:1
   static const bgDark = Color(0xFF071426), surfaceDark = Color(0xFF0E2038);
   static Color flag(String? f) => f == 'GREEN' ? green : f == 'YELLOW' ? yellow : f == 'RED' ? red : const Color(0xFF6B7C8E);
 }

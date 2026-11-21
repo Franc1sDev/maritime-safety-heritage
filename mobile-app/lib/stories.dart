@@ -26,7 +26,7 @@ bool need(BuildContext context) {
   final s = AppScope.read(context);
   if (s.signedIn) return true;
   sheet(context, t('Sign in to continue'), (c) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(t('You need an account to post, react, comment, message, add favorites, follow or report. Reading the archive is always free.')),
+        Text('${t('Sign in to react, comment, save favourites or share your own story.')} ${t('Reading the archive is always free.')}'),
         const SizedBox(height: 14), ProviderButtons(onDone: () => Navigator.pop(c)),
       ]));
   return false;
@@ -568,6 +568,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
       final r = await AppScope.read(context).outbox.send(t('Comment'), 'POST', '/stories/${widget.story['id']}/comments', {'text': ctl.text.trim(), if (replyTo != null) 'parentId': replyTo!['id']});
       if (!mounted) return;
       if (r == null) { toast(context, t('Waiting to send')); } else if (asMap(r)['message'] is String) { toast(context, str(asMap(r)['message'])); }
+      // A new comment has no reactions yet, so it would sit at the end of a long list: show the newest first instead.
+      if (r != null && replyTo == null && sort != 'recent') sort = 'recent';
       ctl.clear(); replyTo = null;
       if (r != null) await _load();
     } catch (e) { if (mounted) toast(context, errText(e), error: true); }
@@ -605,6 +607,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         if (d['hidden'] == true) Note('${t('Comments have been hidden by an admin.')} ${str(d['hiddenReason'])} (${t('{n} comments', {'n': d['count']})})', color: C.yellow),
         if (d['locked'] == true) Note('${t('Comments and replies have been locked by an admin.')} ${str(d['lockedReason'])}', color: C.yellow),
         if (asList(d['items']).isEmpty && d['hidden'] != true) EmptyState(t('No comments yet'), icon: Icons.mode_comment_outlined, text: t('Be the first to say something kind.')),
+        if (d['more'] == true) Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(t('Showing the first {n} comments.', {'n': 500}), style: const TextStyle(fontSize: 12.5))),
         for (final c in asList(d['items'])) ...[_one(c), for (final r in asList(c['replies'])) _one(r, reply: true)],
         if (d['locked'] != true) ...[
           if (replyTo != null) Row(children: [Expanded(child: Text(t('Replying to {name}', {'name': personName(asMap(replyTo!['author']))}), style: const TextStyle(fontSize: 12.5))), TextButton(onPressed: () => setState(() { replyTo = null; ctl.clear(); }), child: Text(t('Cancel')))]),

@@ -312,7 +312,10 @@ function Comments({ story, onClose, onCount }: { story: Story; onClose: () => vo
     try {
       const r = await sendOrQueue(t('Comment'), `/stories/${story.id}/comments`, 'POST', { text: text.trim(), parentId: replyTo?.id, mediaId: file?.id });
       if (!r) toast(t('Waiting to send'), 'info'); else if (r.held) toast(r.message, 'info');
+      const reply = !!replyTo;
       setText(''); setReplyTo(null); setFile(null); await refresh();
+      // A new comment has no reactions yet, so it would sit at the end of a long list: show the newest first instead.
+      if (r && !reply && sort !== 'recent') setSort('recent');
     } catch (e: any) { toast(e.details?.reason ? `${e.message} ${e.details.reason}` : e.message, 'error'); } finally { setBusy(false); }
   }
   async function attach(f: File | undefined) {
@@ -348,6 +351,7 @@ function Comments({ story, onClose, onCount }: { story: Story; onClose: () => vo
       {q.isLoading ? <Skeleton lines={3} /> : q.error ? <Problem error={q.error} retry={() => q.refetch()} /> : (
         <div style={{ maxHeight: '46vh', overflowY: 'auto' }}>
           {q.data.items.length === 0 && !q.data.hidden && <Empty icon="comment" title={t('No comments yet')}><p>{t('Be the first to say something kind.')}</p></Empty>}
+          {q.data.more && <p className="small">{t('Showing the first {n} comments.', { n: 500 })}</p>}
           {q.data.items.map((c: CommentItem) => <div key={c.id}><One c={c} />{c.replies.length > 0 && <div className="replies">{c.replies.map((r) => <One key={r.id} c={r} />)}</div>}</div>)}
         </div>
       )}

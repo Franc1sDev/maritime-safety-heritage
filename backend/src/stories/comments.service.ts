@@ -35,12 +35,14 @@ export class CommentsService {
          LEFT JOIN comments pc ON pc.id = c.parent_id LEFT JOIN users pu ON pu.id = pc.author_id LEFT JOIN admin_profiles pap ON pap.user_id = pu.id
         WHERE c.story_id = $1 AND (c.status = 'published' OR (c.author_id = $2::uuid AND c.status = 'pending_review') OR ($3 AND c.status <> 'deleted'))
           AND ($2::uuid IS NULL OR c.author_id IS NULL OR NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.user_id = $2 AND b.target_id = c.author_id) OR (b.user_id = c.author_id AND b.target_id = $2 AND b.kind = 'block')))
-        ORDER BY ${order} LIMIT 500`, [storyId, viewer?.id ?? null, isTeam(viewer?.role)]);
+        ORDER BY ${order} LIMIT 501`, [storyId, viewer?.id ?? null, isTeam(viewer?.role)]);
     const shape = (c: Row) => ({
       id: c.id, parentId: c.parentId, text: c.body, language: c.language, reactions: c.reactionCount, createdAt: c.createdAt, status: c.status, author: c.author, replyTo: c.parentId ? c.replyTo : null,
       myReaction: c.myReaction ?? null, own: !!viewer && c.authorId === viewer.id, file: c.file ? this.media.view(this.camel(c.file)) : null, replies: [] as any[],
     });
-    const all = rows.map(shape);
+    // At most 500 are sent; the page says so when there are more.
+    const more = rows.length > 500;
+    const all = rows.slice(0, 500).map(shape);
     const byId = new Map(all.map((c) => [c.id, c]));
     const top: typeof all = [];
     for (const c of all) {
@@ -50,7 +52,7 @@ export class CommentsService {
       if (root) root.replies.push(c); else top.push(c);
     }
     for (const c of top) c.replies.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    return { ...state, items: top };
+    return { ...state, items: top, more };
   }
   private camel(o: Record<string, any>) { const out: Row = {}; for (const k of Object.keys(o)) out[k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())] = o[k]; return out; }
 

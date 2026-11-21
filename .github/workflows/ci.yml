@@ -3,7 +3,7 @@ name: Checks and builds
 on:
   push:
     branches: [main, master-plan]
-    paths: ['backend/**', 'web/**', 'mobile-app/**', '.github/workflows/**']
+    paths: ['backend/**', 'web/**', 'mobile-app/**', 'tests/**', '.github/workflows/**']
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,37 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm test
       - run: npm run build
+
+  browser:
+    name: Browser tests (journeys, accessibility, slow and offline networks, load)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build the server and the website
+        run: |
+          (cd backend && npm ci --no-audit --no-fund && npm run build)
+          (cd web && npm ci --no-audit --no-fund && npm run build)
+      - name: Start the demo server with the sample data
+        run: |
+          cd backend
+          RATE_LIMIT_SCALE=100000 nohup node scripts/demo.mjs > ../server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:4000/api/v1/auth/providers > /dev/null && break; sleep 3; done
+          curl -sf localhost:4000/api/v1/auth/providers
+      - name: Install the test browser and the accessibility checker
+        run: |
+          mkdir -p /tmp/e2e && cd /tmp/e2e && npm init -y > /dev/null
+          npm install --no-audit --no-fund playwright@1 axe-core@4 lighthouse@12
+          npx playwright install --with-deps chromium
+      - name: Journeys, accessibility and network tests in a real browser
+        run: NODE_PATH=/tmp/e2e/node_modules LOG=$PWD/server.log AXE=/tmp/e2e/node_modules/axe-core/axe.min.js NET_LIMIT=9000 node web/e2e/journeys.cjs
+      - name: Lighthouse on a simulated phone (performance 80+, accessibility, best practices and SEO 95+)
+        run: NODE_PATH=/tmp/e2e/node_modules LIGHTHOUSE=/tmp/e2e/node_modules/.bin/lighthouse node tests/perf/lighthouse.cjs http://localhost:4000/
+      - name: Load test (200 people for 30 seconds; 95% of requests must be under 300 ms with no server errors)
+        run: node tests/load/node-load.mjs --users 200 --seconds 30 --think 2000
+      - if: failure()
+        run: tail -n 80 server.log
 
   android:
     name: Android app
