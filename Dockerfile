@@ -9,7 +9,8 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=4000 STORAGE_LOCAL_DIR=/data/storage TRUST_PROXY=1
-RUN apk add --no-cache tini && mkdir -p /data/storage && chown -R node:node /data
+# FFmpeg converts video and audio for the web (HLS, MP4, M4A) and removes hidden location data.
+RUN apk add --no-cache tini ffmpeg && mkdir -p /data/storage && chown -R node:node /data
 WORKDIR /app/backend
 COPY --from=build --chown=node:node /app/backend/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/backend/dist ./dist

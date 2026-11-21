@@ -2,7 +2,10 @@ import { Body, Controller, Delete, Get, Headers, HttpCode, Param, ParseUUIDPipe,
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator';
-import { AuthUser, CurrentUser, Meta, Public, RequestMeta } from '../common/decorators';
+import { AuthUser, CurrentUser, Meta, Public, RequestMeta, Roles } from '../common/decorators';
+
+/** Super Admins view the archive but do not post or engage (Section 4.3). */
+const Engage = () => Roles('contributor', 'admin');
 import { LANGUAGES } from '../common/messages';
 import { CommentLimit, PostLimit } from '../common/rate-limits';
 import { CommentsService } from './comments.service';
@@ -60,20 +63,20 @@ export class StoriesController {
   @Public() @Get('stories/:id') @ApiOperation({ summary: 'One story by id or story ID (e.g. MS-2026-00918)' })
   one(@Param('id') id: string, @CurrentUser() me?: AuthUser) { return this.stories.get(id, me); }
 
-  @ApiBearerAuth() @PostLimit() @Post('stories') @ApiOperation({ summary: 'Share a story (or save a draft). Send an Idempotency-Key header so a retry never creates a duplicate.' })
+  @Engage() @ApiBearerAuth() @PostLimit() @Post('stories') @ApiOperation({ summary: 'Share a story (or save a draft). Send an Idempotency-Key header so a retry never creates a duplicate.' })
   create(@Body() dto: StoryDto, @CurrentUser() me: AuthUser, @Headers('idempotency-key') key: string | undefined, @Meta() meta: RequestMeta) { return this.stories.create(me, dto, key?.slice(0, 80), meta); }
-  @ApiBearerAuth() @Patch('stories/:id') @ApiOperation({ summary: 'Edit a draft or a published story (changes to a published story are checked before they show)' })
+  @Engage() @ApiBearerAuth() @Patch('stories/:id') @ApiOperation({ summary: 'Edit a draft or a published story (changes to a published story are checked before they show)' })
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: StoryDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.stories.update(id, me, dto, meta); }
-  @ApiBearerAuth() @PostLimit() @Post('stories/:id/submit') @HttpCode(200) @ApiOperation({ summary: 'Send a draft for AI review' })
+  @Engage() @ApiBearerAuth() @PostLimit() @Post('stories/:id/submit') @HttpCode(200) @ApiOperation({ summary: 'Send a draft for AI review' })
   submit(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.stories.submit(id, me, meta); }
   @ApiBearerAuth() @Get('stories/:id/review') @ApiOperation({ summary: 'Progress and outcome of the AI review' })
   review(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.stories.reviewStatus(id, me, meta.lang); }
   @ApiBearerAuth() @Delete('stories/:id') @ApiOperation({ summary: 'Delete my story (recoverable for 30 days, then erased)' })
   remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.stories.remove(id, me, meta); }
 
-  @ApiBearerAuth() @Put('stories/:id/reaction') @ApiOperation({ summary: 'React with Heart, Heartbreak or Laugh; the same reaction again removes it' })
+  @Engage() @ApiBearerAuth() @Put('stories/:id/reaction') @ApiOperation({ summary: 'React with Heart, Heartbreak or Laugh; the same reaction again removes it' })
   react(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReactionDto, @CurrentUser() me: AuthUser) { return this.stories.react(id, me, dto.type ?? null); }
-  @ApiBearerAuth() @Put('stories/:id/favourite') @ApiOperation({ summary: 'Add to Favorites, or remove if it is already there' })
+  @Engage() @ApiBearerAuth() @Put('stories/:id/favourite') @ApiOperation({ summary: 'Add to Favorites, or remove if it is already there' })
   favourite(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.stories.favourite(id, me, meta.lang); }
   @Public() @Post('stories/:id/share') @HttpCode(200) @ApiOperation({ summary: 'Record a share, a copied link or a citation' })
   share(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ShareDto, @CurrentUser() me: AuthUser | undefined, @Meta() meta: RequestMeta) { return this.stories.share(id, me, dto.kind, dto.target ?? '', meta.visitor); }
@@ -90,12 +93,12 @@ export class StoriesController {
 
   @Public() @Get('stories/:id/comments') @ApiOperation({ summary: 'Comments and replies; sort=top (default), recent or oldest' })
   listComments(@Param('id', ParseUUIDPipe) id: string, @Query('sort') sort: string | undefined, @CurrentUser() me?: AuthUser) { return this.comments.list(id, sort, me); }
-  @ApiBearerAuth() @CommentLimit() @Post('stories/:id/comments') @ApiOperation({ summary: 'Comment or reply, with text, a file, or both; tag people with @username' })
+  @Engage() @ApiBearerAuth() @CommentLimit() @Post('stories/:id/comments') @ApiOperation({ summary: 'Comment or reply, with text, a file, or both; tag people with @username' })
   comment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CommentDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.comments.create(id, me, dto, meta); }
   @Public() @Get('comments/:id/translate') @ApiOperation({ summary: 'Machine translation of a comment, cached' })
   translateComment(@Param('id', ParseUUIDPipe) id: string, @Query('to') to: string) { return this.comments.translate(id, (LANGUAGES as readonly string[]).includes(to) ? to : 'en'); }
   @ApiBearerAuth() @Delete('comments/:id') @ApiOperation({ summary: 'Delete my comment' })
   removeComment(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.comments.remove(id, me); }
-  @ApiBearerAuth() @Put('comments/:id/reaction') @ApiOperation({ summary: 'React to a comment' })
+  @Engage() @ApiBearerAuth() @Put('comments/:id/reaction') @ApiOperation({ summary: 'React to a comment' })
   reactComment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReactionDto, @CurrentUser() me: AuthUser) { return this.comments.react(id, me, dto.type ?? null); }
 }

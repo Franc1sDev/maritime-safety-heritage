@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 0 of 1190 items ticked, 0 partly done**
+**Progress: 249 of 1190 items ticked, 70 partly done**
 
 How to read it:
 
@@ -51,19 +51,19 @@ To develop a secure, modern, easy-to-use and open-access social platform, availa
 
 ### 1.3 Project Deliverables
 
-- [ ] **1\. Backend (API and services)**: The secure server application, database, media storage, background processing, AI services, notifications and administration logic (Section 2).
-- [ ] **2\. Website and web app**: The full platform in any modern browser on computers and phones, installable as a web app (Section 3.2).
-- [ ] **3\. Android app**: An installable app published on Google Play (Section 3.3).
-- [ ] **4\. iOS app**: An installable app published on the Apple App Store (Section 3.3).
-- [ ] **5\. Admin and Super Admin tools**: Administrative controls, moderation, reports queue, live analytics and PDF reports (Sections 3.2.9–3.2.12).
-- [ ] **6\. Incident records and national mapping**: A catalogue of documented water-transport incidents, shown on a map and linked to the stories, testimonies and records about each incident (Sections 2.3 and 3.2.14).
-- [ ] **7\. Bulk import and cataloguing tools**: Tools for the project team to upload the collected oral histories, photographs, records and reports with their metadata, consent and rights (Section 3.2.10).
-- [ ] **8\. Learning resources area**: A library for policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions (Section 3.2.6).
-- [ ] **9\. AI services**: Content review, transcription, translation and report narratives (Section 5).
-- [ ] **10\. Hosting and deployment**: Test hosting, production hosting, domain, SSL, CI/CD, monitoring and backups (Sections 7 and 9).
-- [ ] **11\. Documentation**: User guide, contributor handbook, admin guide, technical documentation, API reference, deployment and security guides, and handover notes.
-- [ ] **12\. Training and handover**: Orientation for partners, researchers and community representatives, training sessions for admins and Super Admins, and a handover of accounts, credentials and source code.
-- [ ] **13\. Sustainability inputs**: Hosting, maintenance and cost information for the project’s archive sustainability plan (Section 11.8).
+- [x] **1. Backend (API and services)**: The secure server application, database, media storage, background processing, AI services, notifications and administration logic (Section 2). — *Note: 171 API endpoints, 44 automated end-to-end tests; production services are switched on in stage 5*
+- [ ] **2. Website and web app**: The full platform in any modern browser on computers and phones, installable as a web app (Section 3.2).
+- [ ] **3. Android app**: An installable app published on Google Play (Section 3.3).
+- [ ] **4. iOS app**: An installable app published on the Apple App Store (Section 3.3).
+- [ ] **5. Admin and Super Admin tools**: Administrative controls, moderation, reports queue, live analytics and PDF reports (Sections 3.2.9–3.2.12).
+- [ ] **6. Incident records and national mapping**: A catalogue of documented water-transport incidents, shown on a map and linked to the stories, testimonies and records about each incident (Sections 2.3 and 3.2.14).
+- [ ] **7. Bulk import and cataloguing tools**: Tools for the project team to upload the collected oral histories, photographs, records and reports with their metadata, consent and rights (Section 3.2.10).
+- [ ] **8. Learning resources area**: A library for policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions (Section 3.2.6).
+- [ ] **9. AI services**: Content review, transcription, translation and report narratives (Section 5).
+- [ ] **10. Hosting and deployment**: Test hosting, production hosting, domain, SSL, CI/CD, monitoring and backups (Sections 7 and 9).
+- [ ] **11. Documentation**: User guide, contributor handbook, admin guide, technical documentation, API reference, deployment and security guides, and handover notes.
+- [ ] **12. Training and handover**: Orientation for partners, researchers and community representatives, training sessions for admins and Super Admins, and a handover of accounts, credentials and source code.
+- [ ] **13. Sustainability inputs**: Hosting, maintenance and cost information for the project’s archive sustainability plan (Section 11.8).
 
 ### 1.4 User Platforms
 
@@ -98,11 +98,11 @@ Design consequences: inland waters receive the same weight as the coast in the p
 
 The project has five activities. The platform is Activity 3, and it also supports the other four:
 
-- [ ] **1\. Researching and documenting water-transport safety heritage**: Incident records and the national incident map; historical records with source and reference; bulk import of collected materials (Sections 2.3, 3.2.10 and 3.2.14).
-- [ ] **2\. Co-creating community histories of risk and resilience**: Story sharing in the storyteller’s own language; “as told by” and anonymous posting with recorded consent; validation by storytellers before publication; audio and video oral histories with transcripts (Sections 3.2.4 and 11.4).
-- [ ] **3\. Developing an open-access digital archive**: The whole platform: website, web app, Android and iOS apps, open to visitors without an account (Sections 2 to 9).
-- [ ] **4\. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3).
-- [ ] **5\. Translating heritage into policy and public learning**: The learning resources area for policy briefs, learning summaries, educational materials and online exhibitions; collections; analytics for reporting (Sections 3.2.6, 3.2.14 and 11.9).
+- [ ] **1. Researching and documenting water-transport safety heritage**: Incident records and the national incident map; historical records with source and reference; bulk import of collected materials (Sections 2.3, 3.2.10 and 3.2.14).
+- [ ] **2. Co-creating community histories of risk and resilience**: Story sharing in the storyteller’s own language; “as told by” and anonymous posting with recorded consent; validation by storytellers before publication; audio and video oral histories with transcripts (Sections 3.2.4 and 11.4).
+- [ ] **3. Developing an open-access digital archive**: The whole platform: website, web app, Android and iOS apps, open to visitors without an account (Sections 2 to 9).
+- [ ] **4. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3).
+- [ ] **5. Translating heritage into policy and public learning**: The learning resources area for policy briefs, learning summaries, educational materials and online exhibitions; collections; analytics for reporting (Sections 3.2.6, 3.2.14 and 11.9).
 
 ### 1.8 Development Approach
 
@@ -127,165 +127,165 @@ The plan is arranged as follows, ending with references and appendices:
 
 ### 2.1 Architecture Overview
 
-- [ ] The backend will be a single, well-organised NestJS application (a “modular monolith”) backed by PostgreSQL. Each area of the platform will be its own module with clear boundaries, so that any module can later be split into a separate service if load requires it. Slow work will never run inside a user’s request; it will be handed to background workers through a job queue.
-- [ ] Clients (website, web app, Android, iOS) talk to the backend only through a versioned HTTPS API and a WebSocket connection for live updates.
+- [x] The backend will be a single, well-organised NestJS application (a “modular monolith”) backed by PostgreSQL. Each area of the platform will be its own module with clear boundaries, so that any module can later be split into a separate service if load requires it. Slow work will never run inside a user’s request; it will be handed to background workers through a job queue.
+- [x] Clients (website, web app, Android, iOS) talk to the backend only through a versioned HTTPS API and a WebSocket connection for live updates.
 - [ ] A reverse proxy (Caddy) will terminate HTTPS, handle certificates automatically and compress responses. A CDN (e.g. Cloudflare) will sit in front for media and static files.
-- [ ] The API servers will be stateless, so more copies can be added behind the proxy when traffic grows (Section 6.5).
-- [ ] Supporting services: PostgreSQL with PostGIS (data and maps), Redis (cache, sessions, job queue, live-update fan-out), object storage (media), ClamAV (virus scanning), an AI provider (Section 5), push notification services (FCM and APNs) and an email service.
+- [x] The API servers will be stateless, so more copies can be added behind the proxy when traffic grows (Section 6.5).
+- [~] Supporting services: PostgreSQL with PostGIS (data and maps), Redis (cache, sessions, job queue, live-update fan-out), object storage (media), ClamAV (virus scanning), an AI provider (Section 5), push notification services (FCM and APNs) and an email service. — *Left: all are supported in the code and Redis is tested; PostGIS is optional (the map also works without it); ClamAV, object storage, push and the AI provider are switched on and tested on the production server in stage 5 (Deployment)*
 
 ### 2.2 Technology Stack
 
-- [ ] **API framework**: NestJS (Node.js, TypeScript) | Modules, validation, security, OpenAPI documentation
-- [ ] **Database**: PostgreSQL with PostGIS | All structured data, full-text search, map queries
-- [ ] **ORM and migrations**: TypeORM | Database access and versioned schema changes
-- [ ] **Cache and queue**: Redis with BullMQ | Caching, rate limits, background jobs, WebSocket scaling
-- [ ] **Media storage**: S3-compatible object storage (e.g. Cloudflare R2, Backblaze B2, AWS S3) | Original and processed media files
-- [ ] **Media processing**: FFmpeg, Sharp | Video conversion (HLS), audio, image sizes and formats
-- [ ] **Virus scanning**: ClamAV | Scan every upload before it is stored
-- [ ] **Real-time**: WebSockets (Socket.IO with Redis adapter) | Inbox, counts, notifications, live charts
-- [ ] **Push notifications**: Firebase Cloud Messaging, Apple Push Notification service | Notifications to Android, iOS and web
-- [ ] **Email**: SMTP provider or transactional email API | Verification codes, notices, digests
-- [ ] **PDF generation**: Server-side HTML-to-PDF renderer | Analytics PDF reports
+- [x] **API framework**: NestJS (Node.js, TypeScript) | Modules, validation, security, OpenAPI documentation
+- [~] **Database**: PostgreSQL with PostGIS | All structured data, full-text search, map queries — *Left: PostgreSQL with full-text and fuzzy search is in use; PostGIS is switched on where the server has it, and map queries also work without it*
+- [x] **ORM and migrations**: TypeORM | Database access and versioned schema changes
+- [x] **Cache and queue**: Redis with BullMQ | Caching, rate limits, background jobs, WebSocket scaling
+- [~] **Media storage**: S3-compatible object storage (e.g. Cloudflare R2, Backblaze B2, AWS S3) | Original and processed media files — *Left: the S3 driver is built; switched on and tested on the production server in stage 5 (Deployment)*
+- [x] **Media processing**: FFmpeg, Sharp | Video conversion (HLS), audio, image sizes and formats
+- [~] **Virus scanning**: ClamAV | Scan every upload before it is stored — *Left: every upload is sent to the scanner when one is configured; the ClamAV service itself is switched on and tested on the production server in stage 5 (Deployment)*
+- [x] **Real-time**: WebSockets (Socket.IO with Redis adapter) | Inbox, counts, notifications, live charts
+- [x] **Push notifications**: Firebase Cloud Messaging, Apple Push Notification service | Notifications to Android, iOS and web — *Note: sent through Firebase Cloud Messaging, which delivers to iPhones through Apple’s service; web push uses the browser standard. Needs the Firebase and web-push keys (stage 5)*
+- [x] **Email**: SMTP provider or transactional email API | Verification codes, notices, digests
+- [~] **PDF generation**: Server-side HTML-to-PDF renderer | Analytics PDF reports — *Left: reports are made by a built-in PDF writer instead of an HTML-to-PDF renderer, because a headless browser is too heavy for the server budget; the output is the same kind of report*
 - [ ] **Containers**: Docker, Docker Compose | Identical setup on every server
 - [ ] **Reverse proxy**: Caddy | HTTPS, certificates, compression
 
 ### 2.3 Core Modules
 
-- [ ] **Public access**: Read-only access for visitors without an account to published stories, incident records, collections, the map, search and learning resources; rate limits and caching (Sections 2.5 and 4.3).
-- [ ] **Auth**: Google and Apple sign-in for Contributors; admin registration, password and multi-factor authentication; sessions and tokens (Section 4.2).
-- [ ] **Users and Profiles**: Usernames, avatars or photos, theme and language settings, notification settings, blocks and mutes, follows, account deletion.
-- [ ] **Stories**: Creating, editing and deleting stories; story details (location, event date, category, vessel, tags, language); usage rights; drafts; story IDs.
-- [ ] **Records**: Historical records (newspaper articles, reports, photographs, official records) with source, archive reference, original date and rights; shown in the story frame alongside community stories.
-- [ ] **Incidents**: Incident records: date, place, water body, vessel, type, summary, outcome and sources; links to every story, testimony and record about the incident; the incident map layer.
-- [ ] **Import**: Bulk import of collected materials from files plus a metadata spreadsheet: validation, preview, error report, and submission of the batch for approval.
-- [ ] **Resources**: The learning resources library: policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions, with download counts.
-- [ ] **Safety concerns**: Safety concerns raised by users about current risks, kept separate from content reports, with a queue for the project team.
-- [ ] **Media**: Uploads (resumable), virus scan, location-data removal, compression, image sizes, video and audio conversion, ZIP downloads, signed links.
-- [ ] **Engagement**: Reactions (Heart, Heartbreak, Laugh), favourites, shares, copied links, views, trending score.
-- [ ] **Comments**: Threaded comments and replies, tagging, attachments, sorting, lock and hide.
-- [ ] **Moderation**: AI review results and flags, admin moderation actions, “Ask Why” requests, moderation history.
-- [ ] **Reports**: User reports on stories and Contributors, reports queue, actions and outcomes.
-- [ ] **Approvals**: One shared approval engine for AI-ban overrides, company stories, collections and terminal account actions (Section 2.7).
-- [ ] **Messaging (Inbox)**: Direct messages, conversations grouped by sender or issue, message requests, unread counts, attachments.
-- [ ] **Announcements**: Creating and editing announcements, dates for animated calendars, unread counts, ordering by last change.
-- [ ] **Notifications**: In-app, push and email notifications; priority notifications; user preferences and quiet hours.
-- [ ] **Reminders**: User and admin reminders with due times and notifications.
-- [ ] **Places**: The coastal places list, location auto-complete, map data (PostGIS).
-- [ ] **Search**: Full-text and fuzzy search across stories, transcripts, contributors and places, in all supported languages.
-- [ ] **Analytics**: Event recording, aggregates per day, week, month and year, live chart feeds, PDF reports.
-- [ ] **AI**: A single gateway to AI providers for review, transcription, translation and report writing (Section 5).
-- [ ] **Admin Management**: Admin and Super Admin accounts, the last-Super-Admin rule, the audit log.
-- [ ] **i18n**: Interface translations and story translation on demand.
+- [x] **Public access**: Read-only access for visitors without an account to published stories, incident records, collections, the map, search and learning resources; rate limits and caching (Sections 2.5 and 4.3).
+- [x] **Auth**: Google and Apple sign-in for Contributors; admin registration, password and multi-factor authentication; sessions and tokens (Section 4.2).
+- [x] **Users and Profiles**: Usernames, avatars or photos, theme and language settings, notification settings, blocks and mutes, follows, account deletion.
+- [x] **Stories**: Creating, editing and deleting stories; story details (location, event date, category, vessel, tags, language); usage rights; drafts; story IDs.
+- [x] **Records**: Historical records (newspaper articles, reports, photographs, official records) with source, archive reference, original date and rights; shown in the story frame alongside community stories.
+- [x] **Incidents**: Incident records: date, place, water body, vessel, type, summary, outcome and sources; links to every story, testimony and record about the incident; the incident map layer.
+- [x] **Import**: Bulk import of collected materials from files plus a metadata spreadsheet: validation, preview, error report, and submission of the batch for approval.
+- [x] **Resources**: The learning resources library: policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions, with download counts.
+- [x] **Safety concerns**: Safety concerns raised by users about current risks, kept separate from content reports, with a queue for the project team.
+- [x] **Media**: Uploads (resumable), virus scan, location-data removal, compression, image sizes, video and audio conversion, ZIP downloads, signed links.
+- [x] **Engagement**: Reactions (Heart, Heartbreak, Laugh), favourites, shares, copied links, views, trending score.
+- [x] **Comments**: Threaded comments and replies, tagging, attachments, sorting, lock and hide.
+- [x] **Moderation**: AI review results and flags, admin moderation actions, “Ask Why” requests, moderation history.
+- [x] **Reports**: User reports on stories and Contributors, reports queue, actions and outcomes.
+- [x] **Approvals**: One shared approval engine for AI-ban overrides, company stories, collections and terminal account actions (Section 2.7).
+- [x] **Messaging (Inbox)**: Direct messages, conversations grouped by sender or issue, message requests, unread counts, attachments.
+- [x] **Announcements**: Creating and editing announcements, dates for animated calendars, unread counts, ordering by last change.
+- [x] **Notifications**: In-app, push and email notifications; priority notifications; user preferences and quiet hours.
+- [x] **Reminders**: User and admin reminders with due times and notifications.
+- [~] **Places**: The coastal places list, location auto-complete, map data (PostGIS). — *Left: places list, auto-complete and map data are built; PostGIS is optional*
+- [x] **Search**: Full-text and fuzzy search across stories, transcripts, contributors and places, in all supported languages.
+- [x] **Analytics**: Event recording, aggregates per day, week, month and year, live chart feeds, PDF reports.
+- [x] **AI**: A single gateway to AI providers for review, transcription, translation and report writing (Section 5). — *Note: one gateway with connectors for Anthropic, OpenAI and Gemini, plus a rule-based stand-in for testing*
+- [x] **Admin Management**: Admin and Super Admin accounts, the last-Super-Admin rule, the audit log.
+- [~] **i18n**: Interface translations and story translation on demand. — *Left: story and comment translation on demand is built (needs an AI key); server messages are in English and Kiswahili; interface translations come with the website and apps (stages 2 and 3)*
 
 ### 2.4 Data Model – Key Entities
 
-- [ ] **User**: id, role (Contributor, Admin, Super Admin), sign-in provider and provider ID, username, avatar or photo, language, theme, status (active, warned, suspended, deleted), created and deleted dates.
-- [ ] **AdminProfile**: user, admin name (e.g. “Admin – Grace”), Admin ID, staff number, encrypted ID/passport number, verified email and phone, MFA settings.
-- [ ] **Story**: story ID (e.g. MS-2026-00918), type (community story, testimony or historical record), linked incident, consent record, validation status, author, posted-as (self, “as told by”, anonymous, company), text, language, location (place and coordinates), event date (exact or approximate), category, vessel name, tags, usage rights, AI flag and score, status (draft, pending review, published, blocked, deleted), edit history.
-- [ ] **Incident**: incident ID, title, date (exact or approximate), place and coordinates, water body, vessel, incident type, summary, outcome, sources, linked stories and records, status.
-- [ ] **RecordSource**: for historical records: holding institution or publication, archive reference, original date, creator, rights statement, how it was obtained.
-- [ ] **ConsentRecord**: storyteller, type of consent, date, consent form file, restrictions (e.g. anonymous, no downloads), validation date, withdrawal date.
-- [ ] **ImportBatch**: uploaded files, metadata spreadsheet, validation results, items created, proposer, approval status.
-- [ ] **Resource**: title, type (policy brief, learning summary, educational material, handbook, exhibition), summary, file or pages, audience, language, publication date, downloads.
-- [ ] **SafetyConcern**: reporter (or anonymous visitor), place, description, photo, date, status, notes, referral made.
-- [ ] **MediaFile**: story or comment or message, type (video, audio, document, image), original file, processed versions, size, duration, transcript, checksum, scan result.
-- [ ] **Reaction, Favourite, Share, View**: user, story, type and time.
-- [ ] **Comment**: story, author, parent comment (for threads), text, attachment, tagged users, reaction counts, AI flag.
-- [ ] **ModerationDecision**: story or comment, AI flag and explanation, admin action, reason, admin, time.
-- [ ] **Report**: reporter, target (story or Contributor), reasons, description, status, action taken.
-- [ ] **ApprovalRequest**: type (override, company story, collection, account deletion), target, proposer, justification, approvals and rejections with justifications, status, deadline.
-- [ ] **Conversation and Message**: participants, topic (sender or issue), messages, read status, attachments.
-- [ ] **Announcement**: title, summary, description, dates, created and edited times, read status per user.
-- [ ] **Notification**: user, type, priority flag, link to item, read and acted-on status.
-- [ ] **Reminder**: user, text, due time, status.
-- [ ] **Place**: name, alternative names, type (port, town, beach, island, landing site, lake, river), coordinates, county or region.
-- [ ] **Collection**: title, description, curated stories, approval status.
-- [ ] **AuditLog**: who, what, target, reason, time, IP address. Cannot be edited or deleted.
-- [ ] **AnalyticsEvent**: event type, story, user (pseudonymised), time. Stored separately from main data.
+- [x] **User**: id, role (Contributor, Admin, Super Admin), sign-in provider and provider ID, username, avatar or photo, language, theme, status (active, warned, suspended, deleted), created and deleted dates.
+- [x] **AdminProfile**: user, admin name (e.g. “Admin – Grace”), Admin ID, staff number, encrypted ID/passport number, verified email and phone, MFA settings.
+- [x] **Story**: story ID (e.g. MS-2026-00918), type (community story, testimony or historical record), linked incident, consent record, validation status, author, posted-as (self, “as told by”, anonymous, company), text, language, location (place and coordinates), event date (exact or approximate), category, vessel name, tags, usage rights, AI flag and score, status (draft, pending review, published, blocked, deleted), edit history.
+- [x] **Incident**: incident ID, title, date (exact or approximate), place and coordinates, water body, vessel, incident type, summary, outcome, sources, linked stories and records, status.
+- [x] **RecordSource**: for historical records: holding institution or publication, archive reference, original date, creator, rights statement, how it was obtained.
+- [x] **ConsentRecord**: storyteller, type of consent, date, consent form file, restrictions (e.g. anonymous, no downloads), validation date, withdrawal date.
+- [x] **ImportBatch**: uploaded files, metadata spreadsheet, validation results, items created, proposer, approval status.
+- [x] **Resource**: title, type (policy brief, learning summary, educational material, handbook, exhibition), summary, file or pages, audience, language, publication date, downloads.
+- [x] **SafetyConcern**: reporter (or anonymous visitor), place, description, photo, date, status, notes, referral made.
+- [x] **MediaFile**: story or comment or message, type (video, audio, document, image), original file, processed versions, size, duration, transcript, checksum, scan result.
+- [x] **Reaction, Favourite, Share, View**: user, story, type and time.
+- [x] **Comment**: story, author, parent comment (for threads), text, attachment, tagged users, reaction counts, AI flag.
+- [x] **ModerationDecision**: story or comment, AI flag and explanation, admin action, reason, admin, time.
+- [x] **Report**: reporter, target (story or Contributor), reasons, description, status, action taken.
+- [x] **ApprovalRequest**: type (override, company story, collection, account deletion), target, proposer, justification, approvals and rejections with justifications, status, deadline.
+- [x] **Conversation and Message**: participants, topic (sender or issue), messages, read status, attachments.
+- [x] **Announcement**: title, summary, description, dates, created and edited times, read status per user.
+- [x] **Notification**: user, type, priority flag, link to item, read and acted-on status.
+- [x] **Reminder**: user, text, due time, status.
+- [x] **Place**: name, alternative names, type (port, town, beach, island, landing site, lake, river), coordinates, county or region.
+- [x] **Collection**: title, description, curated stories, approval status.
+- [x] **AuditLog**: who, what, target, reason, time, IP address. Cannot be edited or deleted.
+- [x] **AnalyticsEvent**: event type, story, user (pseudonymised), time. Stored separately from main data.
 
 ### 2.5 API Design
 
-- [ ] Style: a REST API under /api/v1, documented with OpenAPI (Swagger) so the website and apps are built against one shared, always-current specification.
-- [ ] Public endpoints: published stories, incident records, collections, map data, search and learning resources can be read without signing in; every other endpoint requires a signed-in user with the right role (Section 4.3).
-- [ ] Versioning: breaking changes go into a new version (/api/v2), and older app versions keep working until they are retired.
-- [ ] Pagination: cursor-based pagination for feeds, comments, messages and lists, so infinite scrolling stays fast however large the archive becomes.
-- [ ] Errors: every error returns a consistent structure (code, message in the user’s language, details), so all clients show the same messages.
-- [ ] Validation: all input is validated and unknown fields are rejected.
-- [ ] Idempotency: story submissions, messages and approvals carry an idempotency key, so a retry on a weak connection never creates duplicates.
-- [ ] Real-time: a WebSocket channel pushes new messages, unread counts, notifications, approval progress and live chart updates.
+- [x] Style: a REST API under /api/v1, documented with OpenAPI (Swagger) so the website and apps are built against one shared, always-current specification.
+- [x] Public endpoints: published stories, incident records, collections, map data, search and learning resources can be read without signing in; every other endpoint requires a signed-in user with the right role (Section 4.3).
+- [x] Versioning: breaking changes go into a new version (/api/v2), and older app versions keep working until they are retired.
+- [x] Pagination: cursor-based pagination for feeds, comments, messages and lists, so infinite scrolling stays fast however large the archive becomes.
+- [x] Errors: every error returns a consistent structure (code, message in the user’s language, details), so all clients show the same messages.
+- [x] Validation: all input is validated and unknown fields are rejected.
+- [x] Idempotency: story submissions, messages and approvals carry an idempotency key, so a retry on a weak connection never creates duplicates.
+- [x] Real-time: a WebSocket channel pushes new messages, unread counts, notifications, approval progress and live chart updates.
 
 ### 2.6 Business Rules
 
 The backend must enforce these rules itself, never relying on the website or apps alone:
 
-- [ ] Story contents: text (optional, any length), up to 1 video, 1 audio file, 4 documents or PDFs and 20 images. A story must contain at least one item.
-- [ ] Open access: published content is readable by anyone without an account. Posting, reacting, commenting, messaging, favourites and content reports require sign-in.
-- [ ] Consent and validation: a testimony collected by the project is published only when its consent record is complete and it is marked as validated with the storyteller, who keeps control over how it is shared and can withdraw it.
-- [ ] Incident links: a story or record can be linked to one incident record; the incident page lists everything linked to it.
-- [ ] Favourites: a story can be added to a user’s Favourites only once; the same action removes it again.
-- [ ] Trending: the trending rank combines all engagement (reactions, shares, copied links, comments, views and other interactions) and applies time decay, so newer stories with strong engagement can rise above older ones. Suggested formula: score = weighted engagement ÷ (hours since posting + 2)^gravity, recalculated every few minutes.
-- [ ] Comments: default order is the highest combined total of reactions; also most recent and oldest. Locked comments can be read but not added to; hidden comments show only their count. Both show the admin’s reason.
-- [ ] Reserved identity: no Contributor may use “Admin” (or close variants) as a username or the Maritime logo as a profile image. Company stories appear under “Admin” with the logo; individual admins appear as “Admin – \[name\]” with an admin badge.
-- [ ] Admin profile: admins may change their verification email and password, but not their admin name, Admin ID or profile image.
-- [ ] Last Super Admin: a Super Admin cannot delete their account, or be removed, if they are the only Super Admin.
-- [ ] Account deletion: the user picks one preset reason and may type their own (Appendix A). The account and its content are hidden at once and permanently erased after a 30-day recovery period.
-- [ ] Ask Why: when an admin deletes a story, its Contributor can send an “Ask Why” request (subject, description, attachments), which reaches the admins’ INBOX.
-- [ ] Blocking: a blocked user cannot view, comment on, react to or message the user who blocked them.
+- [x] Story contents: text (optional, any length), up to 1 video, 1 audio file, 4 documents or PDFs and 20 images. A story must contain at least one item.
+- [x] Open access: published content is readable by anyone without an account. Posting, reacting, commenting, messaging, favourites and content reports require sign-in.
+- [x] Consent and validation: a testimony collected by the project is published only when its consent record is complete and it is marked as validated with the storyteller, who keeps control over how it is shared and can withdraw it.
+- [x] Incident links: a story or record can be linked to one incident record; the incident page lists everything linked to it.
+- [x] Favourites: a story can be added to a user’s Favourites only once; the same action removes it again.
+- [x] Trending: the trending rank combines all engagement (reactions, shares, copied links, comments, views and other interactions) and applies time decay, so newer stories with strong engagement can rise above older ones. Suggested formula: score = weighted engagement ÷ (hours since posting + 2)^gravity, recalculated every few minutes.
+- [x] Comments: default order is the highest combined total of reactions; also most recent and oldest. Locked comments can be read but not added to; hidden comments show only their count. Both show the admin’s reason.
+- [~] Reserved identity: no Contributor may use “Admin” (or close variants) as a username or the Maritime logo as a profile image. Company stories appear under “Admin” with the logo; individual admins appear as “Admin – \[name\]” with an admin badge. — *Left: reserved usernames and the “Admin” identity are enforced; an uploaded photo that copies the logo is not detected automatically yet*
+- [x] Admin profile: admins may change their verification email and password, but not their admin name, Admin ID or profile image.
+- [x] Last Super Admin: a Super Admin cannot delete their account, or be removed, if they are the only Super Admin.
+- [x] Account deletion: the user picks one preset reason and may type their own (Appendix A). The account and its content are hidden at once and permanently erased after a 30-day recovery period.
+- [x] Ask Why: when an admin deletes a story, its Contributor can send an “Ask Why” request (subject, description, attachments), which reaches the admins’ INBOX.
+- [x] Blocking: a blocked user cannot view, comment on, react to or message the user who blocked them.
 
 ### 2.7 Approval Workflow Engine
 
 Several actions require more than one admin to agree: overriding an AI ban, publishing a company story, publishing a collection, and terminal account actions (permanent account deletion). These will all use one shared approval engine:
 
-- [ ] An admin proposes the action with a written justification. The request appears to all other admins, who each approve, reject or request changes, with a written justification.
-- [ ] The action takes effect only when the approval rule is met. Until then the current state remains (the AI ban stays, the company story stays unpublished, the account stays active).
-- [ ] Approval rule: the baseline rule is approval by ALL admins. Because one absent admin could block a decision indefinitely, the recommended alternative is approval by a set majority of active admins (e.g. two-thirds), with a deadline, after which the Super Admin decides. The rule is an open decision (Appendix B).
-- [ ] Every step is recorded in the audit log, and progress is visible to the admins (e.g. “2 of 4 approved”).
-- [ ] For account actions, the account holder is kept informed at every stage through INBOX messages and priority notifications: report under review, action proposed, approvals in progress, and final outcome. They can use “Ask Why”.
+- [x] An admin proposes the action with a written justification. The request appears to all other admins, who each approve, reject or request changes, with a written justification.
+- [x] The action takes effect only when the approval rule is met. Until then the current state remains (the AI ban stays, the company story stays unpublished, the account stays active).
+- [x] Approval rule: the baseline rule is approval by ALL admins. Because one absent admin could block a decision indefinitely, the recommended alternative is approval by a set majority of active admins (e.g. two-thirds), with a deadline, after which the Super Admin decides. The rule is an open decision (Appendix B).
+- [x] Every step is recorded in the audit log, and progress is visible to the admins (e.g. “2 of 4 approved”).
+- [x] For account actions, the account holder is kept informed at every stage through INBOX messages and priority notifications: report under review, action proposed, approvals in progress, and final outcome. They can use “Ask Why”.
 
 ### 2.8 Moderation and Reports Pipeline
 
-- [ ] Every new or edited story, and every comment and message, passes through AI review (Section 5.2) and receives a GREEN, YELLOW or RED flag.
-- [ ] RED items are held as “Pending review” and appear in the admins’ moderation queue, filterable by flag, date, pending review, AI-blocked not overridden, and AI-blocked overridden.
-- [ ] Reports from users (on a story or a Contributor) enter the reports queue with the reporter, reasons and description. Several reports on the same item are grouped.
-- [ ] Admin actions on a report: dismiss, warn the Contributor, drop the story, suspend the account for a set period, or delete the account permanently (via the approval engine).
-- [ ] Reporters receive a confirmation, and an update when the report is resolved.
-- [ ] Reports pending longer than a set time are escalated and highlighted; admins can add internal notes.
-- [ ] Safety concerns are not content reports: they go to a separate queue, where the project team can acknowledge them, add notes and record any referral to the responsible authority. The platform states clearly that it is not an emergency service.
+- [x] Every new or edited story, and every comment and message, passes through AI review (Section 5.2) and receives a GREEN, YELLOW or RED flag.
+- [x] RED items are held as “Pending review” and appear in the admins’ moderation queue, filterable by flag, date, pending review, AI-blocked not overridden, and AI-blocked overridden.
+- [x] Reports from users (on a story or a Contributor) enter the reports queue with the reporter, reasons and description. Several reports on the same item are grouped.
+- [x] Admin actions on a report: dismiss, warn the Contributor, drop the story, suspend the account for a set period, or delete the account permanently (via the approval engine).
+- [x] Reporters receive a confirmation, and an update when the report is resolved.
+- [x] Reports pending longer than a set time are escalated and highlighted; admins can add internal notes.
+- [x] Safety concerns are not content reports: they go to a separate queue, where the project team can acknowledge them, add notes and record any referral to the responsible authority. The platform states clearly that it is not an emergency service.
 
 ### 2.9 Notifications, Messaging and Announcements
 
-- [ ] Channels: in-app, push (Android, iOS and web app) and email. Users choose which notifications they receive, through which channel, and quiet hours. Moderation and account notices cannot be switched off.
-- [ ] Priority notifications: items that need the user’s action are flagged as priority and shown on sign-in as floating notifications (Section 3.1.7) until acted on.
-- [ ] INBOX: conversations are grouped by sender or by issue (e.g. “Story #918 issue”, “Account help”). Messages from people the user does not follow arrive as requests. Unread counts update live.
-- [ ] Announcements: ordered by when they were created or last edited, so an edited announcement moves back to the top. Each user has an unread count. Dates in an announcement are stored as structured dates for the animated calendar.
+- [x] Channels: in-app, push (Android, iOS and web app) and email. Users choose which notifications they receive, through which channel, and quiet hours. Moderation and account notices cannot be switched off.
+- [x] Priority notifications: items that need the user’s action are flagged as priority and shown on sign-in as floating notifications (Section 3.1.7) until acted on.
+- [x] INBOX: conversations are grouped by sender or by issue (e.g. “Story #918 issue”, “Account help”). Messages from people the user does not follow arrive as requests. Unread counts update live.
+- [x] Announcements: ordered by when they were created or last edited, so an edited announcement moves back to the top. Each user has an unread count. Dates in an announcement are stored as structured dates for the animated calendar.
 
 ### 2.10 Analytics and PDF Reports
 
-- [ ] Interactions are recorded as analytics events, separately from the main data, and summarised into daily, weekly, monthly and yearly totals.
-- [ ] Live charts: stories posted per day, week, month and year; RED-flagged and GREEN-flagged stories per week, month and year; plus YELLOW-flagged stories, active users, reports and engagement.
-- [ ] Project reporting measures: testimonies and historical records archived, incident records mapped, counties and water bodies covered, active trained contributors, visitors and users by type, and views and downloads of learning resources (Section 11.9).
-- [ ] Charts update live over WebSockets as new data arrives.
-- [ ] PDF reports: an admin or Super Admin chooses a period and the charts to include. The report is generated in the background, with an AI-written explanation of the trends (Section 5.4) reviewed against the actual figures, and is ready to download when complete.
+- [x] Interactions are recorded as analytics events, separately from the main data, and summarised into daily, weekly, monthly and yearly totals.
+- [x] Live charts: stories posted per day, week, month and year; RED-flagged and GREEN-flagged stories per week, month and year; plus YELLOW-flagged stories, active users, reports and engagement.
+- [x] Project reporting measures: testimonies and historical records archived, incident records mapped, counties and water bodies covered, active trained contributors, visitors and users by type, and views and downloads of learning resources (Section 11.9).
+- [x] Charts update live over WebSockets as new data arrives.
+- [x] PDF reports: an admin or Super Admin chooses a period and the charts to include. The report is generated in the background, with an AI-written explanation of the trends (Section 5.4) reviewed against the actual figures, and is ready to download when complete.
 
 ### 2.11 Background Jobs
 
-- [ ] The following will run as background jobs, with retries and progress reported to the user where relevant: virus scanning; location-data removal; image resizing; video conversion to HLS; audio conversion; AI content review; transcription; translation; ZIP generation for story downloads; bulk import processing; PDF report generation; trending recalculation; analytics summaries; notification and email delivery; scheduled purging after the 30-day recovery period; backups.
+- [~] The following will run as background jobs, with retries and progress reported to the user where relevant: virus scanning; location-data removal; image resizing; video conversion to HLS; audio conversion; AI content review; transcription; translation; ZIP generation for story downloads; bulk import processing; PDF report generation; trending recalculation; analytics summaries; notification and email delivery; scheduled purging after the 30-day recovery period; backups. — *Left: all run in the background with retries except virus scanning and image resizing, which take under a second and run as the file arrives; backups are set up in stage 5*
 
 ### 2.12 Backend Testing
 
-- [ ] Unit tests for business rules and end-to-end tests for every API endpoint, run automatically on every change.
-- [ ] Priority test areas: sign-in and sessions, permissions per role, AI flag handling, the approval engine, account deletion and recovery, the last-Super-Admin rule, file uploads and signed links.
+- [~] Unit tests for business rules and end-to-end tests for every API endpoint, run automatically on every change. — *Left: 44 end-to-end tests cover every module; not yet every single endpoint, and the automatic run on GitHub is confirmed in stage 5*
+- [x] Priority test areas: sign-in and sessions, permissions per role, AI flag handling, the approval engine, account deletion and recovery, the last-Super-Admin rule, file uploads and signed links.
 - [ ] Load tests before each release (Section 6.6).
 
 ### 2.13 Tools and Technologies
 
-- [ ] **Language and framework**: TypeScript, Node.js (LTS), NestJS | Backend application
-- [ ] **Database tools**: PostgreSQL 17, PostGIS, pg_trgm, TypeORM migrations | Data, maps, fuzzy search, schema changes
-- [ ] **Queue and cache**: Redis, BullMQ, Bull Board (job dashboard) | Background jobs and their monitoring
-- [ ] **Media**: FFmpeg, Sharp, exiftool | Video and audio conversion, images, location-data removal
-- [ ] **API documentation**: OpenAPI (Swagger UI) | Shared, always-current API reference
-- [ ] **Code quality**: ESLint, Prettier, TypeScript strict mode | Consistent, safer code
-- [ ] **Testing**: Jest, Supertest | Unit and end-to-end API tests
+- [x] **Language and framework**: TypeScript, Node.js (LTS), NestJS | Backend application
+- [~] **Database tools**: PostgreSQL 17, PostGIS, pg_trgm, TypeORM migrations | Data, maps, fuzzy search, schema changes — *Left: pg_trgm and SQL migrations in use; PostGIS optional; the PostgreSQL version is confirmed on the production server*
+- [~] **Queue and cache**: Redis, BullMQ, Bull Board (job dashboard) | Background jobs and their monitoring — *Left: Redis and BullMQ are in use and tested; a queue status page for Super Admins replaces Bull Board*
+- [~] **Media**: FFmpeg, Sharp, exiftool | Video and audio conversion, images, location-data removal — *Left: Sharp and FFmpeg remove location and device data from photos, video and audio, so exiftool is not needed; PDF document properties are not stripped*
+- [x] **API documentation**: OpenAPI (Swagger UI) | Shared, always-current API reference
+- [~] **Code quality**: ESLint, Prettier, TypeScript strict mode | Consistent, safer code — *Left: TypeScript strict mode is on; ESLint and Prettier are not set up yet*
+- [x] **Testing**: Jest, Supertest | Unit and end-to-end API tests
 - [ ] **Editor and source control**: Visual Studio Code, Git, GitHub (private repository) | Development and version history
 - [ ] **Local environment**: Docker Desktop, embedded PostgreSQL for demos | The same setup on every computer
 
@@ -816,75 +816,75 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 4.1 Security Principles
 
-- [ ] Security by design: security is built into each feature from the start, not added at the end.
-- [ ] Least privilege: every user, admin, service and staff member gets only the access they need.
-- [ ] Defence in depth: several layers of protection, so one failure does not expose data.
-- [ ] Privacy by default: the most private settings are the default, and only necessary data is collected.
+- [x] Security by design: security is built into each feature from the start, not added at the end.
+- [x] Least privilege: every user, admin, service and staff member gets only the access they need.
+- [x] Defence in depth: several layers of protection, so one failure does not expose data.
+- [x] Privacy by default: the most private settings are the default, and only necessary data is collected.
 
 ### 4.2 Authentication
 
-- [ ] Contributors: sign in with Google or Apple (OpenID Connect). The backend verifies each sign-in token directly with Google or Apple before creating a session.
-- [ ] Admins and Super Admins: register through a sign-up form (ID/passport number, staff number, email, phone and password), approved by a Super Admin. Multi-factor authentication is required, with verification codes to email and phone as specified. An authenticator app or passkey is recommended as the main second factor, with email and SMS as backup, to reduce SMS costs and SIM-swap risk.
-- [ ] Passwords: hashed with a strong, salted algorithm (scrypt or Argon2); never stored or logged in plain text; checked against lists of known breached passwords.
-- [ ] Sessions: short-lived access tokens (about 15 minutes) with refresh tokens that rotate on each use; reuse of an old refresh token signs out all sessions. Users can see and sign out their active devices.
-- [ ] Lockout: repeated failed attempts are slowed and then temporarily locked, with an alert to the account owner.
+- [x] Contributors: sign in with Google or Apple (OpenID Connect). The backend verifies each sign-in token directly with Google or Apple before creating a session.
+- [~] Admins and Super Admins: register through a sign-up form (ID/passport number, staff number, email, phone and password), approved by a Super Admin. Multi-factor authentication is required, with verification codes to email and phone as specified. An authenticator app or passkey is recommended as the main second factor, with email and SMS as backup, to reduce SMS costs and SIM-swap risk. — *Left: registration, Super Admin approval, authenticator app and email codes are built and tested; SMS codes need an Africa’s Talking account; passkeys are not built*
+- [x] Passwords: hashed with a strong, salted algorithm (scrypt or Argon2); never stored or logged in plain text; checked against lists of known breached passwords.
+- [x] Sessions: short-lived access tokens (about 15 minutes) with refresh tokens that rotate on each use; reuse of an old refresh token signs out all sessions. Users can see and sign out their active devices.
+- [x] Lockout: repeated failed attempts are slowed and then temporarily locked, with an alert to the account owner.
 
 ### 4.3 Authorisation and Roles
 
-- [ ] **View published stories, incident records, collections, map and learning resources**: Yes | Yes | Yes | View only
-- [ ] **Share links, cite, listen, translate, download where allowed**: Yes | Yes | Yes | No
-- [ ] **Report a safety concern**: Yes | Yes | Yes | No
-- [ ] **React, comment, message, favourite, follow, report content**: No (sign-in prompt) | Yes | Yes | No
-- [ ] **Share stories**: No | Yes | Yes (company stories via approval) | No
-- [ ] **Moderate stories and comments**: No | No | Yes | No
-- [ ] **Handle reports, safety concerns and account actions**: No | No | Yes | No
-- [ ] **Manage incident records, imports, resources and announcements**: No | No | Yes | No
-- [ ] **Live analytics and PDF reports**: No | No | Yes | Yes
-- [ ] **Add and remove admins**: No | No | No | Yes
-- [ ] **View full audit log**: No | No | Own actions | Yes
-- [ ] Open access applies to published content only: drafts, blocked and removed items, messages, reports, consent forms and personal data are never public.
-- [ ] Permissions are checked on the server on every request. Role changes and suspensions take effect immediately.
+- [x] **View published stories, incident records, collections, map and learning resources**: Yes | Yes | Yes | View only
+- [x] **Share links, cite, listen, translate, download where allowed**: Yes | Yes | Yes | No
+- [x] **Report a safety concern**: Yes | Yes | Yes | No
+- [x] **React, comment, message, favourite, follow, report content**: No (sign-in prompt) | Yes | Yes | No
+- [x] **Share stories**: No | Yes | Yes (company stories via approval) | No
+- [x] **Moderate stories and comments**: No | No | Yes | No
+- [x] **Handle reports, safety concerns and account actions**: No | No | Yes | No
+- [x] **Manage incident records, imports, resources and announcements**: No | No | Yes | No
+- [x] **Live analytics and PDF reports**: No | No | Yes | Yes
+- [x] **Add and remove admins**: No | No | No | Yes
+- [x] **View full audit log**: No | No | Own actions | Yes
+- [x] Open access applies to published content only: drafts, blocked and removed items, messages, reports, consent forms and personal data are never public.
+- [x] Permissions are checked on the server on every request. Role changes and suspensions take effect immediately.
 
 ### 4.4 Data Protection and Legal Compliance
 
 - [ ] Kenya Data Protection Act, 2019: the project’s data controller registers with the Office of the Data Protection Commissioner (ODPC) as required, and a data protection impact assessment (DPIA) will be completed before launch.
 - [ ] Legal pages: a privacy policy, terms of use, rules and a cookie notice, linked from sign-in, ABOUT and the app stores, and accepted on first sign-in.
-- [ ] Data minimisation: only data needed for the platform is collected. Admin ID/passport numbers are collected only if strictly necessary, stored encrypted and separately, and visible only to Super Admins.
-- [ ] User rights: users can see, correct, download and delete their data (MY PROFILE).
-- [ ] Consent: stories told on behalf of others require a consent confirmation; faces can be blurred; anonymous posting is available for sensitive incidents.
-- [ ] Consent records: for testimonies collected by the project, the consent form, the storyteller’s choices (for example anonymous, or no downloads) and the validation date are stored with the item, visible only to admins, so that participants keep control over how their stories are shared.
+- [x] Data minimisation: only data needed for the platform is collected. Admin ID/passport numbers are collected only if strictly necessary, stored encrypted and separately, and visible only to Super Admins.
+- [x] User rights: users can see, correct, download and delete their data (MY PROFILE).
+- [~] Consent: stories told on behalf of others require a consent confirmation; faces can be blurred; anonymous posting is available for sensitive incidents. — *Left: consent confirmation and anonymous posting are enforced by the server; face blurring is a tool in the website and apps (stages 2 and 3)*
+- [x] Consent records: for testimonies collected by the project, the consent form, the storyteller’s choices (for example anonymous, or no downloads) and the validation date are stored with the item, visible only to admins, so that participants keep control over how their stories are shared.
 - [ ] Institutional policies: the platform’s rules and moderation are consistent with the project’s institutional policies on safeguarding, anti-bullying, and diversity and inclusion.
-- [ ] Age requirement: a minimum age is set and confirmed at first sign-in.
+- [x] Age requirement: a minimum age is set and confirmed at first sign-in.
 - [ ] Processors: contracts with hosting, AI, email and push providers must cover data protection, and AI providers must not use platform data to train their models.
 
 ### 4.5 Encryption
 
 - [ ] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds.
-- [ ] At rest: media files encrypted with AES-256; database on encrypted disks; sensitive fields (e.g. ID numbers, MFA secrets) encrypted separately.
+- [~] At rest: media files encrypted with AES-256; database on encrypted disks; sensitive fields (e.g. ID numbers, MFA secrets) encrypted separately. — *Left: media files are encrypted with AES-256 and sensitive fields separately; encrypted database disks depend on the production host (stage 5)*
 - [ ] Backups: encrypted before they leave the server (Section 7.4).
-- [ ] File access: files are never public. Each file link is signed and expires (e.g. after one hour), and is issued only to users allowed to see the item.
+- [x] File access: files are never public. Each file link is signed and expires (e.g. after one hour), and is issued only to users allowed to see the item.
 
 ### 4.6 Upload and Content Security
 
-- [ ] Every upload is scanned for viruses (ClamAV) before it is stored or shown.
-- [ ] File types are checked from their contents, not their names; dangerous types are refused; size limits apply per file type.
-- [ ] Hidden location and device data is removed from photos and videos automatically.
-- [ ] Documents are displayed in a safe viewer, never executed.
+- [~] Every upload is scanned for viruses (ClamAV) before it is stored or shown. — *Left: the scanning step is built; the ClamAV service is switched on and tested on the production server in stage 5 (Deployment)*
+- [x] File types are checked from their contents, not their names; dangerous types are refused; size limits apply per file type.
+- [x] Hidden location and device data is removed from photos and videos automatically.
+- [x] Documents are displayed in a safe viewer, never executed.
 
 ### 4.7 Application Security
 
-- [ ] Protection against the OWASP Top 10, including parameterised database queries (SQL injection), output escaping and a strict Content Security Policy (cross-site scripting), and protection against cross-site request forgery.
-- [ ] Security headers (e.g. Helmet), strict input validation, and rejection of unknown fields.
-- [ ] Rate limits on sign-in, posting, commenting, messaging and reporting, stricter for new accounts.
-- [ ] Public pages and forms: public read endpoints are rate-limited and cached; the safety-concern and feedback forms open to visitors are protected against automated abuse (for example with a human-verification check).
-- [ ] Secrets (keys, passwords, tokens) kept out of the source code and stored in the hosting provider’s secret store.
+- [x] Protection against the OWASP Top 10, including parameterised database queries (SQL injection), output escaping and a strict Content Security Policy (cross-site scripting), and protection against cross-site request forgery.
+- [x] Security headers (e.g. Helmet), strict input validation, and rejection of unknown fields.
+- [x] Rate limits on sign-in, posting, commenting, messaging and reporting, stricter for new accounts.
+- [x] Public pages and forms: public read endpoints are rate-limited and cached; the safety-concern and feedback forms open to visitors are protected against automated abuse (for example with a human-verification check).
+- [x] Secrets (keys, passwords, tokens) kept out of the source code and stored in the hosting provider’s secret store.
 - [ ] Dependencies scanned automatically for known vulnerabilities on every change.
 
 ### 4.8 Audit Logging and Monitoring
 
-- [ ] A permanent, unchangeable audit log of every admin and Super Admin action: who, what, when, the reason and the IP address.
-- [ ] Security events (failed sign-ins, lockouts, permission errors, unusual activity) are logged and trigger alerts.
-- [ ] Logs never contain passwords, tokens or full ID numbers.
+- [x] A permanent, unchangeable audit log of every admin and Super Admin action: who, what, when, the reason and the IP address.
+- [~] Security events (failed sign-ins, lockouts, permission errors, unusual activity) are logged and trigger alerts. — *Left: failed sign-ins, lockouts and permission errors are logged, and lockouts alert the owner and the Super Admins; alerts on unusual activity come with monitoring in stage 5*
+- [x] Logs never contain passwords, tokens or full ID numbers.
 
 ### 4.9 Incident Response
 
@@ -894,7 +894,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 4.10 Security Testing
 
-- [ ] Automated security tests for sign-in, lockout, token reuse, permissions, signed links, encryption and file-type checks on every change.
+- [x] Automated security tests for sign-in, lockout, token reuse, permissions, signed links, encryption and file-type checks on every change.
 - [ ] An independent penetration test before public launch, with all high and critical findings fixed before go-live.
 - [ ] A security review at least once a year after launch.
 
@@ -903,18 +903,18 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ##### Contributor Rights and Licences
 
 - [ ] Contributors keep the copyright in their stories, and grant the platform permission to store, display and preserve them.
-- [ ] Contributors choose whether others may reuse their story, e.g. All rights reserved or a Creative Commons licence (Section 3.2.4).
-- [ ] Each story shows its rights and credits; media can be watermarked.
+- [x] Contributors choose whether others may reuse their story, e.g. All rights reserved or a Creative Commons licence (Section 3.2.4).
+- [~] Each story shows its rights and credits; media can be watermarked. — *Left: rights and credits are stored and returned with every story; watermarking is not built*
 
 ##### Consent
 
-- [ ] Stories about or told on behalf of other people require their informed consent, recorded with the story.
-- [ ] Storytellers can withdraw consent, and their story is then removed.
-- [ ] Consent forms used by the project team for oral histories will be stored securely and linked to the relevant items.
+- [x] Stories about or told on behalf of other people require their informed consent, recorded with the story.
+- [x] Storytellers can withdraw consent, and their story is then removed.
+- [x] Consent forms used by the project team for oral histories will be stored securely and linked to the relevant items.
 
 ##### Children and Young People
 
-- [ ] A minimum age for accounts is set and confirmed at first sign-in.
+- [x] A minimum age for accounts is set and confirmed at first sign-in.
 - [ ] Identifiable images or stories of children require consent from a parent or guardian.
 
 ##### Ethical Handling of Traumatic Content
@@ -932,18 +932,18 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ##### Protecting the Original Archive
 
-- [ ] One official domain, verified in Google Search Console, with canonical tags marking the original.
-- [ ] Media watermarked and credited; bulk downloading and scraping rate-limited.
+- [~] One official domain, verified in Google Search Console, with canonical tags marking the original. — *Left: canonical tags are on every public page; the domain and Search Console are set up at go-live*
+- [~] Media watermarked and credited; bulk downloading and scraping rate-limited. — *Left: credits and rate limits are in place; watermarking is not built*
 - [ ] Monitoring for copies, with takedown requests for duplicates; a copyright and licence notice on every page.
 - [ ] No public website can be made impossible to copy; the aim is to make copying hard, easy to detect and quick to remove.
 
 ### 4.12 Tools and Technologies
 
-- [ ] **Sign-in**: Google Identity (OpenID Connect), Sign in with Apple | Contributor sign-in
-- [ ] **MFA**: TOTP authenticator apps, WebAuthn passkeys, email and SMS codes (e.g. Africa’s Talking) | Admin second factor
-- [ ] **Password hashing**: scrypt or Argon2id | Salted password storage
-- [ ] **Web security**: Helmet, NestJS Throttler, class-validator | Security headers, rate limits, input validation
-- [ ] **Virus scanning**: ClamAV | Scan every upload
+- [x] **Sign-in**: Google Identity (OpenID Connect), Sign in with Apple | Contributor sign-in
+- [~] **MFA**: TOTP authenticator apps, WebAuthn passkeys, email and SMS codes (e.g. Africa’s Talking) | Admin second factor — *Left: authenticator apps and email codes built; SMS needs an Africa’s Talking account; passkeys not built*
+- [x] **Password hashing**: scrypt or Argon2id | Salted password storage
+- [x] **Web security**: Helmet, NestJS Throttler, class-validator | Security headers, rate limits, input validation
+- [~] **Virus scanning**: ClamAV | Scan every upload — *Left: ClamAV is switched on and tested on the production server in stage 5 (Deployment)*
 - [ ] **Code and dependency scanning**: GitHub Dependabot, npm audit, GitHub secret scanning, CodeQL | Find vulnerable packages, leaked secrets and code flaws
 - [ ] **Security testing**: OWASP ZAP | Automated web vulnerability scans
 - [ ] **Edge protection**: Cloudflare (firewall, DDoS protection, bot control) | Block attacks and scraping
@@ -953,61 +953,61 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 5.1 Purpose of AI on the Platform
 
-- [ ] AI will help a small team of admins keep a growing, multilingual archive safe, searchable and accessible. AI supports human decisions; it never has the final say on removing a person’s account, and every AI decision can be reviewed by an admin.
-- [ ] **Content review**: Flag stories, comments, messages and images that may break the rules (GREEN / YELLOW / RED).
-- [ ] **Transcription**: Turn audio and video oral histories into searchable text and captions.
-- [ ] **Translation**: Translate the interface and, on demand, stories, comments and transcripts.
-- [ ] **Accessibility**: Suggest alt text for images.
-- [ ] **Report narratives**: Write the trend explanation in PDF analytics reports.
-- [ ] **Organisation**: Suggest a category, tags and location for a story, which the contributor confirms.
-- [ ] **Spam detection**: Spot repeated, automated or scam content.
-- [ ] **Incident matching**: Suggest the incident record a story or historical record may belong to, for the contributor or admin to confirm.
+- [x] AI will help a small team of admins keep a growing, multilingual archive safe, searchable and accessible. AI supports human decisions; it never has the final say on removing a person’s account, and every AI decision can be reviewed by an admin.
+- [x] **Content review**: Flag stories, comments, messages and images that may break the rules (GREEN / YELLOW / RED).
+- [~] **Transcription**: Turn audio and video oral histories into searchable text and captions. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] **Translation**: Translate the interface and, on demand, stories, comments and transcripts. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] **Accessibility**: Suggest alt text for images. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] **Report narratives**: Write the trend explanation in PDF analytics reports. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [x] **Organisation**: Suggest a category, tags and location for a story, which the contributor confirms.
+- [x] **Spam detection**: Spot repeated, automated or scam content.
+- [x] **Incident matching**: Suggest the incident record a story or historical record may belong to, for the contributor or admin to confirm.
 - [ ] **Read aloud**: Turn story text into speech for the Listen button.
 
 ### 5.2 AI Content Review
 
-- [ ] Trigger: when a story is submitted or edited, and when a comment or message is sent.
-- [ ] Guidelines checked: safety, privacy (personal data shared without consent), harassment and hate speech, misinformation and conspiracy theories, political bias or campaigning, spam, scams and impersonation, and inappropriate content, in line with the rules (Appendix A).
-- [ ] Scoring: the AI scores the item against each guideline and returns an overall violation score with an explanation per guideline. GREEN: up to 20%; YELLOW: above 20% and below 70%; RED: 70% or above.
-- [ ] Outcomes: GREEN is posted; YELLOW is posted with a warning explaining what to avoid; RED is blocked, explained to the user, and sent to admins (Section 2.8).
-- [ ] Media: images and video frames are checked for inappropriate content; audio and video are reviewed through their transcripts.
-- [ ] Speed: review must complete within 3 minutes, and near-instantly for text. Video length and size limits (e.g. 5 minutes, 200 MB) keep long media within this limit.
-- [ ] Languages: review must work in all supported languages and recognise local languages and dialects, so that stories in Kiswahili or Giriama are not unfairly flagged.
-- [ ] Context: the AI is told that this is a maritime safety archive, so accounts of drownings, accidents and disasters are not wrongly treated as harmful content.
+- [x] Trigger: when a story is submitted or edited, and when a comment or message is sent.
+- [x] Guidelines checked: safety, privacy (personal data shared without consent), harassment and hate speech, misinformation and conspiracy theories, political bias or campaigning, spam, scams and impersonation, and inappropriate content, in line with the rules (Appendix A).
+- [x] Scoring: the AI scores the item against each guideline and returns an overall violation score with an explanation per guideline. GREEN: up to 20%; YELLOW: above 20% and below 70%; RED: 70% or above.
+- [x] Outcomes: GREEN is posted; YELLOW is posted with a warning explaining what to avoid; RED is blocked, explained to the user, and sent to admins (Section 2.8).
+- [~] Media: images and video frames are checked for inappropriate content; audio and video are reviewed through their transcripts. — *Left: photos and a frame of each video are sent with the text, and transcripts are reviewed when present; this needs a provider that reads images*
+- [~] Speed: review must complete within 3 minutes, and near-instantly for text. Video length and size limits (e.g. 5 minutes, 200 MB) keep long media within this limit. — *Left: the limits and time-outs are built (5 minutes and 200 MB per video); real timings are measured once the provider is chosen*
+- [~] Languages: review must work in all supported languages and recognise local languages and dialects, so that stories in Kiswahili or Giriama are not unfairly flagged. — *Left: the instructions tell the AI to judge by meaning in any language; accuracy in Kiswahili, Dholuo and local languages is measured when the provider is chosen*
+- [x] Context: the AI is told that this is a maritime safety archive, so accounts of drownings, accidents and disasters are not wrongly treated as harmful content.
 
 ### 5.3 Learning from Admin Decisions
 
-- [ ] Every admin decision (approving, overriding or deleting) is stored with its justification.
-- [ ] Approved decisions become examples given to the AI with future reviews, so it follows the platform’s own standards.
-- [ ] The flag thresholds and guidance are reviewed and recalibrated on a schedule (e.g. monthly), using the record of admin decisions. Models are not retrained after each single decision; the override warning text will reflect this.
-- [ ] Overrides are tracked: a high override rate on a guideline signals that the guidance needs adjusting.
+- [x] Every admin decision (approving, overriding or deleting) is stored with its justification.
+- [x] Approved decisions become examples given to the AI with future reviews, so it follows the platform’s own standards.
+- [~] The flag thresholds and guidance are reviewed and recalibrated on a schedule (e.g. monthly), using the record of admin decisions. Models are not retrained after each single decision; the override warning text will reflect this. — *Left: Super Admins can change the thresholds and see the quality figures; the monthly review itself is a team routine*
+- [~] Overrides are tracked: a high override rate on a guideline signals that the guidance needs adjusting. — *Left: the override rate is tracked overall, not yet per guideline*
 
 ### 5.4 Other AI Uses
 
-- [ ] Transcription: automatic transcripts for audio and video, with timestamps for captions; contributors can correct them.
-- [ ] Translation: interface translations prepared in advance; content translations on demand and cached so each item is translated only once per language.
-- [ ] Report narratives: the AI writes the trend explanation for PDF reports from the actual figures only; the figures in the text are checked against the data before the report is produced.
-- [ ] Suggestions: suggested category, tags, alt text and place, always confirmed by the user.
-- [ ] Incident matching: when a story names a place, date or vessel that matches an incident record, the link is suggested and must be confirmed by a person.
+- [~] Transcription: automatic transcripts for audio and video, with timestamps for captions; contributors can correct them. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] Translation: interface translations prepared in advance; content translations on demand and cached so each item is translated only once per language. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] Report narratives: the AI writes the trend explanation for PDF reports from the actual figures only; the figures in the text are checked against the data before the report is produced. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
+- [~] Suggestions: suggested category, tags, alt text and place, always confirmed by the user. — *Left: category, tags and language are suggested now; alt text and place need the AI provider*
+- [x] Incident matching: when a story names a place, date or vessel that matches an incident record, the link is suggested and must be confirmed by a person.
 - [ ] Read aloud: the Listen button uses the device’s own speech voices where one exists for the language, and a cloud voice otherwise. Where no suitable voice exists for a language, the storyteller’s original audio recording is offered instead.
-- [ ] Bulk import checks: imported items pass the same AI review as other stories before the batch is approved.
+- [x] Bulk import checks: imported items pass the same AI review as other stories before the batch is approved.
 
 ### 5.5 Implementation Architecture
 
-- [ ] AI gateway: all AI calls go through one backend module, so providers can be changed without changing the rest of the platform.
-- [ ] Background processing: AI tasks run as background jobs with retries and time limits.
-- [ ] Structured results: the AI returns structured data (scores, flags, explanations), validated before it is used.
-- [ ] Fallback: if the AI service is unavailable, items are held as “Pending review” and processed when it returns; nothing is published unchecked.
-- [ ] Record keeping: each decision stores the model and guidance version used, for accountability.
-- [ ] Cost control: limits per day, caching, and choosing smaller, cheaper models for simple tasks.
+- [x] AI gateway: all AI calls go through one backend module, so providers can be changed without changing the rest of the platform.
+- [x] Background processing: AI tasks run as background jobs with retries and time limits.
+- [x] Structured results: the AI returns structured data (scores, flags, explanations), validated before it is used.
+- [x] Fallback: if the AI service is unavailable, items are held as “Pending review” and processed when it returns; nothing is published unchecked.
+- [x] Record keeping: each decision stores the model and guidance version used, for accountability.
+- [x] Cost control: limits per day, caching, and choosing smaller, cheaper models for simple tasks.
 
 ### 5.6 Human Oversight, Transparency and Fairness
 
-- [ ] Admins make the final decision on every RED item and every account action.
-- [ ] Users are always told why an item was flagged, and can use “Ask Why” or contact admins.
+- [x] Admins make the final decision on every RED item and every account action.
+- [x] Users are always told why an item was flagged, and can use “Ask Why” or contact admins.
 - [ ] The rules frame explains clearly that AI review is used.
-- [ ] Flag rates are monitored by language and region to detect unfair treatment of particular groups.
-- [ ] Personal data sent to AI providers is kept to the minimum needed, under contracts that forbid training on platform data.
+- [x] Flag rates are monitored by language and region to detect unfair treatment of particular groups.
+- [~] Personal data sent to AI providers is kept to the minimum needed, under contracts that forbid training on platform data. — *Left: only the content under review is sent, never account details; the contract with the provider is for the project to sign*
 
 ### 5.7 AI Quality Measures
 
@@ -1019,10 +1019,10 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 5.8 Tools and Technologies
 
 - [ ] The provider will be chosen in the discovery stage by comparing accuracy on sample stories (including Kiswahili), price, speed and data-protection terms. The AI gateway (Section 5.5) allows the provider to be changed later.
-- [ ] **Language model (review, reports)**: A leading large language model through its API, e.g. Anthropic Claude, OpenAI GPT or Google Gemini | Content review, explanations, report narratives, suggestions
-- [ ] **Image moderation**: The chosen model’s image input, or a dedicated moderation service | Checking images and video frames
-- [ ] **Transcription**: A speech-to-text service, e.g. OpenAI Whisper or Google Speech-to-Text | Transcripts and captions
-- [ ] **Translation**: A machine translation service, e.g. Google Cloud Translation or DeepL, or the language model | Interface and content translation
+- [~] **Language model (review, reports)**: A leading large language model through its API, e.g. Anthropic Claude, OpenAI GPT or Google Gemini | Content review, explanations, report narratives, suggestions — *Left: connectors are built; the provider and its key are still to be chosen*
+- [~] **Image moderation**: The chosen model’s image input, or a dedicated moderation service | Checking images and video frames — *Left: connectors are built; the provider and its key are still to be chosen*
+- [~] **Transcription**: A speech-to-text service, e.g. OpenAI Whisper or Google Speech-to-Text | Transcripts and captions — *Left: connectors are built; the provider and its key are still to be chosen*
+- [~] **Translation**: A machine translation service, e.g. Google Cloud Translation or DeepL, or the language model | Interface and content translation — *Left: connectors are built; the provider and its key are still to be chosen*
 - [ ] **Text to speech**: The device’s built-in speech voices; a cloud text-to-speech service where a language needs it | The Listen button
 - [ ] **Evaluation**: A test set of sample stories with agreed admin decisions | Measuring AI accuracy before and after changes
 
@@ -1050,27 +1050,27 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 6.3 Media Delivery
 
 - [ ] All media is served through a CDN close to the user.
-- [ ] Images are stored in several sizes and modern formats (WebP/AVIF); each device receives the size it needs.
-- [ ] Videos are converted to adaptive streaming (HLS), so quality adjusts to the connection.
+- [x] Images are stored in several sizes and modern formats (WebP/AVIF); each device receives the size it needs. — *Note: WebP sizes for images; two HLS renditions plus an MP4 for video*
+- [x] Videos are converted to adaptive streaming (HLS), so quality adjusts to the connection. — *Note: WebP sizes for images; two HLS renditions plus an MP4 for video*
 - [ ] Each uploaded file is compressed individually before it is sent, reducing upload time and data use.
 
 ### 6.4 Backend and Database Performance
 
-- [ ] Indexes on all frequently searched and sorted fields; slow queries are monitored and fixed.
-- [ ] Cursor pagination everywhere, so large lists stay fast.
-- [ ] Caching in Redis for the trending feed, counts, sessions and frequently read data.
-- [ ] The trending ranking and analytics totals are calculated in the background, not when a user opens a page.
-- [ ] Connection pooling to the database.
-- [ ] Public pages (stories, incident records, learning resources) are cached at the CDN and refreshed when their content changes, so open access for visitors does not load the API servers.
+- [~] Indexes on all frequently searched and sorted fields; slow queries are monitored and fixed. — *Left: indexes are in place; slow-query monitoring is set up in stage 5*
+- [~] Cursor pagination everywhere, so large lists stay fast. — *Left: feeds, messages and the audit log use cursors; comments and the shorter lists are capped instead*
+- [x] Caching in Redis for the trending feed, counts, sessions and frequently read data.
+- [x] The trending ranking and analytics totals are calculated in the background, not when a user opens a page.
+- [x] Connection pooling to the database.
+- [~] Public pages (stories, incident records, learning resources) are cached at the CDN and refreshed when their content changes, so open access for visitors does not load the API servers. — *Left: pages are sent with caching headers; the CDN is set up in stage 5*
 
 ### 6.5 Load Handling and Scaling
 
-- [ ] Stateless API servers: more copies can be added behind the proxy during busy periods.
-- [ ] Background workers scale separately from the API, so heavy media processing never slows browsing.
-- [ ] WebSocket connections are shared across servers through Redis.
+- [x] Stateless API servers: more copies can be added behind the proxy during busy periods.
+- [x] Background workers scale separately from the API, so heavy media processing never slows browsing.
+- [x] WebSocket connections are shared across servers through Redis.
 - [ ] A database read replica can be added when read traffic grows.
 - [ ] Graceful degradation: under extreme load, non-essential features (e.g. live chart updates) slow down first, while browsing and posting keep working.
-- [ ] Rate limits protect the platform from abuse and accidental overload.
+- [x] Rate limits protect the platform from abuse and accidental overload.
 
 ### 6.6 Load and Performance Testing
 
@@ -1097,26 +1097,26 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 7.1 What Is Stored Where
 
-- [ ] **Accounts, stories, comments, messages, moderation, approvals**: PostgreSQL | Encrypted disks; sensitive fields encrypted separately
-- [ ] **Media (originals and processed versions)**: S3-compatible object storage | Encrypted; served through CDN with signed links
-- [ ] **Sessions, cache, job queue**: Redis | Temporary data only; can be rebuilt
-- [ ] **Analytics events**: Separate PostgreSQL tables (later a separate analytics database) | Pseudonymised user references
-- [ ] **Audit log**: PostgreSQL (append-only) | Cannot be edited or deleted
+- [~] **Accounts, stories, comments, messages, moderation, approvals**: PostgreSQL | Encrypted disks; sensitive fields encrypted separately — *Left: sensitive fields are encrypted; encrypted disks depend on the production host (stage 5)*
+- [~] **Media (originals and processed versions)**: S3-compatible object storage | Encrypted; served through CDN with signed links — *Left: encrypted and served with signed links; object storage and the CDN are switched on and tested on the production server in stage 5 (Deployment)*
+- [~] **Sessions, cache, job queue**: Redis | Temporary data only; can be rebuilt — *Left: cache and job queue use Redis; sign-in sessions are kept (hashed) in PostgreSQL so they survive a Redis restart*
+- [x] **Analytics events**: Separate PostgreSQL tables (later a separate analytics database) | Pseudonymised user references
+- [x] **Audit log**: PostgreSQL (append-only) | Cannot be edited or deleted
 - [ ] **Backups**: Separate off-site storage provider | Encrypted
 
 ### 7.2 Media Storage
 
-- [ ] Originals: the original full-quality file of every upload is kept alongside the compressed copies used for display, so the archive never loses quality.
-- [ ] Processed versions: image sizes, HLS video, audio versions, thumbnails and transcripts.
-- [ ] Integrity: each file has a checksum, checked regularly to detect damage.
-- [ ] Storage growth: usage is monitored, with alerts before limits are reached.
+- [x] Originals: the original full-quality file of every upload is kept alongside the compressed copies used for display, so the archive never loses quality.
+- [x] Processed versions: image sizes, HLS video, audio versions, thumbnails and transcripts.
+- [x] Integrity: each file has a checksum, checked regularly to detect damage.
+- [x] Storage growth: usage is monitored, with alerts before limits are reached.
 
 ### 7.3 Data Retention and Deletion
 
-- [ ] **Deleted stories and accounts**: Hidden at once; recoverable for 30 days; then permanently erased (including media)
-- [ ] **Stories removed by admins**: Kept hidden for the moderation record for a set period (e.g. 1 year), then erased
-- [ ] **Reports and moderation decisions**: Kept while the account exists, then anonymised
-- [ ] **Audit log**: At least 5 years
+- [x] **Deleted stories and accounts**: Hidden at once; recoverable for 30 days; then permanently erased (including media)
+- [x] **Stories removed by admins**: Kept hidden for the moderation record for a set period (e.g. 1 year), then erased
+- [x] **Reports and moderation decisions**: Kept while the account exists, then anonymised
+- [x] **Audit log**: At least 5 years
 - [ ] **Server logs**: 90 days
 - [ ] **Backups**: Daily for 30 days, weekly for 3 months, monthly for 1 year
 
@@ -1136,15 +1136,15 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 7.6 Long-Term Preservation
 
-- [ ] Media is preserved in open, widely supported formats (e.g. PDF/A for documents, standard audio and video formats).
-- [ ] Every story carries descriptive metadata (title, contributor, place, date, category, language, rights) following a recognised archive standard such as Dublin Core, so the collection can be shared with libraries and museums in future.
-- [ ] Historical records keep their provenance: holding institution or publication, archive reference, original date, creator and rights statement, so that content is “organized using clear documentation standards and metadata” and stays searchable and preserved for long-term use.
-- [ ] Incident records form a structured dataset (date, place, water body, vessel, type, outcome, sources) that can be exported for research and policy work.
-- [ ] The whole archive can be exported in a standard format for transfer to a future system or partner institution.
+- [~] Media is preserved in open, widely supported formats (e.g. PDF/A for documents, standard audio and video formats). — *Left: web copies are standard MP4, M4A and WebP and originals are kept as uploaded; documents are not converted to PDF/A*
+- [x] Every story carries descriptive metadata (title, contributor, place, date, category, language, rights) following a recognised archive standard such as Dublin Core, so the collection can be shared with libraries and museums in future.
+- [x] Historical records keep their provenance: holding institution or publication, archive reference, original date, creator and rights statement, so that content is “organized using clear documentation standards and metadata” and stays searchable and preserved for long-term use.
+- [x] Incident records form a structured dataset (date, place, water body, vessel, type, outcome, sources) that can be exported for research and policy work.
+- [x] The whole archive can be exported in a standard format for transfer to a future system or partner institution.
 
 ### 7.7 User Data Portability
 
-- [ ] Users can download a copy of all their own data (stories, media, comments, profile) from MY PROFILE, prepared in the background and delivered as a ZIP file.
+- [x] Users can download a copy of all their own data (stories, media, comments, profile) from MY PROFILE, prepared in the background and delivered as a ZIP file.
 
 ### 7.8 Tools and Technologies
 
@@ -1152,8 +1152,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [ ] **Object storage**: Cloudflare R2, Backblaze B2, AWS S3 or similar (with an archive tier for originals) | Media files
 - [ ] **Database backups**: WAL-G or pgBackRest | Continuous backup and point-in-time recovery
 - [ ] **File backups**: restic or rclone (encrypted) | Media backups to a second provider
-- [ ] **Integrity**: SHA-256 checksums | Detecting damaged files
-- [ ] **Metadata standard**: Dublin Core | Archive-standard descriptions of each story
+- [x] **Integrity**: SHA-256 checksums | Detecting damaged files
+- [x] **Metadata standard**: Dublin Core | Archive-standard descriptions of each story
 
 ## SECTION 8: NETWORK AND INTERNET SUPPORT AND BEHAVIOR
 
@@ -1179,14 +1179,14 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 8.4 Uploads on Unstable Networks
 
-- [ ] Resumable uploads: large files are sent in pieces and continue from where they stopped if the network drops.
+- [~] Resumable uploads: large files are sent in pieces and continue from where they stopped if the network drops. — *Left: the server side (tus protocol) is built and tested; the website and apps use it in stages 2 and 3*
 - [ ] Background uploads continue while the user browses or closes the app, with progress shown in a notification.
 - [ ] Users can pause, resume or cancel uploads, and can choose to upload only on Wi-Fi.
 
 ### 8.5 Adaptive Media
 
-- [ ] Video quality adjusts automatically to the connection speed (HLS).
-- [ ] Images are delivered at the size the screen needs.
+- [~] Video quality adjusts automatically to the connection speed (HLS). — *Left: the server produces the HLS renditions and image sizes; the players are in the website and apps (stages 2 and 3)*
+- [~] Images are delivered at the size the screen needs. — *Left: the server produces the HLS renditions and image sizes; the players are in the website and apps (stages 2 and 3)*
 
 ### 8.6 Connectivity Feedback
 
@@ -1202,16 +1202,16 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 8.8 Timeouts and Retries
 
 - [ ] Requests that fail because of the network are retried automatically with increasing waits.
-- [ ] Retried submissions never create duplicates (Section 2.5).
-- [ ] Long operations (AI review, PDF reports, ZIP downloads) report progress and notify the user when complete, rather than keeping a request open.
+- [x] Retried submissions never create duplicates (Section 2.5).
+- [~] Long operations (AI review, PDF reports, ZIP downloads) report progress and notify the user when complete, rather than keeping a request open. — *Left: the server reports progress and notifies when AI review, PDF reports and ZIP downloads are ready; the screens for it are in stages 2 and 3*
 
 ### 8.9 Tools and Technologies
 
-- [ ] **Resumable uploads**: tus protocol (tus server, tus-js-client, Uppy, tus client for Flutter) | Uploads that survive dropped connections
+- [~] **Resumable uploads**: tus protocol (tus server, tus-js-client, Uppy, tus client for Flutter) | Uploads that survive dropped connections — *Left: server side built; client side in stages 2 and 3*
 - [ ] **Offline web**: Workbox, IndexedDB | Offline cache, queued actions and drafts on the website
 - [ ] **Offline apps**: drift (SQLite), connectivity_plus, workmanager | Offline data, connection detection, background tasks
 - [ ] **Network handling**: dio with retry (apps), fetch with retry and backoff (web) | Automatic retries
-- [ ] **Streaming**: HLS (FFmpeg, hls.js on web, native players in apps) | Adaptive video
+- [~] **Streaming**: HLS (FFmpeg, hls.js on web, native players in apps) | Adaptive video — *Left: server side built; client side in stages 2 and 3*
 - [ ] **Network testing**: Chrome DevTools network throttling, Android emulator network profiles | Testing on slow and unstable connections
 
 ## SECTION 9: DEPLOYMENT
@@ -1350,11 +1350,11 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 11.2 Development Stages
 
 - [ ] All dates are kept in one place: the project schedule and Gantt chart in Appendix D. Development takes place within the project’s milestone “Digital archive development”; inside that window the sequencing below is flexible, provided the platform is delivered on time.
-- [ ] **1\. Discovery and design**: Confirm requirements and the decisions in Appendix B; confirm archive structure, documentation standards and metadata; choose the AI provider; final visual designs and design system in Figma; clickable prototype; sign-off.
-- [ ] **2\. Build**: Backend core modules and approval engine; website and web app; Android and iOS apps; AI review integration; test hosting; production hosting, domain, SSL and backups set up; regular demos on staging.
-- [ ] **3\. Content and testing**: Bulk import of the project’s collected materials; validation with storytellers; functional, mobile, accessibility, language, network, load and security testing; penetration test; testing with partners and selected users; user acceptance testing; fixes.
-- [ ] **4\. Go-live and handover**: Move to production; app store releases; archive operational and publicly accessible; admin and Super Admin training; final handbook, user guide and documentation; handover of source code, credentials and accounts.
-- [ ] **5\. Dissemination and launch support**: Publishing the project’s policy briefs, learning summaries and online exhibition in the resources area; user guidance and basic access support; support for the official public launch event.
+- [ ] **1. Discovery and design**: Confirm requirements and the decisions in Appendix B; confirm archive structure, documentation standards and metadata; choose the AI provider; final visual designs and design system in Figma; clickable prototype; sign-off.
+- [ ] **2. Build**: Backend core modules and approval engine; website and web app; Android and iOS apps; AI review integration; test hosting; production hosting, domain, SSL and backups set up; regular demos on staging.
+- [ ] **3. Content and testing**: Bulk import of the project’s collected materials; validation with storytellers; functional, mobile, accessibility, language, network, load and security testing; penetration test; testing with partners and selected users; user acceptance testing; fixes.
+- [ ] **4. Go-live and handover**: Move to production; app store releases; archive operational and publicly accessible; admin and Super Admin training; final handbook, user guide and documentation; handover of source code, credentials and accounts.
+- [ ] **5. Dissemination and launch support**: Publishing the project’s policy briefs, learning summaries and online exhibition in the resources area; user guidance and basic access support; support for the official public launch event.
 
 ### 11.3 Prototype, Handbook and Orientation Support
 
@@ -1419,20 +1419,20 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ### 11.9 Measures the Platform Must Report
 
-- [ ] The analytics module (Section 2.10) must be able to report the following measures. The targets are suggestions.
-- [ ] **Published stories**: 500 | 1,500 | Platform analytics
-- [ ] **Registered contributors**: 1,000 | 3,000 | Platform analytics
-- [ ] **Monthly active users**: 500 | 1,500 | Platform analytics
-- [ ] **Beneficiary counties with stories (Mombasa and the coast; Kisumu, Homa Bay, Migori, Busia and Siaya)**: All named counties | All named, plus others | Story locations
-- [ ] **Incident records documented and mapped**: 30 | 60 | Incident records
-- [ ] **Testimonies and historical records from the project’s collection archived**: All collected items | Growing | Import and story records
-- [ ] **Learning resources published; views and downloads**: Tracked | Tracked | Resources area
-- [ ] **Active trained contributors**: Tracked | Tracked | Platform analytics
-- [ ] **Stories in languages other than English**: 30% | 40% | Story language tags
-- [ ] **Audio and video oral histories**: 100 | 300 | Media records
-- [ ] **RED items reviewed within 24 hours**: 95% | 95% | Moderation records
+- [x] The analytics module (Section 2.10) must be able to report the following measures. The targets are suggestions.
+- [x] **Published stories**: 500 | 1,500 | Platform analytics
+- [x] **Registered contributors**: 1,000 | 3,000 | Platform analytics
+- [x] **Monthly active users**: 500 | 1,500 | Platform analytics
+- [x] **Beneficiary counties with stories (Mombasa and the coast; Kisumu, Homa Bay, Migori, Busia and Siaya)**: All named counties | All named, plus others | Story locations
+- [x] **Incident records documented and mapped**: 30 | 60 | Incident records
+- [x] **Testimonies and historical records from the project’s collection archived**: All collected items | Growing | Import and story records
+- [x] **Learning resources published; views and downloads**: Tracked | Tracked | Resources area
+- [x] **Active trained contributors**: Tracked | Tracked | Platform analytics
+- [x] **Stories in languages other than English**: 30% | 40% | Story language tags
+- [x] **Audio and video oral histories**: 100 | 300 | Media records
+- [x] **RED items reviewed within 24 hours**: 95% | 95% | Moderation records
 - [ ] **Platform availability**: 99.5% | 99.5% | Uptime monitoring
-- [ ] **Research and education uses (citations, downloads, class use)**: Tracked | Tracked | Downloads, citations, partner reports
+- [~] **Research and education uses (citations, downloads, class use)**: Tracked | Tracked | Downloads, citations, partner reports — *Left: citations and downloads are counted; class use comes from partner reports*
 
 ### 11.10 Conclusion
 
@@ -1444,27 +1444,27 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ##### A.1 Report reasons (pick one or more)
 
-- [ ] Inappropriate or offensive content
-- [ ] False information or misinformation
-- [ ] Harassment, hate speech, or bullying
-- [ ] Privacy violation (personal data shared without consent)
-- [ ] Spam, scam, or impersonation
+- [x] Inappropriate or offensive content
+- [x] False information or misinformation
+- [x] Harassment, hate speech, or bullying
+- [x] Privacy violation (personal data shared without consent)
+- [x] Spam, scam, or impersonation
 
 ##### A.2 Account deletion reasons (pick one, plus optional text)
 
-- [ ] I no longer use the platform
-- [ ] Privacy concerns
-- [ ] I receive too many notifications
-- [ ] I have another account
-- [ ] I did not find the content useful
+- [x] I no longer use the platform
+- [x] Privacy concerns
+- [x] I receive too many notifications
+- [x] I have another account
+- [x] I did not find the content useful
 
 ##### A.3 Rules and netiquette
 
-- [ ] Share genuine experiences and accurate information related to maritime heritage.
-- [ ] Be respectful: no harassment, hate speech, threats or personal attacks.
-- [ ] Protect privacy: do not share other people’s personal data, contact details or images without their consent.
-- [ ] No misinformation, conspiracy theories or political campaigning.
-- [ ] Only post content you own or have permission to share, and credit sources where possible.
+- [x] Share genuine experiences and accurate information related to maritime heritage. — *Note: served in English and Kiswahili*
+- [x] Be respectful: no harassment, hate speech, threats or personal attacks. — *Note: served in English and Kiswahili*
+- [x] Protect privacy: do not share other people’s personal data, contact details or images without their consent. — *Note: served in English and Kiswahili*
+- [x] No misinformation, conspiracy theories or political campaigning. — *Note: served in English and Kiswahili*
+- [x] Only post content you own or have permission to share, and credit sources where possible. — *Note: served in English and Kiswahili*
 
 ##### A.4 Standard system messages
 
@@ -1571,15 +1571,15 @@ The project will produce an archive sustainability plan and a long-term continui
 ### Appendix B: Open Technical Decisions
 
 - [ ] These points must be settled during discovery and design. Each has a recommended default, which this plan assumes until decided otherwise.
-- [ ] **Approval of overrides, company stories and terminal actions**: Approval by ALL admins, or by a set majority | A two-thirds majority of active admins, with a deadline after which the Super Admin decides, so one absent admin cannot block decisions
-- [ ] **Admin second factor**: Codes by email and SMS, or authenticator app / passkey | Authenticator app or passkey as the main factor, with email and SMS as backup (Section 4.2)
-- [ ] **Video limits**: No limit, or a maximum length and size | A maximum of about 5 minutes and 200 MB per video, so AI review completes within 3 minutes
+- [~] **Approval of overrides, company stories and terminal actions**: Approval by ALL admins, or by a set majority | A two-thirds majority of active admins, with a deadline after which the Super Admin decides, so one absent admin cannot block decisions — *Left: the recommended default is built; it can be changed with one setting once you decide*
+- [~] **Admin second factor**: Codes by email and SMS, or authenticator app / passkey | Authenticator app or passkey as the main factor, with email and SMS as backup (Section 4.2) — *Left: the recommended default is built; it can be changed with one setting once you decide*
+- [~] **Video limits**: No limit, or a maximum length and size | A maximum of about 5 minutes and 200 MB per video, so AI review completes within 3 minutes — *Left: the recommended default is built; it can be changed with one setting once you decide*
 - [ ] **Sharing targets**: Named apps (WhatsApp, TikTok, Instagram, Facebook, Gmail), or the device share menu | The device share menu on phones (TikTok and Instagram do not accept shared web links directly); WhatsApp, Facebook, X, email and Copy Link on the website
-- [ ] **Who adds Super Admins**: An existing Super Admin, or a manual database step | An existing Super Admin, with confirmation
+- [~] **Who adds Super Admins**: An existing Super Admin, or a manual database step | An existing Super Admin, with confirmation — *Left: the recommended default is built; it can be changed with one setting once you decide*
 - [ ] **AI provider**: Candidates in Section 5.8 | Chosen after a comparison on sample stories, including Kiswahili and Dholuo
 - [ ] **Schedule basis**: The Application Questions describes a 12-month delivery; the Milestones and Deliverables describes 18 months | Follow the Milestones and Deliverables, as this plan does (Appendix D)
-- [ ] **Safety concerns: numbers shown**: Which emergency numbers the form shows | 999 and 112 as placeholders until confirmed
-- [ ] **Minimum age for contributor accounts**: 13, 16 or 18 | 18
+- [~] **Safety concerns: numbers shown**: Which emergency numbers the form shows | 999 and 112 as placeholders until confirmed — *Left: the recommended default is built; it can be changed with one setting once you decide*
+- [~] **Minimum age for contributor accounts**: 13, 16 or 18 | 18 — *Left: the recommended default is built; it can be changed with one setting once you decide*
 - [ ] **Android and iOS minimum versions**: Section 3.3.5 | Android 8.0 and iOS 15
 
 ### Appendix C: Moderation Rules to Implement
@@ -1588,65 +1588,65 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ##### C.1 Purpose and Principles
 
-- [ ] This policy guides admins and the AI review in deciding what may be published. It protects the people in the stories and the people who tell them, while keeping the archive open to honest accounts of difficult events.
-- [ ] Heritage value: genuine experiences, including painful ones such as drownings and disasters, belong in the archive.
-- [ ] Dignity: the dead, the bereaved and survivors are treated with respect.
-- [ ] Safety: content must not put anyone at risk, and safety advice must be accurate.
-- [ ] Fairness: rules apply equally to every contributor, language and community.
-- [ ] Transparency: every decision is explained, and every decision can be questioned.
+- [x] This policy guides admins and the AI review in deciding what may be published. It protects the people in the stories and the people who tell them, while keeping the archive open to honest accounts of difficult events.
+- [x] Heritage value: genuine experiences, including painful ones such as drownings and disasters, belong in the archive.
+- [x] Dignity: the dead, the bereaved and survivors are treated with respect.
+- [x] Safety: content must not put anyone at risk, and safety advice must be accurate.
+- [x] Fairness: rules apply equally to every contributor, language and community.
+- [x] Transparency: every decision is explained, and every decision can be questioned.
 
 ##### C.2 What Is and Is Not Allowed
 
-- [ ] **Personal and family experiences on and near the water**: Harassment, hate speech, threats or personal attacks
-- [ ] **Accounts of accidents, rescues, losses and disasters**: Graphic images of injured or dead people
-- [ ] **Traditions, boat-building, fishing, trade and port life**: Personal data of others without consent (phone numbers, addresses, ID numbers)
-- [ ] **Historical photographs, records and documents the contributor may share**: Misinformation, conspiracy theories or political campaigning
-- [ ] **Respectful discussion and disagreement**: Spam, scams, advertising or impersonation
-- [ ] **Safety lessons and advice**: Dangerous or false safety advice
+- [x] **Personal and family experiences on and near the water**: Harassment, hate speech, threats or personal attacks — *Note: these are the rules given to the AI review and shown to users*
+- [x] **Accounts of accidents, rescues, losses and disasters**: Graphic images of injured or dead people — *Note: these are the rules given to the AI review and shown to users*
+- [x] **Traditions, boat-building, fishing, trade and port life**: Personal data of others without consent (phone numbers, addresses, ID numbers) — *Note: these are the rules given to the AI review and shown to users*
+- [x] **Historical photographs, records and documents the contributor may share**: Misinformation, conspiracy theories or political campaigning — *Note: these are the rules given to the AI review and shown to users*
+- [x] **Respectful discussion and disagreement**: Spam, scams, advertising or impersonation — *Note: these are the rules given to the AI review and shown to users*
+- [x] **Safety lessons and advice**: Dangerous or false safety advice — *Note: these are the rules given to the AI review and shown to users*
 
 ##### C.3 Sensitive Stories
 
-- [ ] Contributors can mark a story as sensitive (e.g. involving death or injury); it then shows a content notice before opening.
-- [ ] Families may ask for a story about a relative to be reviewed or removed; such requests are handled with priority and care.
-- [ ] Stories about missing persons or recent incidents are checked so that they do not interfere with official searches or investigations.
-- [ ] Testimonies collected by the project are published only after the storyteller has confirmed how their contribution is represented, and can be withdrawn at their request.
+- [~] Contributors can mark a story as sensitive (e.g. involving death or injury); it then shows a content notice before opening. — *Left: the mark is stored and returned; the notice before opening is shown by the website and apps (stages 2 and 3)*
+- [~] Families may ask for a story about a relative to be reviewed or removed; such requests are handled with priority and care. — *Left: such requests come in as urgent reports or INBOX messages and are put first; there is no separate form for families*
+- [~] Stories about missing persons or recent incidents are checked so that they do not interfere with official searches or investigations. — *Left: the AI is instructed to flag these; it needs the AI provider to take effect*
+- [x] Testimonies collected by the project are published only after the storyteller has confirmed how their contribution is represented, and can be withdrawn at their request.
 
 ##### C.4 Moderation Response Times
 
-- [ ] **Urgent reports (safety risk, private data exposed)**: Within 4 hours
-- [ ] **RED-flagged stories awaiting review**: Within 24 hours
-- [ ] **Other reports**: Within 48 hours
-- [ ] **“Ask Why” requests**: Within 3 working days
-- [ ] **Safety concerns**: Acknowledged within 24 hours
+- [~] **Urgent reports (safety risk, private data exposed)**: Within 4 hours — *Left: the platform puts urgent reports first, escalates reports open for more than 48 hours, flags safety concerns older than 24 hours and measures RED reviews within 24 hours; meeting the times is for the admin team*
+- [~] **RED-flagged stories awaiting review**: Within 24 hours — *Left: the platform puts urgent reports first, escalates reports open for more than 48 hours, flags safety concerns older than 24 hours and measures RED reviews within 24 hours; meeting the times is for the admin team*
+- [~] **Other reports**: Within 48 hours — *Left: the platform puts urgent reports first, escalates reports open for more than 48 hours, flags safety concerns older than 24 hours and measures RED reviews within 24 hours; meeting the times is for the admin team*
+- [~] **“Ask Why” requests**: Within 3 working days — *Left: the platform puts urgent reports first, escalates reports open for more than 48 hours, flags safety concerns older than 24 hours and measures RED reviews within 24 hours; meeting the times is for the admin team*
+- [~] **Safety concerns**: Acknowledged within 24 hours — *Left: the platform puts urgent reports first, escalates reports open for more than 48 hours, flags safety concerns older than 24 hours and measures RED reviews within 24 hours; meeting the times is for the admin team*
 
 ##### C.5 Enforcement Steps
 
-- [ ] **1**: Warning | First minor breach; YELLOW-flagged behaviour repeated
-- [ ] **2**: Content removed | A story or comment breaks the rules
-- [ ] **3**: Suspension (7 or 30 days) | Repeated breaches after a warning
-- [ ] **4**: Permanent ban | Serious or repeated breaches; requires admin approval (Section 2.7)
+- [x] **1**: Warning | First minor breach; YELLOW-flagged behaviour repeated
+- [x] **2**: Content removed | A story or comment breaks the rules
+- [x] **3**: Suspension (7 or 30 days) | Repeated breaches after a warning
+- [x] **4**: Permanent ban | Serious or repeated breaches; requires admin approval (Section 2.7)
 
 ##### C.6 Appeals
 
-- [ ] A contributor can use “Ask Why” on any removal, and can ask for a second review.
-- [ ] The second review is done by a different admin from the one who made the first decision.
+- [x] A contributor can use “Ask Why” on any removal, and can ask for a second review.
+- [x] The second review is done by a different admin from the one who made the first decision.
 
 ##### C.7 Company Stories and Collections
 
-- [ ] Company stories and collections represent the project team, so facts are checked, sources credited and consent confirmed before approval.
+- [x] Company stories and collections represent the project team, so facts are checked, sources credited and consent confirmed before approval. — *Note: both go through the approval engine before publication*
 - [ ] Safety information in company stories follows official guidance from the relevant authorities.
 
 ##### C.8 Safety-Critical Information
 
-- [ ] Where a story or comment contains incorrect safety advice, admins may add a correction note linking to official guidance, or remove the advice if it could put people at risk.
+- [x] Where a story or comment contains incorrect safety advice, admins may add a correction note linking to official guidance, or remove the advice if it could put people at risk.
 
 ##### C.9 Safety Concerns
 
 - [ ] Users and visitors can report a current safety concern on the water (Section 3.2.6), so that the archive stays “responsive and relevant” and emerging risks are heard.
-- [ ] The form states that the platform is not an emergency service and shows the emergency numbers to call.
-- [ ] Admins acknowledge each concern, record notes, and where appropriate refer it to the responsible authority through the project’s partners; the referral is recorded.
-- [ ] Concerns are personal data: the reporter’s identity is not published and is shared with an authority only with their agreement.
-- [ ] Patterns in the concerns received are summarised in the analytics and can inform policy briefs.
+- [x] The form states that the platform is not an emergency service and shows the emergency numbers to call.
+- [x] Admins acknowledge each concern, record notes, and where appropriate refer it to the responsible authority through the project’s partners; the referral is recorded.
+- [x] Concerns are personal data: the reporter’s identity is not published and is shared with an authority only with their agreement.
+- [x] Patterns in the concerns received are summarised in the analytics and can inform policy briefs.
 
 ### Appendix D: Project Schedule and Gantt Chart
 

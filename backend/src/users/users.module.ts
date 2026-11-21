@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, Module, Param, ParseUUIDPipe, 
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsISO8601, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { AuthModule } from '../auth/auth.module';
-import { AllowIncomplete, AuthUser, CurrentUser, Meta, Public, RequestMeta } from '../common/decorators';
+import { AllowIncomplete, AuthUser, CurrentUser, Meta, Public, RequestMeta, Roles } from '../common/decorators';
 import { DELETION_REASONS, LANGUAGES } from '../common/messages';
 import { UsersService } from './users.service';
 
@@ -37,7 +37,7 @@ export class UsersController {
 
   @AllowIncomplete() @ApiBearerAuth() @Patch('me/settings') @ApiOperation({ summary: 'Theme, high contrast, text size, reduced motion, language, low-data mode, read receipts, notification settings and quiet hours' })
   settings(@CurrentUser() me: AuthUser, @Body() dto: SettingsDto, @Meta() meta: RequestMeta) { return this.users.saveSettings(me, dto, meta); }
-  @ApiBearerAuth() @Put('people/:id/follow') @ApiOperation({ summary: 'Follow or unfollow a Contributor' })
+  @Roles('contributor', 'admin') @ApiBearerAuth() @Put('people/:id/follow') @ApiOperation({ summary: 'Follow or unfollow a Contributor' })
   follow(@Param('id', ParseUUIDPipe) id: string, @Body() dto: OnDto, @CurrentUser() me: AuthUser) { return this.users.follow(me, id, dto.on); }
   @ApiBearerAuth() @Get('me/following') @ApiOperation({ summary: 'Who I follow' })
   following(@CurrentUser() me: AuthUser) { return this.users.following(me); }

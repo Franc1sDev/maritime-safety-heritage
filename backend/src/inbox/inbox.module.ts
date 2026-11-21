@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Global, Headers, HttpCode, Module, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { AuthUser, CurrentUser, Meta, RequestMeta } from '../common/decorators';
+import { AuthUser, CurrentUser, Meta, RequestMeta, Roles } from '../common/decorators';
 import { MessageLimit } from '../common/rate-limits';
 import { InboxService } from './inbox.service';
 
@@ -20,7 +20,7 @@ export class InboxController {
   constructor(private readonly inbox: InboxService) {}
   @Get() @ApiOperation({ summary: 'My conversations and message requests, each with its unread count' })
   list(@CurrentUser() me: AuthUser) { return this.inbox.list(me); }
-  @MessageLimit() @Post() @ApiOperation({ summary: 'Send a message to a person, to the admins, or into a conversation. Idempotency-Key prevents duplicates on retry.' })
+  @Roles('contributor', 'admin') @MessageLimit() @Post() @ApiOperation({ summary: 'Send a message to a person, to the admins, or into a conversation. Idempotency-Key prevents duplicates on retry.' })
   send(@CurrentUser() me: AuthUser, @Body() dto: SendDto, @Headers('idempotency-key') key: string | undefined, @Meta() meta: RequestMeta) { return this.inbox.send(me, dto, key?.slice(0, 80), meta); }
   @Get(':id') @ApiOperation({ summary: 'The full correspondence of one conversation' })
   messages(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Query() q: Record<string, string>) { return this.inbox.messages(id, me, q); }

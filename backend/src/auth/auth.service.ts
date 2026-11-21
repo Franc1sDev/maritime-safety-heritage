@@ -289,8 +289,9 @@ export class AuthService {
     const clean = String(code).replace(/\D/g, '');
     let ok = !!(user.mfaTotpEnabled && user.mfaSecretEnc && clean.length === 6 && verifyTotp(decryptField(user.mfaSecretEnc), clean));
     if (!ok) {
-      const row = await this.db.one(`UPDATE mfa_codes SET used_at = now() WHERE id = (SELECT id FROM mfa_codes WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1) RETURNING id`, [userId, sha256(`${userId}:${clean}`)]);
+      const row = await this.db.one(`UPDATE mfa_codes SET used_at = now() WHERE id = (SELECT id FROM mfa_codes WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1) RETURNING id, channel`, [userId, sha256(`${userId}:${clean}`)]);
       ok = !!row;
+      if (row?.channel === 'sms') await this.db.q(`UPDATE admin_profiles SET phone_verified = true WHERE user_id = $1`, [userId]);
     }
     if (!ok) { await this.lockIfNeeded(user, user.failedLogins + 1, meta); return fail(401, 'mfa_wrong'); }
     await this.db.q(`UPDATE users SET failed_logins = 0, locked_until = NULL WHERE id = $1`, [userId]);

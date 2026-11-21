@@ -64,7 +64,7 @@ export class ModerationController {
   @Public() @PublicFormLimit() @Post('auth/suspension/ask-why') @HttpCode(200) @ApiOperation({ summary: 'Ask why my account is suspended (with the token given at sign-in)' })
   askWhySuspended(@Body() dto: AskWhySuspendedDto, @Meta() meta: RequestMeta) { return this.mod.askWhySuspended(dto.token, dto.description, meta); }
 
-  @ReportLimit() @Post('reports') @ApiOperation({ summary: 'Report a story, a comment or a Contributor: one or more preset reasons and/or a description' })
+  @Roles('contributor', 'admin') @ReportLimit() @Post('reports') @ApiOperation({ summary: 'Report a story, a comment or a Contributor: one or more preset reasons and/or a description' })
   report(@Body() dto: ReportDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.report(me, dto, meta); }
   @Roles('admin') @Get('admin/reports') @ApiOperation({ summary: 'The reports queue, grouped by item' })
   reports(@Query('status') status?: string) { return this.mod.reports(['open', 'resolved', 'dismissed'].includes(status ?? '') ? status : 'open'); }

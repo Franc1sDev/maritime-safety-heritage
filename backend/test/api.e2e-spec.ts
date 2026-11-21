@@ -756,6 +756,12 @@ describe('analytics, PDF reports and the audit log', () => {
     expect(flags.body.series[2].values.reduce((a: number, b: number) => a + b, 0)).toBeGreaterThan(0);
     for (const period of ['day', 'month', 'year']) expect((await request(http).get(`${api}/admin/analytics/series?chart=stories&period=${period}`).set(bearer(grace.token)).expect(200)).body.labels.length).toBeGreaterThan(0);
     await request(http).get(`${api}/admin/analytics/summary`).set(bearer(omari.token)).expect(403);
+    // Super Admins see analytics and manage admins, but do not moderate, post or engage.
+    await request(http).get(`${api}/admin/moderation`).set(bearer(boss.token)).expect(403);
+    await request(http).post(`${api}/stories`).set(bearer(boss.token)).send({ text: 'A story from the Super Admin.' }).expect(403);
+    const anyId = (await request(http).get(`${api}/stories?limit=1`)).body.items[0].id;
+    await request(http).put(`${api}/stories/${anyId}/reaction`).set(bearer(boss.token)).send({ type: 'heart' }).expect(403);
+    await request(http).get(`${api}/stories/${anyId}`).set(bearer(boss.token)).expect(200);
     expect((await request(http).get(`${api}/admin/analytics/ai`).set(bearer(boss.token)).expect(200)).body).toMatchObject({ provider: 'rules', thresholds: { yellowAbove: 20, redFrom: 70 } });
   });
   it('generates a PDF report in the background', async () => {
