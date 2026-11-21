@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import i18n from '../lib/i18n';
+import i18n, { setLanguage } from '../lib/i18n';
 import sw from '../locales/sw';
 import { avatarUrl } from '../lib/api';
 import { compact, fmtDate, Dialog, Confirm } from '../components/ui';
@@ -34,8 +34,8 @@ describe('helpers', () => {
 });
 
 describe('languages', () => {
-  it('falls back to English when a translation is missing', async () => { await i18n.changeLanguage('luo'); expect(i18n.t('Share my story')).toBe('Share my story'); });
-  it('shows Kiswahili and fills in values', async () => { await i18n.changeLanguage('sw'); expect(i18n.t('Share my story')).toBe(sw['Share my story']); expect(i18n.t('{n} stories', { n: 3 })).toBe('Hadithi 3'); await i18n.changeLanguage('en'); });
+  it('falls back to English when a translation is missing', async () => { await setLanguage('luo'); expect(i18n.t('Share my story')).toBe('Share my story'); });
+  it('shows Kiswahili and fills in values', async () => { await setLanguage('sw'); expect(i18n.t('Share my story')).toBe(sw['Share my story']); expect(i18n.t('{n} stories', { n: 3 })).toBe('Hadithi 3'); await setLanguage('en'); expect(i18n.t('Share my story')).toBe('Share my story'); });
   it('keeps every placeholder in the Kiswahili text', () => {
     const ph = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join();
     for (const [en, tr] of Object.entries(sw)) expect(ph(tr), en).toBe(ph(en));

@@ -174,9 +174,25 @@ class StoriesScreenState extends State<StoriesScreen> {
       };
     }
     // Stories are full-screen; swiping up moves to the next story.
-    return PageView.builder(controller: page, scrollDirection: Axis.vertical, itemCount: items.length,
+    _preload(s);
+    // allowImplicitScrolling keeps the next story built and ready, so swiping feels instant.
+    return PageView.builder(controller: page, scrollDirection: Axis.vertical, itemCount: items.length, allowImplicitScrolling: true,
         onPageChanged: (i) { setState(() => index = i); if (i >= items.length - 2) _more(); },
         itemBuilder: (c, i) => StoryView(key: ValueKey(items[i]['id']), story: items[i], active: i == index, onChanged: (n) => items[i] = n, onReload: load));
+  }
+
+  /// Pre-loading: the pictures of the next two stories are fetched in the background (not in low-data mode).
+  int _preloaded = -1;
+  void _preload(AppState s) {
+    if (s.lowData || _preloaded == index) return;
+    _preloaded = index;
+    for (final next in items.skip(index + 1).take(2)) {
+      for (final m in asList(next['media'])) {
+        final urls = asMap(m['urls']);
+        final u = m['kind'] == 'image' ? (urls['medium'] ?? urls['full']) : urls['poster'];
+        if (u != null) precacheImage(NetworkImage(s.api.abs(str(u))), context, onError: (e, st) {});
+      }
+    }
   }
 
   Future<void> _search() async {

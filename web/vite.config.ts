@@ -36,7 +36,7 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist', sourcemap: false, target: 'es2020',
-    rollupOptions: { output: { manualChunks: { react: ['react', 'react-dom', 'react-router-dom'], motion: ['framer-motion'], data: ['@tanstack/react-query', 'i18next', 'react-i18next', 'socket.io-client'] } } },
+    rollupOptions: { output: { manualChunks: { react: ['react', 'react-dom', 'react-router-dom'], data: ['@tanstack/react-query', 'i18next', 'react-i18next'] } } },
   },
   server: { port: 5173, proxy: { '/api': 'http://localhost:4000', '/socket.io': { target: 'http://localhost:4000', ws: true }, '/og': 'http://localhost:4000' } },
 });

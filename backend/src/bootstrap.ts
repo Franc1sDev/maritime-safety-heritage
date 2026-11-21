@@ -1,9 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { existsSync } from 'fs';
+import type { NextFunction, Request, Response } from 'express';
+import { existsSync, readdirSync } from 'fs';
 import helmet from 'helmet';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { ErrorsFilter } from './common/errors.filter';
 import { config } from './config/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
@@ -54,9 +55,28 @@ export function configureApp(app: INestApplication) {
   registerPublicPages(app);
   // The website lives in ../web and is served from the same address, so its sign-in cookie stays first-party.
   if (config.webDir && existsSync(join(config.webDir, 'index.html'))) {
-    // Files with a content hash in their name never change, so browsers may keep them for a year.
+    // The website's build leaves a .br and .gz copy beside each text file. They are sent to browsers that accept them,
+    // so the site is small on the wire even where no proxy compresses it (a third of the size on a slow connection).
+    const small = new Set<string>();
+    const walk = (dir: string, rel: string) => { for (const e of readdirSync(dir, { withFileTypes: true })) { if (e.isDirectory()) walk(join(dir, e.name), `${rel}/${e.name}`); else if (/\.(br|gz)$/.test(e.name)) small.add(`${rel}/${e.name}`); } };
+    try { walk(config.webDir, ''); } catch { /* none */ }
+    const TYPES: Record<string, string> = { '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
+    express.use((req: Request, res: Response, next: NextFunction) => {
+      const type = TYPES[extname(req.path)];
+      if (!type || (req.method !== 'GET' && req.method !== 'HEAD') || req.headers.range) return next();
+      const accepts = String(req.headers['accept-encoding'] ?? '');
+      const pick = /\bbr\b/.test(accepts) && small.has(`${req.path}.br`) ? ['br', '.br'] : /\bgzip\b/.test(accepts) && small.has(`${req.path}.gz`) ? ['gzip', '.gz'] : null;
+      if (pick) {
+        const query = req.url.slice(req.path.length);
+        req.url = `${req.path}${pick[1]}${query}`;
+        res.setHeader('Content-Encoding', pick[0]); res.setHeader('Content-Type', type);
+      }
+      res.setHeader('Vary', 'Accept-Encoding');
+      next();
+    });
+    // Files in /assets carry a content hash in their name and never change, so browsers may keep them for a year.
     express.useStaticAssets(config.webDir, { index: false, maxAge: config.isProd ? '1h' : 0, dotfiles: 'ignore',
-      setHeaders: (res: { setHeader: (k: string, v: string) => void }, path: string) => { if (/[.-][0-9a-f]{8,}\.(js|css|woff2|png|svg|webp)$/i.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); } });
+      setHeaders: (res: { setHeader: (k: string, v: string) => void }, path: string) => { if (/[\\/]assets[\\/]/.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); } });
   }
   registerAppFallback(app);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));

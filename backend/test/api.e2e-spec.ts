@@ -208,6 +208,8 @@ describe('contributors sign in with Google or Apple only', () => {
     const r1 = await request(http).post(`${api}/auth/refresh`).set('X-Client', 'app').send({ refreshToken: p.refresh }).expect(200);
     expect((await request(http).post(`${api}/auth/refresh`).set('X-Client', 'app').send({ refreshToken: p.refresh }).expect(401)).body.code).toBe('session_expired');
     await request(http).post(`${api}/auth/refresh`).set('X-Client', 'app').send({ refreshToken: r1.body.refreshToken }).expect(401);
+    // The website asks at start-up whether the browser has a saved sign-in: a visitor is told no, without an error.
+    expect((await request(http).post(`${api}/auth/refresh`).set('X-Requested-With', 'XMLHttpRequest').send({}).expect(200)).body).toEqual({ accessToken: null });
     const web = await request(http).post(`${api}/auth/demo`).send({ name: 'session_test' }).expect(200);
     expect(web.body.refreshToken).toBeUndefined();
     expect(String(web.headers['set-cookie'])).toMatch(/msh_refresh=.*HttpOnly.*SameSite=Strict/);

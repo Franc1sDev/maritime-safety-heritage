@@ -149,6 +149,8 @@ export class AuthController {
   // ----- Sessions -----
   @Public() @Post('refresh') @HttpCode(200) @ApiOperation({ summary: 'Swap the refresh token for a new session' })
   async refresh(@Body() dto: RefreshDto, @Meta() meta: RequestMeta, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // A browser with no saved sign-in is a visitor, not an error: it is told so plainly (the website asks once at start-up).
+    if (!isApp(req) && !readCookie(req, REFRESH_COOKIE)) return { accessToken: null };
     return this.send(req, res, await this.auth.refresh(this.refreshTokenFrom(req, dto), meta));
   }
   @Public() @Post('logout') @HttpCode(200) @ApiOperation({ summary: 'Sign out of this device' })

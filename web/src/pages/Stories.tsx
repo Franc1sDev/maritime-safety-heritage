@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { get, Person } from '../lib/api';
 import { useApp } from '../lib/app';
 import { AdminBar } from '../components/AdminBar';
@@ -13,6 +13,11 @@ import { Avatar, Empty, fmtDate, Problem, Skeleton } from '../components/ui';
 import { RulesFrame, SafetyConcernDialog } from './About';
 
 const ShareStory = lazy(() => import('./Share'));
+
+/** The first stories sent inside the start page, read once. */
+const boot: { items: Story[]; nextCursor: string | null } | null = (() => {
+  try { const el = document.getElementById('boot'); const d = el ? JSON.parse(el.textContent ?? '') : null; return d?.feed?.items?.length ? d.feed : null; } catch { return null; }
+})();
 
 const TABS: Array<[string, string, string]> = [
   ['trending', 'trending', 'Trending'], ['following', 'follow', 'Following'], ['location', 'pin', 'Location'], ['contributors', 'people', 'Contributors'], ['favorites', 'star', 'Favorites'],
@@ -50,7 +55,7 @@ export function Combo<T>({ label, placeholder, load, render, onPick, none, value
 
 export default function StoriesPage({ paused }: { paused: boolean }) {
   const { t, i18n } = useTranslation();
-  const { me, need, config, reducedMotion } = useApp();
+  const { me, need, config, reducedMotion, lowData } = useApp();
   const nav = useNavigate();
   const { code } = useParams();
   const [sp, setSp] = useSearchParams();
@@ -85,6 +90,8 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
     queryKey: ['stories', feedTab, filters, me?.id ?? null],
     queryFn: ({ pageParam }) => get<{ items: Story[]; nextCursor: string | null }>('/stories', { tab: feedTab, ...filters, cursor: pageParam, limit: 6 }),
     initialPageParam: undefined as string | undefined, getNextPageParam: (l) => l.nextCursor ?? undefined, enabled,
+    // A visitor's first stories arrive inside the page itself (see the server's start page). They are shown at once and then refreshed.
+    initialData: boot && !me && feedTab === 'trending' && Object.keys(filters).length === 0 ? { pages: [boot], pageParams: [undefined] } : undefined, initialDataUpdatedAt: 0,
   });
   const also = useQuery({ queryKey: ['search', filters.q], queryFn: () => get('/search', { q: filters.q }), enabled: !!filters.q });
   const items = useMemo(() => {
@@ -92,6 +99,14 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
     return routeCode && one.data ? [one.data, ...list.filter((s) => s.id !== one.data!.id)] : list;
   }, [feed.data, one.data, routeCode]);
   useEffect(() => { setIndex(0); }, [tab, filters, routeCode]);
+  // Pre-loading: the pictures of the next two stories are fetched in the background, so moving on feels instant (not in low-data mode).
+  useEffect(() => {
+    if (lowData) return;
+    for (const next of items.slice(index + 1, index + 3)) for (const m of next.media ?? []) {
+      const u = m.kind === 'image' ? (m.urls.medium ?? m.urls.full) : m.urls.poster;
+      if (u) { const img = new Image(); img.decoding = 'async'; img.src = u; }
+    }
+  }, [index, items, lowData]);
   useEffect(() => { if (index >= items.length - 2 && feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage(); }, [index, items.length, feed.hasNextPage, feed.isFetchingNextPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = useCallback((d: 1 | -1) => {
@@ -136,9 +151,11 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
 
   return (
     <div>
-      <div className="tabs-row" data-guide="browse" role="tablist" aria-label={t('Stories by')}>
+      <div className="tabs-row" data-guide="browse">
         <span className="label">{t('Stories by')}</span>
-        {TABS.map(([k, icon, label]) => <button key={k} role="tab" aria-selected={tab === k && !filters.q} className={`tab ${tab === k && !filters.q ? 'on' : ''}`} onClick={() => pickTab(k)}><Icon name={icon} />{t(label)}</button>)}
+        <div role="tablist" aria-label={t('Stories by')} style={{ display: 'contents' }}>
+          {TABS.map(([k, icon, label]) => <button key={k} role="tab" aria-selected={tab === k && !filters.q} className={`tab ${tab === k && !filters.q ? 'on' : ''}`} onClick={() => pickTab(k)}><Icon name={icon} />{t(label)}</button>)}
+        </div>
         <form role="search" className="searchbox" onSubmit={(e) => { e.preventDefault(); if (search.trim()) nav(`/?q=${encodeURIComponent(search.trim())}`); else nav('/'); }}>
           <label className="sr" htmlFor="q">{t('Search the archive')}</label>
           <input id="q" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search the archive')} />
@@ -206,10 +223,10 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
                 </Zone>
               ) : (
                 <AnimatePresence mode="wait" initial={false} custom={dir}>
-                  <motion.div key={current.id} custom={dir} initial={reducedMotion ? false : { opacity: 0, y: dir * 60 }} animate={{ opacity: 1, y: 0 }} exit={reducedMotion ? undefined : { opacity: 0, y: dir * -60 }} transition={{ duration: 0.22 }}>
+                  <m.div key={current.id} custom={dir} initial={reducedMotion ? false : { opacity: 0, y: dir * 60 }} animate={{ opacity: 1, y: 0 }} exit={reducedMotion ? undefined : { opacity: 0, y: dir * -60 }} transition={{ duration: 0.22 }}>
                     <StoryFrame story={current} active paused={paused} onOpenSafety={() => setSafety(true)}
                       adminBar={isAdmin && current.moderation ? <AdminBar story={current} onChanged={() => { void feed.refetch(); if (routeCode) void one.refetch(); }} /> : undefined} />
-                  </motion.div>
+                  </m.div>
                 </AnimatePresence>
               )}
             {!listTab && items.length > 1 && (

@@ -5,6 +5,7 @@ import { join } from 'path';
 import { DataSource } from 'typeorm';
 import { config } from '../config/config';
 import { MediaService } from '../media/media.service';
+import { StoriesService } from '../stories/stories.service';
 
 /**
  * Pages for search engines and link previews (Section 3.2.1), served outside the API:
@@ -20,7 +21,7 @@ const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '
 const SITE = 'Remembering the Waters';
 const TAGLINE = 'Kenya’s Maritime and Inland-Water Safety Heritage Archive';
 const TYPE: Record<string, string> = { community: 'Community story', testimony: 'Testimony', record: 'Historical record' };
-interface Page { title: string; description: string; path: string; body: string; image?: string; jsonLd?: object; status?: number; noindex?: boolean }
+interface Page { title: string; description: string; path: string; body: string; image?: string; jsonLd?: object; status?: number; noindex?: boolean; boot?: object }
 const VISIBLE = `s.status = 'published' AND (au.id IS NULL OR au.status NOT IN ('deleted','removed'))`;
 
 export function registerPublicPages(app: INestApplication) {
@@ -45,7 +46,7 @@ export function registerPublicPages(app: INestApplication) {
 <meta property="og:site_name" content="${esc(SITE)}"><meta property="og:type" content="article">
 <meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description)}"><meta property="og:url" content="${esc(url)}">
 <meta property="og:image" content="${esc(p.image ?? `${site()}/og-default.png`)}"><meta name="twitter:card" content="${p.image ? 'summary_large_image' : 'summary'}">
-${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).replace(/</g, '\\u003c')}</script>` : ''}`;
+${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).replace(/</g, '\\u003c')}</script>` : ''}${p.boot ? `<script type="application/json" id="boot">${JSON.stringify(p.boot).replace(/</g, '\\u003c')}</script>` : ''}`;
     return shellHtml().replace(/__SITE_URL__/g, esc(site())).replace(/__V__/g, esc(version))
       .replace(/<title>[\s\S]*?<\/title>/, '').replace('<!--SEO-HEAD-->', head).replace('<!--SEO-BODY-->', `<main class="prerender">${p.body}</main>`);
   };
@@ -189,7 +190,10 @@ ${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).repl
   http.get(['/', '/index.html'], wrap(async () => {
     const rows = config.publicPreviews ? await ds.query(`SELECT s.code, s.title, left(s.body, 140) AS excerpt, s.place_name FROM stories s LEFT JOIN users au ON au.id = s.author_id WHERE ${VISIBLE} AND NOT s.sensitive ORDER BY s.trending_score DESC LIMIT 40`) : [];
     const h = home();
-    return { ...h, body: `${h.body}<ul>${rows.map((s: any) => `<li><a href="/stories/${esc(s.code)}">${esc(s.title || s.excerpt)}</a>${s.place_name ? `, ${esc(s.place_name)}` : ''}</li>`).join('')}</ul>
+    // The first stories travel with the page itself, so a visitor's first story appears without waiting for a second request.
+    let boot: object | undefined;
+    try { boot = { feed: await app.get(StoriesService).feed({ tab: 'trending', limit: '6' }, null), at: Date.now() }; } catch { boot = undefined; }
+    return { ...h, boot, body: `${h.body}<ul>${rows.map((s: any) => `<li><a href="/stories/${esc(s.code)}">${esc(s.title || s.excerpt)}</a>${s.place_name ? `, ${esc(s.place_name)}` : ''}</li>`).join('')}</ul>
       <p><a href="/incidents">Incident records</a> · <a href="/resources">Learning resources</a> · <a href="/collections">Collections</a></p>` };
   }));
 }

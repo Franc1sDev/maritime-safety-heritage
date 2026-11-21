@@ -283,6 +283,7 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
       </div>
       {canBlurFaces() && <label className="check"><input type="checkbox" checked={blur} onChange={(e) => setBlur(e.target.checked)} /><span>{t('Blur faces in the photos I add next')}</span></label>}
       <p className="hint" style={{ textAlign: 'start' }}>{t('Hidden location data is removed from photos automatically. Limits: video {v} MB and {m} minutes, audio {a} MB, images and documents {i} MB each.', { v: lim.videoMb, m: lim.videoMinutes, a: lim.audioMb, i: lim.imageMb })}</p>
+      <p className="hint" style={{ textAlign: 'start' }}>{t('Pictures or stories that identify a child need the agreement of a parent or guardian.')}</p>
       {slots.length > 0 && (
         <ul className="list">{slots.map((s) => (
           <li key={s.key} className="row" style={{ flexWrap: 'nowrap' }}>

@@ -1159,23 +1159,23 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 8.1 Design Assumptions
 
-- [ ] Many of the project’s beneficiaries will be in coastal villages, on islands, on boats or around Lake Victoria, with weak or intermittent mobile coverage, expensive data and low-end phones. The platform must stay usable in these conditions and never lose a user’s work because the connection dropped.
+- [x] Many of the project’s beneficiaries will be in coastal villages, on islands, on boats or around Lake Victoria, with weak or intermittent mobile coverage, expensive data and low-end phones. The platform must stay usable in these conditions and never lose a user’s work because the connection dropped. — *Note: retries, offline reading, an offline queue, drafts kept on the device and uploads that continue; in the app still to be tried on a real phone*
 
 ### 8.2 Low-Data Mode
 
-- [ ] Available in MY PROFILE, and suggested automatically when a slow connection is detected.
-- [ ] No autoplay; compressed previews only; media loads only when tapped; lower video quality by default.
-- [ ] Shows the approximate size of large media before it loads.
+- [x] Available in MY PROFILE, and suggested automatically when a slow connection is detected. — *Note: the website turns it on by itself on a slow connection and says so; the app asks*
+- [~] No autoplay; compressed previews only; media loads only when tapped; lower video quality by default. — *Left: no autoplay and nothing loads until selected on both; the website starts video at the lowest quality, in the app the phone’s player picks the quality*
+- [x] Shows the approximate size of large media before it loads.
 
 ### 8.3 Offline Behaviour
 
-- [ ] **Stories already viewed**: Remain viewable from the device cache
-- [ ] **Favourites**: Recently viewed favourites remain available
-- [ ] **Writing a story**: Saved as a draft on the device; sent automatically when online, with the user’s confirmation
-- [ ] **Reactions, favourites, comments**: Queued and sent when the connection returns
-- [ ] **Messages**: Queued with a “waiting to send” label
-- [ ] **Announcements and INBOX**: Last loaded content remains readable
-- [ ] **Admin actions**: Not queued: moderation and approvals require a live connection, to avoid acting on outdated information
+- [x] **Stories already viewed**: Remain viewable from the device cache — *Note: website and app; in the app still to be tried on a real phone*
+- [x] **Favourites**: Recently viewed favourites remain available — *Note: website and app; in the app still to be tried on a real phone*
+- [x] **Writing a story**: Saved as a draft on the device; sent automatically when online, with the user’s confirmation — *Note: the words and details are kept on the device and offered for sending when the connection returns; files are added again*
+- [x] **Reactions, favourites, comments**: Queued and sent when the connection returns — *Note: website and app; in the app still to be tried on a real phone*
+- [x] **Messages**: Queued with a “waiting to send” label — *Note: website and app; in the app still to be tried on a real phone*
+- [x] **Announcements and INBOX**: Last loaded content remains readable — *Note: website and app; in the app still to be tried on a real phone*
+- [x] **Admin actions**: Not queued: moderation and approvals require a live connection, to avoid acting on outdated information — *Note: website and app; in the app still to be tried on a real phone*
 
 ### 8.4 Uploads on Unstable Networks
 
@@ -1185,33 +1185,33 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 8.5 Adaptive Media
 
-- [~] Video quality adjusts automatically to the connection speed (HLS). — *Left: the server produces the HLS renditions and image sizes; the players are in the website and apps (stages 2 and 3)*
-- [~] Images are delivered at the size the screen needs. — *Left: the server produces the HLS renditions and image sizes; the players are in the website and apps (stages 2 and 3)*
+- [x] Video quality adjusts automatically to the connection speed (HLS). — *Note: in the app still to be tried on a real phone*
+- [x] Images are delivered at the size the screen needs. — *Note: in the app still to be tried on a real phone*
 
 ### 8.6 Connectivity Feedback
 
-- [ ] A clear banner shows when the user is offline, and when the connection returns.
-- [ ] Queued actions are labelled, so users know what has not yet been sent.
-- [ ] Error messages are friendly and explain what to do next.
+- [x] A clear banner shows when the user is offline, and when the connection returns. — *Note: website and app; in the app still to be tried on a real phone*
+- [x] Queued actions are labelled, so users know what has not yet been sent. — *Note: website and app; in the app still to be tried on a real phone*
+- [x] Error messages are friendly and explain what to do next. — *Note: website and app; in the app still to be tried on a real phone*
 
 ### 8.7 Real-Time Connection Handling
 
-- [ ] The live connection (WebSocket) reconnects automatically after drops, and fetches anything missed while disconnected.
-- [ ] If live connections are blocked by a network, the app falls back to checking for updates at intervals.
+- [~] The live connection (WebSocket) reconnects automatically after drops, and fetches anything missed while disconnected. — *Left: the website holds a live connection, reconnects and falls back to checking at intervals; the app checks every 40 seconds instead of holding a live connection*
+- [~] If live connections are blocked by a network, the app falls back to checking for updates at intervals. — *Left: the website holds a live connection, reconnects and falls back to checking at intervals; the app checks every 40 seconds instead of holding a live connection*
 
 ### 8.8 Timeouts and Retries
 
-- [ ] Requests that fail because of the network are retried automatically with increasing waits.
+- [x] Requests that fail because of the network are retried automatically with increasing waits. — *Note: website and app, covered by automatic tests*
 - [x] Retried submissions never create duplicates (Section 2.5).
 - [~] Long operations (AI review, PDF reports, ZIP downloads) report progress and notify the user when complete, rather than keeping a request open. — *Left: the server reports progress and notifies when AI review, PDF reports and ZIP downloads are ready; the screens for it are in stages 2 and 3*
 
 ### 8.9 Tools and Technologies
 
 - [x] **Resumable uploads**: tus protocol (tus server, tus-js-client, Uppy, tus client for Flutter) | Uploads that survive dropped connections — *Note: tus server, tus-js-client on the website, and a small tus client written for the app*
-- [ ] **Offline web**: Workbox, IndexedDB | Offline cache, queued actions and drafts on the website
-- [ ] **Offline apps**: drift (SQLite), connectivity_plus, workmanager | Offline data, connection detection, background tasks
-- [ ] **Network handling**: dio with retry (apps), fetch with retry and backoff (web) | Automatic retries
-- [~] **Streaming**: HLS (FFmpeg, hls.js on web, native players in apps) | Adaptive video — *Left: server side built; client side in stages 2 and 3*
+- [x] **Offline web**: Workbox, IndexedDB | Offline cache, queued actions and drafts on the website
+- [~] **Offline apps**: drift (SQLite), connectivity_plus, workmanager | Offline data, connection detection, background tasks — *Left: built with files on the phone, shared_preferences and connectivity_plus; drift and workmanager were not needed for what is built*
+- [x] **Network handling**: dio with retry (apps), fetch with retry and backoff (web) | Automatic retries — *Note: the http package with its own retry in the app, fetch with retry on the website*
+- [x] **Streaming**: HLS (FFmpeg, hls.js on web, native players in apps) | Adaptive video
 - [ ] **Network testing**: Chrome DevTools network throttling, Android emulator network profiles | Testing on slow and unstable connections
 
 ## SECTION 9: DEPLOYMENT
@@ -1468,105 +1468,105 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ##### A.4 Standard system messages
 
-- [ ] Examples in the messages (names, dates, story IDs, email addresses) are filled in by the system.
-- [ ] **Sign-in cancelled or failed**: Sign-in was cancelled or could not be completed. Please try again.
-- [ ] **Username available**: Username available
-- [ ] **Username taken**: This username is taken. Try another.
-- [ ] **Reserved username**: This name is reserved and cannot be used.
-- [ ] **Profile saved**: Profile saved.
-- [ ] **Suspended account at sign-in**: Your account is suspended until 12 December 2026.
-- [ ] **Deleted account signs in within 30 days**: Your account is scheduled for permanent deletion on 19 December 2026. Do you want to restore it?
-- [ ] **Account restored**: Welcome back! Your account has been restored.
-- [ ] **Session expired**: Your session has expired. Please sign in again.
-- [ ] **Admin registration sent**: Registration sent. A Super Admin will review it, and you will be notified by email.
-- [ ] **Wrong or expired MFA code**: That code is incorrect or has expired. Try again.
-- [ ] **Too many sign-in attempts**: Too many attempts. Sign-in is locked for 15 minutes, and the account owner has been alerted.
-- [ ] **Location search, no match**: No stories for this location.
-- [ ] **Contributor search, no match**: No Contributor with this username has posted a story, or their stories may have been deleted.
-- [ ] **Favorite added**: Added to Favorites.
-- [ ] **Favorite removed**: Removed from Favorites.
-- [ ] **Link copied**: Link copied.
-- [ ] **Citation copied**: Citation copied.
-- [ ] **Preparing a ZIP download**: Preparing your download…
-- [ ] **ZIP download ready**: Your download is ready.
-- [ ] **Translated story label**: Machine-translated from Kiswahili · Show original
-- [ ] **Report sent**: Report sent. You will receive a confirmation in INBOX.
-- [ ] **Report with nothing selected**: Pick at least one reason or describe the issue.
-- [ ] **Comments locked (with the admin’s reason)**: Comments and replies have been locked by an admin.
-- [ ] **Comments hidden (with the admin’s reason)**: Comments have been hidden by an admin.
-- [ ] **Sensitive-story notice**: This story describes loss of life and may be distressing.
-- [ ] **Story removed by an admin**: Your story MS-2026-00877 was removed by an admin.
-- [ ] **“Ask Why” sent**: Your request has been sent to the admins. You will receive a reply in INBOX.
-- [ ] **Draft saved**: Draft saved.
-- [ ] **File limit reached**: You can add up to 20 images.
-- [ ] **File too large**: This file is too large. The maximum for a video is 200 MB.
-- [ ] **Unsupported file type**: This file type is not supported.
-- [ ] **File blocked by the virus scan**: This file was blocked because it may be harmful.
-- [ ] **Empty story**: Add text or at least one file before sending.
-- [ ] **Story queued while offline**: You are offline. Your story will be sent when you are back online.
-- [ ] **AI review in progress**: Checking your story… This takes up to 3 minutes.
-- [ ] **GREEN outcome**: Your story is live!
-- [ ] **YELLOW outcome (followed by the explanation)**: Your story is live, with a warning.
-- [ ] **RED outcome (followed by the explanation)**: Your story was not posted.
-- [ ] **User blocked**: @mzee_omari is blocked.
-- [ ] **User muted**: @mzee_omari is muted.
-- [ ] **Delete a story**: Delete this story? This cannot be undone.
-- [ ] **Story deleted**: Story deleted.
-- [ ] **Edited story under review**: Your changes are being checked. The story will update when the review is complete.
-- [ ] **Reminder saved**: Reminder saved.
-- [ ] **Settings saved**: Settings saved.
-- [ ] **Preparing “Download my data”**: We are preparing your data. You will be notified when it is ready.
-- [ ] **“Download my data” ready**: Your data is ready to download.
-- [ ] **Delete account warning**: Your account and content will be removed at once and permanently erased after 30 days. To restore it, sign in again within 30 days.
-- [ ] **Account deleted**: Your account has been deleted. Sign in within 30 days if you change your mind.
-- [ ] **Feedback sent**: Thank you for your feedback.
-- [ ] **Message queued while offline**: Waiting to send
-- [ ] **Offline banner**: You are offline. Some features are unavailable.
-- [ ] **Back online**: Back online.
-- [ ] **General error (with Retry)**: Something went wrong. Please try again.
-- [ ] **Following tab, empty**: You are not following anyone yet. Follow contributors to see their stories here.
-- [ ] **Favorites tab, empty**: No favorites yet. Select ☆ on a story to save it here.
-- [ ] **App update required**: A new version of the app is available. Please update to continue.
-- [ ] **Admin deleted a story**: Story deleted. The Contributor has been notified.
-- [ ] **Admin locked comments**: Comments locked.
-- [ ] **Admin hid comments**: Comments hidden.
-- [ ] **AI override warning**: Overrides are irreversible, feed into the AI review guidance and may weaken it. Override only when certain.
-- [ ] **AI override submitted**: Override submitted for approval.
-- [ ] **Approval decision recorded**: Your decision has been recorded.
-- [ ] **Warning sent**: Warning sent to @user_2210.
-- [ ] **Account suspended**: Account suspended for 7 days. The account holder has been notified.
-- [ ] **Account deletion proposed**: Deletion proposed. It takes effect when the approval rule is met.
-- [ ] **Report dismissed**: Report dismissed. The reporter has been notified.
-- [ ] **Story dropped**: Story dropped. The Contributor has been notified.
-- [ ] **Company story or collection submitted**: Submitted for approval.
-- [ ] **Announcement published**: Announcement published.
-- [ ] **PDF report generating**: Generating report…
-- [ ] **PDF report ready**: Your report is ready.
-- [ ] **Admin invitation sent**: Invitation sent to lucy.a@rememberingthewaters.org.
-- [ ] **Admin registration approved**: Registration approved. The admin has been notified.
-- [ ] **Remove an admin (confirmation)**: Remove Admin – Peter? They will lose access immediately.
-- [ ] **Admin removed**: Admin – Peter has been removed.
-- [ ] **Last Super Admin tries to delete their account**: You are the only Super Admin. The system must always have at least one Super Admin. Add another Super Admin first.
-- [ ] **Super Admin added**: Super Admin added.
-- [ ] **Password changed**: Password changed.
-- [ ] **Authenticator app added**: Authenticator app added.
-- [ ] **Visitor tries an action that needs an account**: Sign in to react, comment, save favourites or share your own story.
-- [ ] **Safety concern form notice**: This is not an emergency service. In an emergency, call 999 or 112.
-- [ ] **Safety concern sent**: Thank you. Your safety concern has been sent to the project team.
-- [ ] **Bulk import checked**: 48 of 50 items are ready. 2 need attention.
-- [ ] **Bulk import submitted**: Batch submitted for approval.
-- [ ] **Incident record saved**: Incident record saved.
-- [ ] **Learning resource published**: Resource published.
-- [ ] **Admin registration awaiting approval**: Your registration is awaiting Super Admin approval.
-- [ ] **Wrong admin email or password**: Incorrect email or password.
-- [ ] **“As told by” story without consent confirmed**: Confirm the storyteller’s consent before sending.
-- [ ] **More files than allowed**: You can add 1 video, 1 audio file and up to 4 documents.
-- [ ] **Comment held by AI review**: Your comment was not posted because it may break the rules. An admin will review it.
-- [ ] **Upload waiting for Wi-Fi**: Waiting for Wi-Fi to upload. Upload now
-- [ ] **Pending action completed**: Done – removed from your pending actions.
-- [ ] **AI override approved**: Override approved. Story MS-2026-00918 is now published.
-- [ ] **Safety concern with no description**: Describe the concern before sending.
-- [ ] **Safety concern acknowledged by an admin**: Concern acknowledged. The sender has been notified.
+- [x] Examples in the messages (names, dates, story IDs, email addresses) are filled in by the system.
+- [x] **Sign-in cancelled or failed**: Sign-in was cancelled or could not be completed. Please try again.
+- [x] **Username available**: Username available
+- [x] **Username taken**: This username is taken. Try another.
+- [x] **Reserved username**: This name is reserved and cannot be used.
+- [x] **Profile saved**: Profile saved.
+- [x] **Suspended account at sign-in**: Your account is suspended until 12 December 2026.
+- [x] **Deleted account signs in within 30 days**: Your account is scheduled for permanent deletion on 19 December 2026. Do you want to restore it?
+- [x] **Account restored**: Welcome back! Your account has been restored.
+- [x] **Session expired**: Your session has expired. Please sign in again.
+- [x] **Admin registration sent**: Registration sent. A Super Admin will review it, and you will be notified by email.
+- [x] **Wrong or expired MFA code**: That code is incorrect or has expired. Try again.
+- [x] **Too many sign-in attempts**: Too many attempts. Sign-in is locked for 15 minutes, and the account owner has been alerted.
+- [x] **Location search, no match**: No stories for this location.
+- [x] **Contributor search, no match**: No Contributor with this username has posted a story, or their stories may have been deleted.
+- [x] **Favorite added**: Added to Favorites.
+- [x] **Favorite removed**: Removed from Favorites.
+- [x] **Link copied**: Link copied.
+- [x] **Citation copied**: Citation copied.
+- [x] **Preparing a ZIP download**: Preparing your download…
+- [x] **ZIP download ready**: Your download is ready.
+- [x] **Translated story label**: Machine-translated from Kiswahili · Show original
+- [x] **Report sent**: Report sent. You will receive a confirmation in INBOX.
+- [x] **Report with nothing selected**: Pick at least one reason or describe the issue.
+- [x] **Comments locked (with the admin’s reason)**: Comments and replies have been locked by an admin.
+- [x] **Comments hidden (with the admin’s reason)**: Comments have been hidden by an admin.
+- [x] **Sensitive-story notice**: This story describes loss of life and may be distressing.
+- [x] **Story removed by an admin**: Your story MS-2026-00877 was removed by an admin.
+- [x] **“Ask Why” sent**: Your request has been sent to the admins. You will receive a reply in INBOX.
+- [x] **Draft saved**: Draft saved.
+- [x] **File limit reached**: You can add up to 20 images.
+- [x] **File too large**: This file is too large. The maximum for a video is 200 MB.
+- [x] **Unsupported file type**: This file type is not supported.
+- [x] **File blocked by the virus scan**: This file was blocked because it may be harmful.
+- [x] **Empty story**: Add text or at least one file before sending.
+- [x] **Story queued while offline**: You are offline. Your story will be sent when you are back online.
+- [x] **AI review in progress**: Checking your story… This takes up to 3 minutes.
+- [x] **GREEN outcome**: Your story is live!
+- [x] **YELLOW outcome (followed by the explanation)**: Your story is live, with a warning.
+- [x] **RED outcome (followed by the explanation)**: Your story was not posted.
+- [x] **User blocked**: @mzee_omari is blocked.
+- [x] **User muted**: @mzee_omari is muted.
+- [x] **Delete a story**: Delete this story? This cannot be undone.
+- [x] **Story deleted**: Story deleted.
+- [x] **Edited story under review**: Your changes are being checked. The story will update when the review is complete.
+- [x] **Reminder saved**: Reminder saved.
+- [x] **Settings saved**: Settings saved.
+- [x] **Preparing “Download my data”**: We are preparing your data. You will be notified when it is ready.
+- [x] **“Download my data” ready**: Your data is ready to download.
+- [x] **Delete account warning**: Your account and content will be removed at once and permanently erased after 30 days. To restore it, sign in again within 30 days.
+- [x] **Account deleted**: Your account has been deleted. Sign in within 30 days if you change your mind.
+- [x] **Feedback sent**: Thank you for your feedback.
+- [x] **Message queued while offline**: Waiting to send
+- [x] **Offline banner**: You are offline. Some features are unavailable.
+- [x] **Back online**: Back online.
+- [x] **General error (with Retry)**: Something went wrong. Please try again.
+- [x] **Following tab, empty**: You are not following anyone yet. Follow contributors to see their stories here.
+- [x] **Favorites tab, empty**: No favorites yet. Select ☆ on a story to save it here.
+- [x] **App update required**: A new version of the app is available. Please update to continue.
+- [x] **Admin deleted a story**: Story deleted. The Contributor has been notified.
+- [x] **Admin locked comments**: Comments locked.
+- [x] **Admin hid comments**: Comments hidden.
+- [x] **AI override warning**: Overrides are irreversible, feed into the AI review guidance and may weaken it. Override only when certain.
+- [x] **AI override submitted**: Override submitted for approval.
+- [x] **Approval decision recorded**: Your decision has been recorded.
+- [x] **Warning sent**: Warning sent to @user_2210.
+- [x] **Account suspended**: Account suspended for 7 days. The account holder has been notified.
+- [x] **Account deletion proposed**: Deletion proposed. It takes effect when the approval rule is met.
+- [x] **Report dismissed**: Report dismissed. The reporter has been notified.
+- [x] **Story dropped**: Story dropped. The Contributor has been notified.
+- [x] **Company story or collection submitted**: Submitted for approval.
+- [x] **Announcement published**: Announcement published.
+- [x] **PDF report generating**: Generating report…
+- [x] **PDF report ready**: Your report is ready.
+- [x] **Admin invitation sent**: Invitation sent to lucy.a@rememberingthewaters.org.
+- [x] **Admin registration approved**: Registration approved. The admin has been notified.
+- [x] **Remove an admin (confirmation)**: Remove Admin – Peter? They will lose access immediately.
+- [x] **Admin removed**: Admin – Peter has been removed.
+- [x] **Last Super Admin tries to delete their account**: You are the only Super Admin. The system must always have at least one Super Admin. Add another Super Admin first.
+- [x] **Super Admin added**: Super Admin added.
+- [x] **Password changed**: Password changed.
+- [x] **Authenticator app added**: Authenticator app added.
+- [x] **Visitor tries an action that needs an account**: Sign in to react, comment, save favourites or share your own story.
+- [x] **Safety concern form notice**: This is not an emergency service. In an emergency, call 999 or 112.
+- [x] **Safety concern sent**: Thank you. Your safety concern has been sent to the project team.
+- [x] **Bulk import checked**: 48 of 50 items are ready. 2 need attention.
+- [x] **Bulk import submitted**: Batch submitted for approval.
+- [x] **Incident record saved**: Incident record saved.
+- [x] **Learning resource published**: Resource published.
+- [x] **Admin registration awaiting approval**: Your registration is awaiting Super Admin approval.
+- [x] **Wrong admin email or password**: Incorrect email or password.
+- [x] **“As told by” story without consent confirmed**: Confirm the storyteller’s consent before sending.
+- [x] **More files than allowed**: You can add 1 video, 1 audio file and up to 4 documents.
+- [x] **Comment held by AI review**: Your comment was not posted because it may break the rules. An admin will review it.
+- [x] **Upload waiting for Wi-Fi**: Waiting for Wi-Fi to upload. Upload now
+- [x] **Pending action completed**: Done – removed from your pending actions.
+- [x] **AI override approved**: Override approved. Story MS-2026-00918 is now published.
+- [x] **Safety concern with no description**: Describe the concern before sending.
+- [x] **Safety concern acknowledged by an admin**: Concern acknowledged. The sender has been notified.
 
 ### Appendix B: Open Technical Decisions
 

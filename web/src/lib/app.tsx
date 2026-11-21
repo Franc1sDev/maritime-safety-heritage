@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { io, Socket } from 'socket.io-client';
-import { api, get, getToken, onSession, post, refreshSession, setSession } from './api';
+import type { Socket } from 'socket.io-client';
+import { api, get, getToken, hint, onSession, post, refreshSession, sessionHint, setSession } from './api';
 import i18n, { detectLanguage, setLanguage } from './i18n';
 import { flushQueue } from './offline';
 
@@ -65,7 +65,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await api('/auth/logout', { method: 'POST', body: {} }).catch(() => undefined);
     try { sessionStorage.removeItem('floated'); } catch { /* private mode */ }
-    setSession(null); setMeState(null); setCounts({ notifications: 0, priority: 0, announcements: 0, inbox: 0 }); qc.clear();
+    setSession(null); hint('0'); setMeState(null); setCounts({ notifications: 0, priority: 0, announcements: 0, inbox: 0 }); qc.clear();
   }, [qc]);
 
   // Start-up: language, lists and standard texts, then the saved session if there is one.
@@ -74,7 +74,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lang = detectLanguage(['en', 'sw', 'luo']);
       await setLanguage(lang);
       get<Config>('/config').then(setConfig).catch(() => undefined);
-      if (await refreshSession()) { try { setMe(await get<Me>('/auth/me')); } catch { setSession(null); } }
+      const restore = async () => { if (await refreshSession()) { try { setMe(await get<Me>('/auth/me')); void qc.invalidateQueries(); } catch { setSession(null); } } };
+      const known = sessionHint();
+      // A browser with a saved sign-in waits for it, so nobody sees the visitor view flash by. A visitor's browser
+      // does not wait: one that is known to have no sign-in skips the check, one not yet known checks in the background.
+      if (known === '1') await restore(); else if (known === null) void restore();
       setReady(true);
     })();
     // The lists and standard texts come from the server in the reader's language.
@@ -103,23 +107,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Live updates. The connection reconnects by itself after drops and then fetches anything missed; if live connections are blocked, updates are checked at intervals instead.
   useEffect(() => {
     if (!ready) return;
-    const s = io({ auth: { token: getToken() ?? undefined }, transports: ['websocket', 'polling'], reconnectionDelayMax: 15_000 });
-    setSocket(s);
-    s.on('counts', (c: Counts) => setCounts(c));
-    s.on('notification', () => { void qc.invalidateQueries({ queryKey: ['notifications'] }); });
-    s.on('notification.done', () => { void qc.invalidateQueries({ queryKey: ['notifications'] }); });
-    s.on('message', () => { void qc.invalidateQueries({ queryKey: ['inbox'] }); });
-    s.on('message.read', () => { void qc.invalidateQueries({ queryKey: ['inbox'] }); });
-    s.on('announcement', () => { void qc.invalidateQueries({ queryKey: ['announcements'] }); refreshCounts(); });
-    s.on('approval', () => { void qc.invalidateQueries({ queryKey: ['approvals'] }); });
-    s.on('moderation', () => { void qc.invalidateQueries({ queryKey: ['moderation'] }); });
-    s.on('report', () => { void qc.invalidateQueries({ queryKey: ['reports'] }); });
-    s.on('safety', () => { void qc.invalidateQueries({ queryKey: ['safety'] }); });
-    s.on('story.review', () => { void qc.invalidateQueries({ queryKey: ['my-stories'] }); });
-    s.io.on('reconnect', () => { void qc.invalidateQueries(); refreshCounts(); });
+    let s: Socket | null = null;
+    let closed = false;
     refreshCounts();
-    const poll = setInterval(() => { if (!s.connected) { refreshCounts(); void qc.invalidateQueries({ queryKey: ['inbox'] }); } }, 45_000);
-    return () => { clearInterval(poll); s.close(); setSocket(null); };
+    // The live connection (and its code) is fetched once the first story is on screen, so it never delays it.
+    const start = window.setTimeout(() => {
+      void import('socket.io-client').then(({ io }) => {
+        if (closed) return;
+        const live = io({ auth: { token: getToken() ?? undefined }, transports: ['websocket', 'polling'], reconnectionDelayMax: 15_000 });
+        s = live;
+        setSocket(live);
+        live.on('counts', (c: Counts) => setCounts(c));
+        live.on('notification', () => { void qc.invalidateQueries({ queryKey: ['notifications'] }); });
+        live.on('notification.done', () => { void qc.invalidateQueries({ queryKey: ['notifications'] }); });
+        live.on('message', () => { void qc.invalidateQueries({ queryKey: ['inbox'] }); });
+        live.on('message.read', () => { void qc.invalidateQueries({ queryKey: ['inbox'] }); });
+        live.on('announcement', () => { void qc.invalidateQueries({ queryKey: ['announcements'] }); refreshCounts(); });
+        live.on('approval', () => { void qc.invalidateQueries({ queryKey: ['approvals'] }); });
+        live.on('moderation', () => { void qc.invalidateQueries({ queryKey: ['moderation'] }); });
+        live.on('report', () => { void qc.invalidateQueries({ queryKey: ['reports'] }); });
+        live.on('safety', () => { void qc.invalidateQueries({ queryKey: ['safety'] }); });
+        live.on('story.review', () => { void qc.invalidateQueries({ queryKey: ['my-stories'] }); });
+        live.io.on('reconnect', () => { void qc.invalidateQueries(); refreshCounts(); });
+      }).catch(() => undefined);
+    }, 1500);
+    const poll = setInterval(() => { if (!s?.connected) { refreshCounts(); void qc.invalidateQueries({ queryKey: ['inbox'] }); } }, 45_000);
+    return () => { closed = true; clearTimeout(start); clearInterval(poll); s?.close(); setSocket(null); };
   }, [ready, me?.id, qc, refreshCounts]);
 
   // Look: theme (Light, Dark or Auto), high contrast, text size and reduced motion. Saved to the account when signed in, on the device otherwise.

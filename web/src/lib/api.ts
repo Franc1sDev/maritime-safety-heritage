@@ -16,7 +16,13 @@ const listeners = new Set<(signedIn: boolean) => void>();
 export const setLanguageHeader = (l: string) => { language = l; };
 export const getToken = () => token;
 export const onSession = (fn: (signedIn: boolean) => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
-export function setSession(accessToken: string | null) { token = accessToken; listeners.forEach((l) => l(!!accessToken)); }
+export function setSession(accessToken: string | null) { token = accessToken; if (accessToken) hint('1'); listeners.forEach((l) => l(!!accessToken)); }
+/**
+ * Whether this browser has a saved sign-in: '1' yes, '0' no, null not yet known. A browser known to be a visitor's
+ * skips the sign-in check at start-up, so the first story appears one round trip sooner.
+ */
+export const sessionHint = (): string | null => { try { return localStorage.getItem('session'); } catch { return null; } };
+export const hint = (v: '0' | '1') => { try { localStorage.setItem('session', v); } catch { /* private mode */ } };
 export const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 function fail(status: number, body: any): ApiError {
@@ -30,8 +36,10 @@ export async function refreshSession(): Promise<boolean> {
   refreshing ??= (async () => {
     try {
       const r = await fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: '{}' });
-      if (!r.ok) { setSession(null); return false; }
-      setSession((await r.json()).accessToken);
+      if (!r.ok) { setSession(null); if (r.status === 401 || r.status === 403) hint('0'); return false; }
+      const fresh = (await r.json()).accessToken as string | null;
+      if (!fresh) { setSession(null); hint('0'); return false; } // no saved sign-in: a visitor
+      setSession(fresh);
       return true;
     } catch { return false; } finally { setTimeout(() => { refreshing = null; }, 0); }
   })();

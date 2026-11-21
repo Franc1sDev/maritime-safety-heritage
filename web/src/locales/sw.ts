@@ -1111,6 +1111,7 @@ const sw: Record<string, string> = {
   'Pause': 'Sitisha',
   'Resume': 'Endelea',
   'Your connection looks slow, so low-data mode is on: pictures and video load only when you select them.': 'Mtandao wako unaonekana kuwa wa polepole, kwa hiyo hali ya data kidogo imewashwa: picha na video hupakia tu unapozichagua.',
+  'Pictures or stories that identify a child need the agreement of a parent or guardian.': 'Picha au hadithi zinazomtambulisha mtoto zinahitaji idhini ya mzazi au mlezi.',
   'Browse the stories': 'Vinjari hadithi',
   'Choose how to browse here: trending, by place, by incident and more. Scroll, swipe or use the arrow keys to move to the next story.': 'Chagua hapa jinsi ya kuvinjari: zinazovuma, kwa mahali, kwa tukio na zaidi. Sogeza, telezesha au tumia vitufe vya mishale kwenda hadithi inayofuata.',
   'React to a story': 'Onyesha hisia kwa hadithi',

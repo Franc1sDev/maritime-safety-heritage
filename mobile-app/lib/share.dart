@@ -318,6 +318,7 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
         if (recording) Note('${t('Recording')} · ${recSeconds ~/ 60}:${(recSeconds % 60).toString().padLeft(2, '0')}', color: C.red, child: Align(alignment: Alignment.centerLeft, child: FilledButton(onPressed: _record, child: Text(t('Stop and keep'))))),
         _fileRow('video', Icons.videocam_outlined, t('Video')), _fileRow('audio', Icons.graphic_eq, t('Audio')), _fileRow('document', Icons.description_outlined, t('Documents')), _fileRow('image', Icons.image_outlined, t('Images')),
         Text(t('Hidden location data is removed from photos automatically. Limits: video {v} MB and {m} minutes, audio {a} MB, images and documents {i} MB each.', {'v': maxMb('video'), 'm': limits['videoMinutes'] ?? 5, 'a': maxMb('audio'), 'i': maxMb('image')}), style: const TextStyle(fontSize: 12)),
+        Text(t('Pictures or stories that identify a child need the agreement of a parent or guardian.'), style: const TextStyle(fontSize: 12)),
         for (final sl in slots) ListTile(dense: true, contentPadding: EdgeInsets.zero,
             leading: Icon(sl.kind == 'image' ? Icons.image : sl.kind == 'video' ? Icons.videocam : sl.kind == 'audio' ? Icons.graphic_eq : Icons.description),
             title: Text(sl.name, maxLines: 1, overflow: TextOverflow.ellipsis),

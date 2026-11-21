@@ -1,19 +1,19 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { setLanguageHeader } from './api';
-import sw from '../locales/sw';
-import luo from '../locales/luo';
 
 /**
  * Interface languages (Section 3.1.5). The English text is the key, so wording is identical everywhere and a missing
  * translation falls back to English. English, Kiswahili and Dholuo are the launch languages; the other 17 are added in
  * Phase 2 and load on demand from /locales/<code>.json.
+ * Only the language in use is downloaded: an English reader never fetches the Kiswahili text, and the reverse.
  */
+const bundled: Record<string, () => Promise<{ default: Record<string, string> }>> = { sw: () => import('../locales/sw'), luo: () => import('../locales/luo') };
 export const RTL = ['ar'];
-const loaded = new Set(['en', 'sw', 'luo']);
+const loaded = new Set(['en']);
 
 void i18n.use(initReactI18next).init({
-  resources: { en: { translation: {} }, sw: { translation: sw }, luo: { translation: luo } },
+  resources: { en: { translation: {} } },
   lng: 'en', fallbackLng: 'en', keySeparator: false, nsSeparator: false, returnEmptyString: false,
   interpolation: { escapeValue: false, prefix: '{', suffix: '}' },
 });
@@ -26,8 +26,11 @@ export function detectLanguage(supported: string[]): string {
 }
 export async function setLanguage(code: string) {
   if (!loaded.has(code)) {
-    try { const r = await fetch(`/locales/${code}.json`); if (r.ok) i18n.addResourceBundle(code, 'translation', await r.json(), true, true); } catch { /* falls back to English */ }
-    loaded.add(code);
+    try {
+      if (bundled[code]) i18n.addResourceBundle(code, 'translation', (await bundled[code]()).default, true, true);
+      else { const r = await fetch(`/locales/${code}.json`); if (r.ok) i18n.addResourceBundle(code, 'translation', await r.json(), true, true); }
+      loaded.add(code);
+    } catch { /* falls back to English now, and tries again next time */ }
   }
   await i18n.changeLanguage(code);
   localStorage.setItem('lang', code);

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { get, post } from './lib/api';
 import { useApp, useSaveSettings } from './lib/app';
 import { onQueue, queued, store } from './lib/offline';
@@ -144,9 +144,9 @@ export default function App() {
         </div>
         <AnimatePresence mode="wait" initial={false}>
           {shown && (
-            <motion.section key={shown} className="panel" aria-label={t('Open page')} initial={reducedMotion ? false : { opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={reducedMotion ? undefined : { opacity: 0, x: 28 }} transition={{ duration: 0.22 }}>
+            <m.section key={shown} className="panel" aria-label={t('Open page')} initial={reducedMotion ? false : { opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={reducedMotion ? undefined : { opacity: 0, x: 28 }} transition={{ duration: 0.22 }}>
               <Suspense fallback={<Spinner label={t('Loading…')} />}>{ready ? body() : <Spinner label={t('Loading…')} />}</Suspense>
-            </motion.section>
+            </m.section>
           )}
         </AnimatePresence>
       </div>
@@ -176,9 +176,9 @@ export default function App() {
         <div className="floaters" onClick={() => setFloating(false)} role="dialog" aria-modal="true" aria-label={t('Needs your action')}>
           <div onClick={(e) => e.stopPropagation()}>
             {priority.slice(0, 4).map((n, i) => (
-              <motion.button key={n.id} className="floater" onClick={() => openNotice(n)} autoFocus={i === 0} initial={reducedMotion ? false : { opacity: 0, y: 30, scale: 0.94 }} animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: [0, -5, 0], scale: 1 }} transition={reducedMotion ? { duration: 0 } : { delay: i * 0.08, y: { repeat: Infinity, duration: 3, ease: 'easeInOut' } }}>
+              <m.button key={n.id} className="floater" onClick={() => openNotice(n)} autoFocus={i === 0} initial={reducedMotion ? false : { opacity: 0, y: 30, scale: 0.94 }} animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: [0, -5, 0], scale: 1 }} transition={reducedMotion ? { duration: 0 } : { delay: i * 0.08, y: { repeat: Infinity, duration: 3, ease: 'easeInOut' } }}>
                 <b>{n.title}</b><br /><span className="small">{n.body}</span>
-              </motion.button>
+              </m.button>
             ))}
             <p className="small" style={{ color: '#fff', textAlign: 'center' }}>{t('Select one to open it, or anywhere else to keep it at the top.')}</p>
           </div>
