@@ -26,7 +26,7 @@ export class UsersService implements OnModuleInit {
   async profile(usernameOrId: string, viewer?: AuthUser | null) {
     const byId = /^[0-9a-f]{8}-/i.test(usernameOrId);
     const u = await this.db.one(
-      `SELECT u.id, u.created_at, ${personSql('u', 'ap')} AS card,
+      `SELECT u.id, u.created_at, u.role, u.trained, ${personSql('u', 'ap')} AS card,
               (SELECT count(*)::int FROM stories s WHERE s.author_id = u.id AND s.status = 'published' AND s.posted_as IN ('self','told_by')) AS stories,
               (SELECT count(*)::int FROM follows f WHERE f.followee_id = u.id) AS followers, (SELECT count(*)::int FROM follows f WHERE f.follower_id = u.id) AS following,
               EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = $2::uuid AND f.followee_id = u.id) AS followed,
@@ -36,7 +36,9 @@ export class UsersService implements OnModuleInit {
          FROM users u LEFT JOIN admin_profiles ap ON ap.user_id = u.id
         WHERE ${byId ? 'u.id = $1::uuid' : 'lower(u.username) = lower($1)'} AND u.status IN ('active','warned','suspended')`, [usernameOrId, viewer?.id ?? null]);
     if (!u || u.blockedMe) return fail(404, 'not_found');
-    return { ...u.card, stories: u.stories, followers: u.followers, following: u.following, joinedAt: u.createdAt, viewer: { following: u.followed, blocked: u.blocked, muted: u.muted, own: viewer?.id === u.id } };
+    // Admins also see whether a Contributor has been trained (for the “trained active contributors” measure).
+    const trained = viewer?.role === 'admin' && u.role === 'contributor' ? { trained: !!u.trained } : {};
+    return { ...u.card, stories: u.stories, followers: u.followers, following: u.following, joinedAt: u.createdAt, ...trained, viewer: { following: u.followed, blocked: u.blocked, muted: u.muted, own: viewer?.id === u.id } };
   }
 
   /** The Contributors tab: everyone who has posted at least one story, with search as the user types. */

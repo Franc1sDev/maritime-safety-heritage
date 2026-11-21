@@ -36,7 +36,7 @@ jobs:
       - run: npm run build
 
   browser:
-    name: Browser tests (journeys, accessibility, slow and offline networks, load)
+    name: Browser tests (journeys, accessibility, access rules, slow and offline networks, load)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +59,10 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Journeys, accessibility and network tests in a real browser
         run: NODE_PATH=/tmp/e2e/node_modules LOG=$PWD/server.log AXE=/tmp/e2e/node_modules/axe-core/axe.min.js NET_LIMIT=9000 node web/e2e/journeys.cjs
+      - name: Access test (every route as a visitor, Contributor, admin and Super Admin, then with nonsense input)
+        run: python3 tests/security/access-matrix.py http://localhost:4000 $PWD/server.log
+      - name: The API reference matches the server
+        run: python3 scripts/api-reference.py && git diff --exit-code docs/API.md
       - name: Lighthouse on a simulated phone (performance 80+, accessibility, best practices and SEO 95+)
         run: NODE_PATH=/tmp/e2e/node_modules LIGHTHOUSE=/tmp/e2e/node_modules/.bin/lighthouse node tests/perf/lighthouse.cjs http://localhost:4000/
       - name: Load test (200 people for 30 seconds; 95% of requests must be under 300 ms with no server errors)

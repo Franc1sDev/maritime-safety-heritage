@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Approvals } from '../approvals/approvals.service';
 import { Audit } from '../common/audit.service';
 import { slugify } from '../common/crypto';
-import { Db, Row } from '../common/db';
+import { dateParam, Db, intParam, Row } from '../common/db';
 import { AuthUser, isTeam, RequestMeta } from '../common/decorators';
 import { Jobs } from '../common/jobs.service';
 import { ZipWriter } from '../common/zip';
@@ -81,8 +81,9 @@ export class ArchiveService implements OnModuleInit {
     const where = [VISIBLE('$1::uuid'), `s.latitude IS NOT NULL AND s.longitude BETWEEN $2 AND $4 AND s.latitude BETWEEN $3 AND $5`];
     if (q.category) { params.push(q.category); where.push(`s.category = $${params.length}`); }
     if (q.language) { params.push(q.language); where.push(`s.language = $${params.length}`); }
-    if (q.from) { params.push(q.from); where.push(`s.event_date >= $${params.length}::date`); }
-    if (q.to) { params.push(q.to); where.push(`s.event_date <= $${params.length}::date`); }
+    if ((q.from && !dateParam(q.from)) || (q.to && !dateParam(q.to))) return fail(400, 'invalid_input');
+    if (q.from) { params.push(dateParam(q.from)); where.push(`s.event_date >= $${params.length}::date`); }
+    if (q.to) { params.push(dateParam(q.to)); where.push(`s.event_date <= $${params.length}::date`); }
     const from = `stories s LEFT JOIN users au ON au.id = s.author_id`;
     const stories = cell
       ? await this.db.q(`SELECT round(avg(s.latitude)::numeric, 5)::float8 AS latitude, round(avg(s.longitude)::numeric, 5)::float8 AS longitude, count(*)::int AS count, min(s.id::text) AS id, min(s.code) AS code
@@ -114,6 +115,7 @@ export class ArchiveService implements OnModuleInit {
     const admin = viewer?.role === 'admin';
     where.push(admin && q.status ? `i.status = ${p(q.status)}` : `i.status = 'published'`);
     if (q.q?.trim()) where.push(`(i.title ILIKE ${p(`%${q.q.trim().replace(/[%_]/g, '')}%`)} OR i.vessel ILIKE ${p(`%${q.q.trim().replace(/[%_]/g, '')}%`)} OR i.place_name ILIKE ${p(`%${q.q.trim().replace(/[%_]/g, '')}%`)} OR similarity(i.title, ${p(q.q.trim())}) > 0.3)`);
+    if (q.year && intParam(q.year, 1, 9999) === null) return fail(400, 'invalid_input');
     if (q.year) where.push(`extract(year FROM i.event_date) = ${p(Number(q.year))}`);
     if (q.waterBody) where.push(`i.water_body = ${p(q.waterBody)}`);
     if (q.type) where.push(`i.incident_type = ${p(q.type)}`);
@@ -333,7 +335,9 @@ export class ArchiveService implements OnModuleInit {
     return rows.map((a) => ({ ...a, edited: !!a.editedAt }));
   }
   async readAnnouncement(viewer: AuthUser, id: string) {
-    await this.db.q(`INSERT INTO announcement_reads (announcement_id, user_id) VALUES ($1,$2) ON CONFLICT (announcement_id, user_id) DO UPDATE SET read_at = now()`, [id, viewer.id]);
+    const rows = await this.db.q(`INSERT INTO announcement_reads (announcement_id, user_id) SELECT a.id, $2 FROM announcements a WHERE a.id = $1
+                                  ON CONFLICT (announcement_id, user_id) DO UPDATE SET read_at = now() RETURNING announcement_id`, [id, viewer.id]);
+    if (!rows.length) return fail(404, 'not_found');
     return this.notify.counts(viewer.id);
   }
   async saveAnnouncement(admin: AuthUser, dto: Row, id: string | undefined, meta: RequestMeta) {

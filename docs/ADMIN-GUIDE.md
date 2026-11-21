@@ -1,94 +1,198 @@
-# Research team guide: editors and admins
+# Admin manual
 
-How the Remembering the Waters team runs the archive day to day. Everything here works on the website and in the app. Read [USER-GUIDE.md](USER-GUIDE.md) first.
+For the project team's **admins**: moderation, reports, safety concerns, approvals, company stories, collections, incident records, bulk import, learning resources, announcements, analytics and PDF reports.
 
-## Roles
+Super Admins have their own guide: [SUPER-ADMIN-GUIDE.md](SUPER-ADMIN-GUIDE.md). The rules you apply are in the platform under **ABOUT & RESOURCES › Rules and netiquette**, and the moderation policy is Appendix C of the master plan.
 
-| Role | Can do |
+## Your account
+
+**Registering.** A Super Admin invites you by email, or you register from **Admin registration** on the sign-in page. You give your full name, work email, phone number, staff number, ID or passport number (kept encrypted) and a password of 8 to 128 characters with at least one letter and one number. A Super Admin approves the registration before you can sign in.
+
+**Signing in.** Choose **Project team** on the sign-in page. Enter your work email and password, then a 6-digit code: from your authenticator app, or sent to your email or phone. An authenticator app is quicker and works without a connection; set one up in **Settings › Sign-in and security**. Sign-in locks for a time after repeated wrong passwords, and you and the Super Admins are told.
+
+**How you appear.** You appear as “Admin – [your name]” with an admin badge. Company stories appear under “Admin” with the project logo. You can change your verification email and password, but not your admin name, Admin ID or picture.
+
+**In the app.** You can turn on **Unlock with fingerprint or face** in Settings. It is asked when the app opens and after a minute away.
+
+## What you see that Contributors do not
+
+- **ADMINISTRATIVE CONTROLS**: the panel described below. It takes half the screen beside the stories and can be made full screen.
+- **MY RESPONSIBILITIES**: approvals waiting for your decision.
+- **Admin controls on every story**: the AI score, and the actions under “Moderating a story”.
+- Items that need your action are pinned at the top of your notifications until you deal with them.
+
+## Response times
+
+| Item | Deal with it within |
 |---|---|
-| **Member** | Search, browse, map, play media, share material, manage their own account |
-| **Editor** | Everything a member does, plus: upload and catalogue, edit, publish, unpublish, delete and restore items; review submissions; manage subject terms; see the dashboard |
-| **Admin** | Everything an editor does, plus: create accounts and change roles, reset passwords, suspend accounts; read contact messages; reports, audit log and CSV exports |
+| Urgent reports (a safety risk, private data exposed) | 4 hours |
+| RED-flagged stories awaiting review | 24 hours |
+| Other reports | 48 hours |
+| “Ask Why” requests | 3 working days |
+| Safety concerns | Acknowledged within 24 hours |
 
-Give people the lowest role they need. Keep at least two admins, so one can always help the other; the archive never lets the last admin lose admin access.
+Overdue items are marked **Overdue**.
 
-Signed in as an editor or admin, the **Team** tab (app) or the **Research team** section under **See more** (website) holds these tools.
+## How stories are checked
 
-## Cataloguing an item
+Every story, comment and message is checked automatically when it is sent or edited. The check gives a violation score and an explanation for each guideline.
 
-1. Open **Upload and catalogue**.
-2. Choose the type (oral history, photograph, record, testimony) and format (audio, video, image, document, text).
-3. Fill in the catalogue record. [METADATA.md](METADATA.md) explains every field. At minimum, add:
-   - a clear **title**;
-   - a **summary** of one or two sentences, which search engines show on the public catalogue page;
-   - **date**: the year, ticking *approximate* if unsure;
-   - **place**: place, county and water body, with latitude and longitude so it appears on the map;
-   - **people**: narrator, interviewer, photographer or creator. Write "Anonymous" when someone asked not to be named;
-   - **language**, **rights** (for example CC BY-NC 4.0) and **consent** (for example "Recorded consent, 12 March 2026, public access");
-   - **subjects**: choose existing terms where possible, so search and "related items" stay consistent.
-4. Attach the file. The original is kept exactly as uploaded, with a SHA-256 checksum, and is encrypted on the server.
-5. For oral histories and videos, add the **transcript** with start times (mm:ss). It is searched and follows the player.
-6. **Save** keeps it as a draft that only the team can see. **Publish** makes it visible to everyone signed in, and its title and summary appear on the public catalogue page at `/items/MSH-xxxx`.
+| Flag | Score | What happens |
+|---|---|---|
+| **GREEN** | up to 20% | Published |
+| **YELLOW** | above 20% and below 70% | Published, with a note to the Contributor about what to avoid |
+| **RED** | 70% or above | Blocked, explained to the Contributor, and sent to you |
 
-An item can't be published without a summary, rights and consent.
+The archive holds accounts of drownings, accidents and disasters. These are not violations. Block only what breaks the rules: harassment or hate, graphic images of injured or dead people, other people's personal data without consent, misinformation or campaigning, spam or impersonation, and dangerous or false safety advice.
 
-### Large videos
+## Moderation
 
-Upload the original master. If it is very large (over 500 MB) or plays slowly on phones, also upload a smaller web copy with the role **web**. A typical conversion with the free tool ffmpeg is:
+**ADMINISTRATIVE CONTROLS › Moderation** has three lists: **Stories**, **Held comments** and **Held messages**. Filter stories by flag and status, search by story ID or words, and order by most recent or oldest.
 
-```
-ffmpeg -i master.mov -c:v libx264 -preset veryfast -crf 26 -vf "scale='min(1280,iw)':-2" -c:a aac -b:a 128k -movflags +faststart web.mp4
-```
+### Moderating a story
 
-## Signing in and your to-do strip
+Open the story. The admin bar shows the AI score and why the AI blocked it.
 
-Everyone uses the same sign-in page; editors and admins land on the dashboard. Work that needs you pops up when it arrives and then stays in the strip at the top of every page until it's done:
+| Action | Use it when | Notes |
+|---|---|---|
+| **Keep blocked** | The AI was right | You give a reason, which the Contributor sees with an **Ask Why** button |
+| **Override the AI ban** | The AI was wrong and the story should be published | A written justification is required. The override goes to the other admins for approval before the story is published. **Overrides are irreversible**, and they feed into the AI review guidance, so override only when you are certain |
+| **Delete story** | A published story breaks the rules | Give the reason shown to the Contributor. They can use **Ask Why** |
+| **Restore story** | A removal was a mistake | |
+| **Lock comments** / **Hide comments** | A discussion has turned harmful | Locked comments can be read but not added to; hidden comments show only their count. Both show your reason. **Unlock** or **Show comments** reverses it |
+| **Add a safety note** | A story describes an unsafe practice | The note is shown with the story, with a link to official guidance. Leave it empty to remove the note |
 
-- **Review** a new submission (editors and admins). It goes away for everyone once someone approves or declines it.
-- **Read and reply** to a new enquiry (admins). It goes away once someone replies or deletes it.
-- **Choose your own password** after a temporary one.
+**Moderation history** on a story lists every decision made about it.
 
-The bell counts notifications you haven't seen; the speech-bubble button counts unread enquiries.
+### Held comments and messages
 
-## Reviewing submissions
+Each one shows why it was held. **Allow** delivers it. **Block** keeps it back; give a reason, which the sender sees.
 
-**Submissions** lists material sent in by the public, newest pending first.
+### Account actions
 
-- Open one to see the description, the files and who sent it.
-- Check the consent box was ticked, the material is genuine and nobody in it is put at risk.
-- **Approve** creates a draft item with the files attached. It is not public yet: finish the catalogue record, then publish.
-- **Decline** with a short, kind note. The contributor sees the note and gets an email.
+From the Moderation list or from a report, open **Account actions**. Follow the enforcement steps in order:
 
-## Editing, unpublishing and deleting
+1. **Warn the account holder** (first minor breach, or repeated YELLOW behaviour).
+2. Remove the content.
+3. **Suspend for a set period** for repeated breaches after a warning. You enter the number of days; the policy is 7 or 30.
+4. **Delete the account permanently**, which **needs approval** from the other admins.
 
-- **Records** lists every item with its status. Filter by status or search by title or identifier.
-- **Unpublish** hides an item immediately (for example when consent is withdrawn) without losing it.
-- **Delete** moves an item to *Deleted*, from where it can be restored. Removing a file from an item deletes that file permanently.
+The account holder is told the reason each time.
 
-## Accounts (admins)
+### Appeals
 
-- **Create user** gives a one-time password to pass on privately. Until they change it, a "Choose your own password" to-do stays pinned at the top of their screen.
-- **Change role** or **Suspend** ends the person's sessions at once, so it takes effect immediately.
-- **Reset password** gives a new one-time password and signs them out everywhere. People can also reset their own password by email.
-- Accounts people closed themselves are hidden from the list. Their past actions stay in the audit log as "Deleted account".
+A Contributor can use **Ask Why** on any removal. It arrives in the admins' INBOX with their subject, description and attachments. A second review is done by a different admin from the one who made the first decision.
 
-## Messages (admins)
+## Reports
 
-Messages from the contact form arrive in **Messages**, newest first. Open one and write your reply in the box: it is emailed to the sender, and members also see it under **Enquiries** with a notification. Opening a message counts it as read. Obvious spam is dropped automatically.
+**Reports** lists what people have reported: stories, comments and Contributors, with the reasons chosen. Urgent reports come first. For each report either **Act on this report** (remove the content, or open Account actions) or **Dismiss the report** with a note. Both are recorded.
 
-## Reports and the audit log (admins)
+## Safety concerns
 
-- **Dashboard:** items, drafts, submissions waiting, accounts, views per month and recent activity. It also shows media storage use when a storage alert level is set.
-- **Reports and logs:** collection health by type and water body, the most viewed items, and the full **audit log** of sign-ins, failed sign-ins, lockouts and every staff action, with the network address.
-- **Export CSV:** download the catalogue, submissions or the audit log for spreadsheets or funders' reports.
+Visitors and Contributors can report a current risk on the water. The form tells them the archive is not an emergency service and shows 999 and 112.
 
-## When someone copies archive material
+For each concern:
 
-1. Note where it appears, with screenshots and the date.
-2. Check the audit log and reports for unusual bulk access.
-3. Send a takedown request to the site owner or host. The terms of use, the copyright notice on every page and the item identifiers support the request. For Google results, use Google's copyright removal form.
-4. Unpublish the item while you deal with it if the people in it are at risk.
+1. **Acknowledge** it within 24 hours.
+2. **Add note** as you learn more.
+3. Where appropriate, refer it to the responsible authority through the project's partners and fill in **Referred to (authority, date, reference)**. This is the record of referral.
+4. Mark it **Resolved** or **Closed**.
 
-## Storage alerts
+Concerns are personal data. The reporter's identity is never published, and is shared with an authority only with their agreement. Patterns in the concerns appear in Analytics under **Places with the most safety concerns**.
 
-When media storage passes 80% of the alert level set on the server, the addresses in `ALERT_EMAILS` get an email once a day. Ask whoever manages hosting to add storage, or to move older masters to a cheaper archive tier (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+## Approvals
+
+Some actions need the agreement of the other admins:
+
+| Needs approval | Proposed from |
+|---|---|
+| A company story, testimony or historical record | Company stories |
+| A collection or online exhibition | Collections |
+| A bulk import batch | Import |
+| Overriding an AI ban | The story's admin bar |
+| Deleting an account permanently | Account actions |
+
+**The rule.** A request is approved when two-thirds of the active admins (not counting the proposer) approve it. The project can change the share, or require all admins. You cannot vote on your own request. Every vote needs a written justification.
+
+**Voting.** In **Approvals** or **MY RESPONSIBILITIES**, open the request and choose **Approve**, **Reject** or **Request changes**. If anyone requests changes, voting stops; the proposer answers and restarts the voting (**Answer and restart voting**).
+
+**Deadline.** Each request shows **Decide by** a date, 7 days after it was made. A request that passes its deadline goes to the Super Admins to decide.
+
+## Company stories, testimonies and historical records
+
+**Company stories › Add a story.** Choose the kind of item:
+
+- **Company story**: written by the project team.
+- **Testimony collected by the project**: needs a **consent record** (storyteller, type of consent, date of consent, and a parent or guardian for anyone under 18). Add the signed consent form as a document and mark it **the signed consent form (kept private)**.
+- **Historical record**: give the **source** (holding institution or publication, reference, original date, creator, rights, and how it was obtained).
+
+Write a **note for the admins who approve it**, then **Submit for approval**. It is published under “Admin” with the project logo once approved.
+
+### Consent and validation of testimonies
+
+A testimony is published only when its consent record is complete **and** the storyteller has confirmed how their contribution is represented.
+
+- After the project's feedback and validation meeting, open the item under **Waiting for approval or validation** and choose **Record validation with the storyteller**.
+- Tick **The storyteller does not want downloads** if they said so.
+- A narrator who wishes to remain anonymous is published anonymously.
+- **Withdraw consent**: use this when the storyteller asks for their story to be taken down. It is removed from public view at once.
+
+Facts are checked, sources credited and consent confirmed before you approve. Safety information in company stories follows official guidance.
+
+## Collections and online exhibitions
+
+**Collections › New collection.** Give a title, description, an optional curator's note, and the kind: **Collection** or **Online exhibition**. Add stories by searching for their ID or words. A collection is published once approved.
+
+## Incident records
+
+**Incidents › New incident record.** Give the name of the incident, date (tick **Approximate** if needed), place, vessel, type, a summary of what happened, the outcome, and sources. Stories and records can then be linked to it, and the incident page lists everything linked.
+
+**Suggested by contributors** lists incidents that Contributors proposed while sharing a story. **Review and add** turns one into a record; **Decline** removes it.
+
+To add a place that is missing from the list, use **Add a place** (name, other names, county, water body, kind of place, latitude and longitude).
+
+## Bulk import
+
+For the project's collected materials. The fields are explained in [METADATA.md](METADATA.md) and the [Handbook](HANDBOOK.md).
+
+1. **Download the template** and fill one row per item.
+2. **Choose files**: upload the files named in the spreadsheet (recordings, photographs, scans, consent forms).
+3. **Choose the spreadsheet** (CSV or Excel). Every row is checked; nothing is created yet. You see how many rows are ready and how many need attention, with the reason for each.
+4. Correct the spreadsheet and upload it again until every row is ready.
+5. **Submit the batch for approval** as one request. When the other admins approve it, the items are created.
+
+A testimony row is ready only when it has the storyteller's name, the type of consent, and `validated` = yes (the storyteller has confirmed how their contribution is represented). A historical record row needs its source or archive reference.
+
+**Export the archive** prepares a full copy of the published archive in open formats (JSON and CSV with Dublin Core fields), with or without the files, for preservation and partner institutions.
+
+## Learning resources
+
+**Resources › New resource.** For policy briefs, learning summaries, educational materials, the handbook and online exhibitions. Give a title, type, language, who it is for, a summary, text to read on screen, and a file to download (PDF, document, audio or video). Save it as a draft or **Publish**. Each resource shows its views and downloads, and readers can copy a citation.
+
+## Announcements
+
+**Announcements › New announcement.** Give a title, summary, full description and optional dates for the calendar, and choose whether to also send a push notification. Announcements go to everyone. An edited announcement moves back to the top and is labelled “Edited”.
+
+## Analytics and PDF reports
+
+**Analytics** shows live figures: published stories, testimonies and historical records, stories with audio or video, stories not in English, incidents documented, counties and water bodies represented, Contributors and active users, visitors, safety concerns, resource views and downloads, story downloads and citations.
+
+**AI quality** shows AI checks today, RED items and how many were reviewed within 24 hours, the override rate, how often admins agreed with RED flags, and AI flags by language, watched so that no language is flagged unfairly.
+
+**PDF reports**: choose the period and the charts to include, then **Generate PDF report**. A monthly report is generated automatically on the first day of each month. Earlier reports stay in the list.
+
+## Trained Contributors
+
+When a Contributor has been through the project’s training, open their profile on the website and tick **This Contributor has been trained by the project**. Analytics then counts them under **Trained active contributors**, one of the project's reported measures.
+
+## Audit log
+
+**Audit log** shows your own actions. It cannot be edited or deleted. Super Admins see everyone's.
+
+## Good practice
+
+- Give a clear, kind reason every time. Every decision is explained and can be questioned.
+- Treat the dead, the bereaved and survivors with respect. When a family asks for a story about a relative to be reviewed or removed, handle it first and with care.
+- Check that stories about missing persons or recent incidents do not interfere with official searches or investigations.
+- Never share a Contributor's private details, a consent form or a safety concern outside the team.
+- Sign out on shared computers. Tell a Super Admin at once if you think your account was used by someone else ([INCIDENT-RESPONSE.md](INCIDENT-RESPONSE.md)).

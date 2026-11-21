@@ -6,7 +6,7 @@ import { Ai, AiUnavailable, Review } from '../ai/ai.service';
 import { Approvals } from '../approvals/approvals.service';
 import { Audit } from '../common/audit.service';
 import { Cache } from '../common/cache.service';
-import { Db, decodeCursor, encodeCursor, pageSize, Row } from '../common/db';
+import { Db, decodeCursor, encodeCursor, intParam, pageSize, Row } from '../common/db';
 import { AuthUser, isTeam, RequestMeta } from '../common/decorators';
 import { Jobs } from '../common/jobs.service';
 import { fail, LANGUAGE_NAMES, text } from '../common/messages';
@@ -127,6 +127,7 @@ export class StoriesService implements OnModuleInit {
       join = ` JOIN favourites fav ON fav.story_id = s.id AND fav.user_id = $1`;
       order = 'fav.created_at DESC, s.id DESC'; key = (r) => [r.favAt, r.id]; after = (c) => `(fav.created_at, s.id) < (${p(c[0])}, ${p(c[1])})`;
     } else if (tab === 'recent' || tab === 'timeline') recent();
+    if ((q.placeId && intParam(q.placeId) === null) || (q.year && intParam(q.year, 1, 9999) === null) || (q.decade && intParam(q.decade, 1, 9999) === null)) return fail(400, 'invalid_input');
     if (q.placeId) where.push(`s.place_id = ${p(Number(q.placeId))}`);
     if (q.place) where.push(`s.place_name ILIKE ${p(`%${q.place.replace(/[%_]/g, '')}%`)}`);
     if (q.authorId) { where.push(`s.author_id = ${p(q.authorId)} AND s.posted_as IN ('self','told_by')`); recent(); }
@@ -219,8 +220,11 @@ export class StoriesService implements OnModuleInit {
     return f;
   }
 
-  private async checkComplete(id: string) {
-    const s = (await this.db.one(`SELECT s.*, (SELECT count(*)::int FROM media_files m WHERE m.story_id = s.id) AS files FROM stories s WHERE s.id = $1`, [id]))!;
+  private async checkComplete(id: string, ownerId?: string) {
+    const s = await this.db.one(`SELECT s.*, (SELECT count(*)::int FROM media_files m WHERE m.story_id = s.id) AS files FROM stories s WHERE s.id = $1`, [id]);
+    if (!s) return fail(404, 'not_found');
+    // Someone else's story is refused before anything about it is said.
+    if (ownerId && s.authorId !== ownerId) return fail(403, 'forbidden');
     if (!s.body.trim() && !s.files) return fail(400, 'story_empty');
     if (s.postedAs === 'told_by' && !s.consentConfirmed) return fail(400, 'consent_required');
     return s;
@@ -298,8 +302,7 @@ export class StoriesService implements OnModuleInit {
 
   /** SEND / SUBMIT: the story goes to AI review, which finishes within 3 minutes. */
   async submit(id: string, user: AuthUser, meta: RequestMeta) {
-    const s = await this.checkComplete(id);
-    if (s.authorId !== user.id) return fail(403, 'forbidden');
+    const s = await this.checkComplete(id, user.id);
     if (!['draft', 'reviewing'].includes(s.status)) return fail(409, 'already_exists');
     await this.db.q(`UPDATE stories SET status = 'reviewing', updated_at = now() WHERE id = $1`, [id]);
     await this.jobs.add('story.review', { id });

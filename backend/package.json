@@ -63,7 +63,7 @@
   },
   "jest": {
     "rootDir": ".",
-    "testRegex": "test/.*\\.e2e-spec\\.ts$",
+    "testRegex": "test/.*\\.(e2e-spec|spec)\\.ts$",
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },

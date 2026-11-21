@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Module, Post, Put, Query } from '@nest
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsIn, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { AuthUser, CurrentUser, Meta, RequestMeta, Roles } from '../common/decorators';
+import { dateParam } from '../common/db';
 import { AnalyticsService, CHARTS } from './analytics.service';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -19,10 +20,10 @@ export class AnalyticsController {
   @Get('charts') @ApiOperation({ summary: 'The charts available' })
   charts() { return Object.entries(CHARTS).map(([key, c]) => ({ key, title: c.title, series: c.series.map((s) => s.name) })); }
   @Get('summary') @ApiOperation({ summary: 'The measures the platform reports: stories, contributors, counties, incidents, resources, moderation response' })
-  summary(@Query('from') from?: string, @Query('to') to?: string) { return this.analytics.summary(DATE.test(from ?? '') ? from : undefined, DATE.test(to ?? '') ? to : undefined); }
+  summary(@Query('from') from?: string, @Query('to') to?: string) { return this.analytics.summary(dateParam(from) ?? undefined, dateParam(to) ?? undefined); }
   @Get('series') @ApiOperation({ summary: 'A chart per day, week, month or year. Live updates arrive on the WebSocket “analytics” event.' })
   series(@Query('chart') chart = 'stories', @Query('period') period = 'day', @Query('from') from?: string, @Query('to') to?: string) {
-    return this.analytics.series(chart, (['day', 'week', 'month', 'year'].includes(period) ? period : 'day') as 'day', DATE.test(from ?? '') ? from : undefined, DATE.test(to ?? '') ? to : undefined);
+    return this.analytics.series(chart, (['day', 'week', 'month', 'year'].includes(period) ? period : 'day') as 'day', dateParam(from) ?? undefined, dateParam(to) ?? undefined);
   }
   @Get('reports') @ApiOperation({ summary: 'Previous and automatic monthly PDF reports' })
   reports() { return this.analytics.reports(); }

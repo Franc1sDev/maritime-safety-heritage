@@ -36,6 +36,12 @@ export class ErrorsFilter implements ExceptionFilter {
       res.status(HttpStatus.CONFLICT).json({ statusCode: 409, code: 'already_exists', message: text('already_exists', lang) });
       return;
     }
+    // A value the database cannot read as a date, number or ID (PostgreSQL class 22) is a mistake in the request, not in the server.
+    if (err instanceof QueryFailedError && String((err as unknown as { code?: string }).code ?? '').startsWith('22')) {
+      this.log.warn(`Bad value in ${req.method} ${req.url.split('?')[0]}: ${err.message}`);
+      res.status(HttpStatus.BAD_REQUEST).json({ statusCode: 400, code: 'invalid_input', message: text('invalid_input', lang) });
+      return;
+    }
     this.log.error(err instanceof Error ? err.stack : String(err));
     res.status(500).json({ statusCode: 500, code: 'general_error', message: text('general_error', lang) });
   }

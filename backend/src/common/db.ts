@@ -39,4 +39,18 @@ export function decodeCursor(cursor?: string): any[] | null {
   if (!cursor) return null;
   try { const v = JSON.parse(Buffer.from(cursor, 'base64url').toString()); return Array.isArray(v) ? v : null; } catch { return null; }
 }
+/** A date from a request, as YYYY-MM-DD, or null when it is not a real calendar date (so it never reaches the database as text). */
+export function dateParam(v: unknown): string | null {
+  const s = String(v ?? '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s ? s : null;
+}
+/** A whole number from a request (a year, a place number), or null when it is not one. */
+export const intParam = (v: unknown, min = 0, max = 2_000_000_000): number | null => {
+  const s = String(v ?? '').trim();
+  if (!/^-?\d{1,10}$/.test(s)) return null;
+  const n = Number(s);
+  return n >= min && n <= max ? n : null;
+};
 export const pageSize = (v: unknown, def = 10, max = 50) => Math.min(max, Math.max(1, parseInt(String(v ?? ''), 10) || def));

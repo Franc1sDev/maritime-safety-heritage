@@ -103,6 +103,12 @@ function Contributor({ username }: { username: string }) {
         )}
         {c.viewer.own && <Link className="btn" to="/profile">{t('My Profile')}</Link>}
       </div>
+      {me?.role === 'admin' && typeof c.trained === 'boolean' && (
+        <label className="check"><input type="checkbox" checked={c.trained} onChange={async (e) => {
+          try { await api(`/admin/contributors/${c.id}/trained`, { method: 'PUT', body: { on: e.target.checked } }); await q.refetch(); toast(e.target.checked ? t('Marked as trained.') : t('No longer marked as trained.')); }
+          catch (err: any) { toast(err.message, 'error'); }
+        }} /> {t('This Contributor has been trained by the project')}</label>
+      )}
       {report && <ReportDialog targetType="user" targetId={c.id} onClose={() => setReport(false)} />}
       {block && <Confirm title={t('Block {name}?', { name: `@${c.username}` })} text={t('They will not be able to message you or interact with your stories, and you will not see theirs. You can unblock them in Settings.')} yes={t('Block')} danger onClose={() => setBlock(false)} onYes={() => toggle('block', true)} />}
     </article>

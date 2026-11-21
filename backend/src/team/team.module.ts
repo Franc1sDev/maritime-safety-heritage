@@ -5,7 +5,7 @@ import { AuthModule } from '../auth/auth.module';
 import { AuthService } from '../auth/auth.service';
 import { Audit } from '../common/audit.service';
 import { randomToken, sha256 } from '../common/crypto';
-import { Db } from '../common/db';
+import { dateParam, Db } from '../common/db';
 import { AuthUser, CurrentUser, Meta, RequestMeta, Roles } from '../common/decorators';
 import { decryptField, maskId } from '../common/field-crypto';
 import { MailService } from '../common/mail.service';
@@ -88,10 +88,11 @@ export class TeamService {
     const params: unknown[] = []; const where: string[] = [];
     const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
     if (me.role !== 'super_admin') where.push(`actor_id = ${p(me.id)}`);
-    else if (q.actorId) where.push(`actor_id = ${p(q.actorId)}`);
+    else if (q.actorId) { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q.actorId)) return fail(400, 'invalid_input'); where.push(`actor_id = ${p(q.actorId)}`); }
     if (q.action) where.push(`action LIKE ${p(`${q.action.replace(/[%_]/g, '')}%`)}`);
-    if (q.from) where.push(`created_at >= ${p(q.from)}::date`);
-    if (q.to) where.push(`created_at < ${p(q.to)}::date + 1`);
+    if ((q.from && !dateParam(q.from)) || (q.to && !dateParam(q.to)) || (q.before && !/^\d{1,15}$/.test(q.before))) return fail(400, 'invalid_input');
+    if (q.from) where.push(`created_at >= ${p(dateParam(q.from))}::date`);
+    if (q.to) where.push(`created_at < ${p(dateParam(q.to))}::date + 1`);
     if (q.q) where.push(`(summary ILIKE ${p(`%${q.q.replace(/[%_]/g, '')}%`)} OR actor_name ILIKE ${p(`%${q.q.replace(/[%_]/g, '')}%`)})`);
     if (q.before) where.push(`id < ${p(Number(q.before))}`);
     const rows = await this.db.q(`SELECT id, actor_id, actor_name, action, entity_type, entity_id, summary, reason, ip, created_at FROM activity_log ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT 101`, params);

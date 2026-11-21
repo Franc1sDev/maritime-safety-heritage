@@ -428,6 +428,10 @@ describe('engagement, comments and social features', () => {
     const c1 = await request(http).post(`${api}/stories/${id}/comments`).set(bearer(atieno.token)).send({ text: 'I remember that ferry, @omari_test!' }).expect(201);
     const c2 = await request(http).post(`${api}/stories/${id}/comments`).set(bearer(baraka.token)).send({ text: 'So do I.', parentId: c1.body.id }).expect(201);
     await request(http).post(`${api}/stories/${id}/comments`).set(bearer(omari.token)).send({ text: 'Thank you both.' }).expect(201);
+    // An item that does not exist is “not found”, never a server error.
+    const nowhere = '00000000-0000-4000-8000-000000000000';
+    expect((await request(http).post(`${api}/stories/${nowhere}/submit`).set(bearer(omari.token)).expect(404)).body.code).toBe('not_found');
+    expect((await request(http).post(`${api}/announcements/${nowhere}/read`).set(bearer(omari.token)).expect(404)).body.code).toBe('not_found');
     // Translate on a comment: served from the saved translation, and a clear message when no AI provider can translate.
     await db.q(`INSERT INTO content_translations (target_type, target_id, language, source_hash, body) VALUES ('comment', $1, 'sw', encode(sha256(convert_to('So do I.', 'UTF8')), 'hex'), 'Mimi pia.')`, [c2.body.id]);
     await db.q(`UPDATE content_translations SET source_hash = left(source_hash, 32) WHERE target_id = $1`, [c2.body.id]);
@@ -448,6 +452,12 @@ describe('engagement, comments and social features', () => {
   });
   it('follows, blocks and mutes', async () => {
     await request(http).put(`${api}/people/${omari.id}/follow`).set(bearer(atieno.token)).send({ on: true }).expect(200);
+    // Trained Contributors: only admins see and set the mark.
+    expect((await request(http).get(`${api}/contributors/${omari.id}`).set(bearer(atieno.token)).expect(200)).body.trained).toBeUndefined();
+    expect((await request(http).get(`${api}/contributors/${omari.id}`).set(bearer(grace.token)).expect(200)).body.trained).toBe(false);
+    await request(http).put(`${api}/admin/contributors/${omari.id}/trained`).set(bearer(atieno.token)).send({ on: true }).expect(403);
+    await request(http).put(`${api}/admin/contributors/${omari.id}/trained`).set(bearer(grace.token)).send({ on: true }).expect(200);
+    expect((await request(http).get(`${api}/contributors/${omari.id}`).set(bearer(grace.token)).expect(200)).body.trained).toBe(true);
     expect((await request(http).get(`${api}/stories?tab=following`).set(bearer(atieno.token)).expect(200)).body.items.every((s: any) => s.author.username === 'omari_test')).toBe(true);
     expect((await request(http).get(`${api}/contributors/omari_test`).set(bearer(atieno.token)).expect(200)).body).toMatchObject({ followers: 1, viewer: { following: true } });
     expect((await request(http).get(`${api}/contributors?q=omari_t`).expect(200)).body[0].person.username).toBe('omari_test');
