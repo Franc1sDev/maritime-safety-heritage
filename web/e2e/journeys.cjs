@@ -146,7 +146,7 @@ test('contributor: share a story and see it go live', async () => {
   await page.locator('input[type=text]').first().fill(title);
   await page.locator('textarea').first().fill('We crossed at Likoni every evening. The crew told us where the life jackets were kept and how to put them on. Everyone on board listened.');
   await page.getByRole('button', { name: /^SEND/i }).first().click();
-  await text(page, 'Your story is live!', 60000);
+  await text(page, 'Your first story is live!', 60000); // a new Contributor's first story gets a word of thanks
   await page.goto(BASE + '/profile/stories');
   await text(page, title);
   await ctx.close(); return problems;
@@ -188,7 +188,7 @@ test('languages: Kiswahili is applied everywhere and remembered', async () => {
 test('admin: sign in with a code, and every admin page opens', async () => {
   const { ctx, page, problems } = await open();
   await adminSignIn(page, 'grace@demo.ke');
-  for (const t of ['', 'reports', 'safety', 'approvals', 'company', 'collections', 'incidents', 'import', 'resources', 'announcements', 'analytics', 'audit']) {
+  for (const t of ['', 'reports', 'safety', 'feedback', 'approvals', 'company', 'collections', 'incidents', 'import', 'resources', 'announcements', 'analytics', 'audit']) {
     await page.goto(`${BASE}/admin/${t}`); await seen(page, '.panel h2, .panel h1, .panel h3'); await page.waitForTimeout(500);
   }
   await page.goto(BASE + '/responsibilities'); await seen(page, '.panel h2');
@@ -215,7 +215,7 @@ test('accessibility: the admin pages pass the automated checks', async () => {
   const { ctx, page, problems } = await open({ forAxe: true });
   await adminSignIn(page, 'amina@demo.ke');
   const found = [];
-  for (const t of ['', 'reports', 'safety', 'approvals', 'company', 'collections', 'incidents', 'import', 'resources', 'announcements', 'analytics', 'audit']) {
+  for (const t of ['', 'reports', 'safety', 'feedback', 'approvals', 'company', 'collections', 'incidents', 'import', 'resources', 'announcements', 'analytics', 'audit']) {
     await page.goto(`${BASE}/admin/${t}`); await seen(page, '.panel h2, .panel h1, .panel h3'); await page.waitForTimeout(1500);
     await page.addScriptTag({ path: AXE });
     const r = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } })).violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`));

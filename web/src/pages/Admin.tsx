@@ -12,7 +12,7 @@ import { ago, Avatar, Confirm, Dialog, Empty, fmtDate, Problem, Skeleton, Spinne
 const Content = lazy(() => import('./AdminContent'));
 const Analytics = lazy(() => import('./Analytics'));
 type Wide = { wide: boolean; setWide: (w: boolean) => void };
-const TABS: Array<[string, string, string]> = [['moderation', 'shield', 'Moderation'], ['reports', 'flag', 'Reports'], ['safety', 'warning', 'Safety concerns'], ['approvals', 'check', 'Approvals'], ['company', 'stories', 'Company stories'], ['collections', 'collection', 'Collections'],
+const TABS: Array<[string, string, string]> = [['moderation', 'shield', 'Moderation'], ['reports', 'flag', 'Reports'], ['safety', 'warning', 'Safety concerns'], ['feedback', 'comment', 'Feedback'], ['approvals', 'check', 'Approvals'], ['company', 'stories', 'Company stories'], ['collections', 'collection', 'Collections'],
   ['incidents', 'incident', 'Incidents'], ['import', 'upload', 'Import'], ['resources', 'book', 'Resources'], ['announcements', 'megaphone', 'Announcements'], ['analytics', 'chart', 'Analytics'], ['audit', 'rules', 'Audit log']];
 
 /** The administrative controls panel: one side of the admin's screen, expandable to full screen and back. */
@@ -29,7 +29,7 @@ export default function Admin({ wide, setWide }: Wide) {
         <button className="btn small" onClick={() => setWide(!wide)} aria-pressed={wide}><Icon name="expand" size={15} />{wide ? t('Half screen') : t('Full screen')}</button></div>
       <nav className="subtabs" aria-label={t('Administrative controls')}>{TABS.map(([k, icon, label]) => <Link key={k} to={`/admin/${k}`} className={`tab ${tab === k ? 'on' : ''}`} aria-current={tab === k ? 'page' : undefined}><Icon name={icon} />{t(label)}</Link>)}</nav>
       <Suspense fallback={<Spinner label={t('Loading…')} />}>
-        {tab === 'moderation' ? <Moderation /> : tab === 'reports' ? <Reports /> : tab === 'safety' ? <Safety /> : tab === 'approvals' ? <Approvals /> : tab === 'audit' ? <AuditLog /> : tab === 'analytics' ? <Analytics /> : <Content tab={tab} />}
+        {tab === 'moderation' ? <Moderation /> : tab === 'reports' ? <Reports /> : tab === 'safety' ? <Safety /> : tab === 'feedback' ? <Feedback /> : tab === 'approvals' ? <Approvals /> : tab === 'audit' ? <AuditLog /> : tab === 'analytics' ? <Analytics /> : <Content tab={tab} />}
       </Suspense>
     </div>
   );
@@ -198,6 +198,26 @@ function Reports() {
 }
 
 // ---------- Safety concerns ----------
+/** Feedback from the form in ABOUT & RESOURCES (Section 11.6), newest first, for the team to read and report on. */
+function Feedback() {
+  const { t, i18n } = useTranslation();
+  const q = useQuery({ queryKey: ['feedback'], queryFn: () => get<Array<{ id: string; body: string; createdAt: string; username: string | null }>>('/admin/feedback') });
+  if (q.isLoading) return <Skeleton />;
+  if (q.error) return <Problem error={q.error} retry={() => q.refetch()} />;
+  if (!q.data!.length) return <Empty icon="comment" title={t('No feedback yet')}>{t('Feedback sent from ABOUT & RESOURCES appears here.')}</Empty>;
+  return (
+    <div>
+      <p className="dim small">{t('{n} messages, newest first. Visitors can send feedback without an account.', { n: q.data!.length })}</p>
+      {q.data!.map((f) => (
+        <article key={f.id} className="card" style={{ marginBottom: '.6rem' }}>
+          <p className="meta" style={{ margin: 0 }}>{fmtDate(f.createdAt, i18n.language, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · {f.username ? `@${f.username}` : t('A visitor')}</p>
+          <p style={{ margin: '.3rem 0 0', whiteSpace: 'pre-wrap' }}>{f.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function Safety() {
   const { t, i18n } = useTranslation();
   const { toast } = useApp();

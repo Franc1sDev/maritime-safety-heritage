@@ -6,7 +6,7 @@ import 'pages.dart';
 import 'share.dart';
 
 const adminTabs = <(String, IconData, String)>[
-  ('moderation', Icons.shield, 'Moderation'), ('reports', Icons.flag, 'Reports'), ('safety', Icons.warning_amber, 'Safety concerns'), ('approvals', Icons.how_to_vote, 'Approvals'), ('company', Icons.auto_stories, 'Company stories'),
+  ('moderation', Icons.shield, 'Moderation'), ('reports', Icons.flag, 'Reports'), ('safety', Icons.warning_amber, 'Safety concerns'), ('feedback', Icons.forum_outlined, 'Feedback'), ('approvals', Icons.how_to_vote, 'Approvals'), ('company', Icons.auto_stories, 'Company stories'),
   ('collections', Icons.collections_bookmark, 'Collections'), ('incidents', Icons.report_gmailerrorred, 'Incidents'), ('import', Icons.upload_file, 'Import'), ('resources', Icons.menu_book, 'Resources'),
   ('announcements', Icons.campaign, 'Announcements'), ('analytics', Icons.insights, 'Analytics'), ('audit', Icons.receipt_long, 'Audit log'),
 ];
@@ -30,7 +30,7 @@ class AdminPage extends StatelessWidget {
     final i = adminTabs.indexWhere((x) => x.$1 == tab);
     return DefaultTabController(length: adminTabs.length, initialIndex: i < 0 ? 0 : i, child: Scaffold(
       appBar: AppBar(title: Text(t('Administrative controls')), bottom: TabBar(isScrollable: true, tabs: [for (final (_, icon, label) in adminTabs) Tab(icon: Icon(icon, size: 20), text: t(label))])),
-      body: const TabBarView(children: [ModerationTab(), ReportsTab(), SafetyTab(), ApprovalsTab(), CompanyTab(), CollectionsTab(), IncidentsTab(), ImportTab(), ResourcesTab(), AnnouncementsTab(), AnalyticsTab(), AuditTab()]),
+      body: const TabBarView(children: [ModerationTab(), ReportsTab(), SafetyTab(), FeedbackTab(), ApprovalsTab(), CompanyTab(), CollectionsTab(), IncidentsTab(), ImportTab(), ResourcesTab(), AnnouncementsTab(), AnalyticsTab(), AuditTab()]),
     ));
   }
 }
@@ -183,6 +183,21 @@ class SafetyTab extends StatelessWidget {
           TextButton(onPressed: () async { final n = await confirm(context, t('Internal note'), yes: t('Save'), reasonLabel: t('Internal note')); if (n != null && context.mounted) { await run(context, () => api.patch('/admin/safety-concerns/${x['id']}', {'note': n}), ok: t('Saved.')); reload(); } }, child: Text(t('Add note'))),
           TextButton(onPressed: () async { final n = await confirm(context, t('Record of referral'), yes: t('Save'), reasonLabel: t('Referred to (authority, date, reference)')); if (n != null && context.mounted) { await run(context, () => api.patch('/admin/safety-concerns/${x['id']}', {'referral': n, 'status': 'referred'}), ok: t('Saved.')); reload(); } }, child: Text(t('Referred to'))),
         ]),
+      ]))),
+    ]));
+  }
+}
+
+/// Feedback from the form in ABOUT & RESOURCES, newest first.
+class FeedbackTab extends StatelessWidget {
+  const FeedbackTab({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final api = AppScope.read(context).api;
+    return Loader<List<J>>(load: () async => asList(await api.get('/admin/feedback')), builder: (c, list, reload) => list.isEmpty ? EmptyState(t('No feedback yet'), icon: Icons.forum_outlined) : ListView(padding: const EdgeInsets.all(12), children: [
+      for (final x in list) Card(child: Padding(padding: const EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('${fmtDate(x['createdAt'], time: true)} · ${str(x['username']).isEmpty ? t('A visitor') : '@${x['username']}'}', style: const TextStyle(fontSize: 12)),
+        const SizedBox(height: 4), Text(str(x['body'])),
       ]))),
     ]));
   }

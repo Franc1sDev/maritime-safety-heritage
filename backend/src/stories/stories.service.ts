@@ -310,12 +310,20 @@ export class StoriesService implements OnModuleInit {
     return { ...(await this.get(id, user)), message: text('review_in_progress', meta.lang) };
   }
 
+  /** True when this is the only published story the Contributor has posted under their own name or as told by someone. */
+  private async firstStory(id: string, authorId: string | null) {
+    if (!authorId) return false;
+    const r = await this.db.one(`SELECT count(*)::int AS n, bool_and(id = $2) AS only FROM stories WHERE author_id = $1 AND status = 'published' AND posted_as IN ('self','told_by','anonymous')`, [authorId, id]);
+    return r?.n === 1 && !!r.only;
+  }
+
   /** Where a submitted story stands, for the progress indicator. */
   async reviewStatus(id: string, user: AuthUser, lang: string) {
     const s = await this.db.one(`SELECT id, code, status, ai_flag, ai_explanation, author_id, pending_edit FROM stories WHERE id = $1`, [id]);
     if (!s || (s.authorId !== user.id && !isTeam(user.role))) return fail(404, 'not_found');
     const done = s.status !== 'reviewing' && !s.pendingEdit;
-    const outcome = !done ? 'review_in_progress' : s.aiFlag === 'RED' ? 'outcome_red' : s.aiFlag === 'YELLOW' ? 'outcome_yellow' : s.status === 'published' ? 'outcome_green' : 'submitted_for_approval';
+    const first = done && s.status === 'published' && s.aiFlag !== 'YELLOW' && (await this.firstStory(s.id, s.authorId));
+    const outcome = !done ? 'review_in_progress' : s.aiFlag === 'RED' ? 'outcome_red' : s.aiFlag === 'YELLOW' ? 'outcome_yellow' : s.status === 'published' ? (first ? 'first_story_live' : 'outcome_green') : 'submitted_for_approval';
     return { id: s.id, code: s.code, status: s.status, done, flag: s.aiFlag, explanation: s.aiExplanation, message: text(done && s.status === 'pending_review' && !s.aiFlag ? 'submitted_for_approval' : outcome, lang) };
   }
 
@@ -382,6 +390,7 @@ export class StoriesService implements OnModuleInit {
     }
 
     await this.db.q(`UPDATE stories SET ai_flag = $2, ai_score = $3, ai_explanation = $4 WHERE id = $1`, [id, result.flag, result.score, explanation]);
+    let first = false;
     if (result.flag === 'RED') {
       await this.db.q(`UPDATE stories SET status = 'pending_review' WHERE id = $1`, [id]);
       if (s.authorId) await this.notify.send(s.authorId, { group: 'moderation', kind: 'story.red', title: text('outcome_red', lang), body: `${s.code}: ${result.summary} An admin will review it.`, link: `/profile/stories?open=${s.code}`, data: { explanation: result } });
@@ -393,14 +402,15 @@ export class StoriesService implements OnModuleInit {
       await this.db.q(`UPDATE stories SET status = 'awaiting_validation' WHERE id = $1`, [id]);
     } else {
       await this.publish(id);
+      first = await this.firstStory(id, s.authorId);
       if (s.authorId) {
-        if (result.flag === 'YELLOW') await this.notify.send(s.authorId, { group: 'moderation', kind: 'story.yellow', title: text('outcome_yellow', lang), body: `${s.code}: ${result.summary}`, link: `/stories/${s.code}`, data: { explanation: result } });
-        else await this.notify.send(s.authorId, { group: 'engagement', kind: 'story.green', title: text('outcome_green', lang), body: s.code, link: `/stories/${s.code}` });
+        if (result.flag === 'YELLOW') await this.notify.send(s.authorId, { group: 'moderation', kind: 'story.yellow', title: text('outcome_yellow', lang), body: `${s.code}: ${result.summary}${first ? ` ${text('first_story_thanks', lang)}` : ''}`, link: `/stories/${s.code}`, data: { explanation: result } });
+        else await this.notify.send(s.authorId, { group: 'engagement', kind: 'story.green', title: text(first ? 'first_story_live' : 'outcome_green', lang), body: first ? `${s.code}: ${text('first_story_thanks', lang)}` : s.code, link: `/stories/${s.code}` });
       }
     }
     const now = await this.db.one(`SELECT status FROM stories WHERE id = $1`, [id]);
-    this.live.toUser(s.authorId, 'story.review', { id, code: s.code, status: now?.status, flag: result.flag, summary: result.summary,
-      message: text(result.flag === 'RED' ? 'outcome_red' : result.flag === 'YELLOW' ? 'outcome_yellow' : now?.status === 'published' ? 'outcome_green' : 'submitted_for_approval', lang) });
+    this.live.toUser(s.authorId, 'story.review', { id, code: s.code, status: now?.status, flag: result.flag, summary: result.summary, first,
+      message: text(result.flag === 'RED' ? 'outcome_red' : result.flag === 'YELLOW' ? 'outcome_yellow' : now?.status === 'published' ? (first ? 'first_story_live' : 'outcome_green') : 'submitted_for_approval', lang) });
   }
 
   /** A testimony collected by the project is published only when its consent record is complete and it is validated with the storyteller. */
@@ -494,7 +504,12 @@ export class StoriesService implements OnModuleInit {
     await this.db.q(this.recount, [id]);
     if (next && !cur) {
       await this.track.event('reaction', this.track.actor(user), { storyId: id, metrics: ['engagement'], meta: { type: next } });
-      if (s.authorId && s.authorId !== user.id && s.postedAs !== 'company') await this.notify.send(s.authorId, { group: 'engagement', kind: 'story.reaction', title: `${user.name} reacted to your story`, body: s.code, link: `/stories/${s.code}` });
+      if (s.authorId && s.authorId !== user.id && s.postedAs !== 'company') {
+        // The first reaction a story receives gets a word of encouragement.
+        const firstReaction = (await this.db.one(`SELECT count(*)::int AS n FROM reactions WHERE story_id = $1 AND user_id <> $2`, [id, s.authorId]))?.n === 1;
+        const lang = (await this.db.one(`SELECT language FROM users WHERE id = $1`, [s.authorId]))?.language ?? 'en';
+        await this.notify.send(s.authorId, { group: 'engagement', kind: 'story.reaction', title: text(firstReaction ? 'first_reaction' : 'story_reaction', lang, { name: user.name }), body: s.code, link: `/stories/${s.code}` });
+      }
     }
     const counts = await this.counts(id);
     this.live.toAll('story.counts', { id, counts });

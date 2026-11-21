@@ -93,12 +93,16 @@ Visitors and Contributors can report a current risk on the water. The form tells
 
 For each concern:
 
-1. **Acknowledge** it within 24 hours.
-2. **Add note** as you learn more.
-3. Where appropriate, refer it to the responsible authority through the project's partners and fill in **Referred to (authority, date, reference)**. This is the record of referral.
-4. Mark it **Resolved** or **Closed**.
+1. Set its **Status** to **Acknowledged** within 24 hours.
+2. Add an **Internal note** as you learn more.
+3. Where appropriate, refer it to the responsible authority through the project's partners, fill in **Referred to (authority, date, reference)**, and set the status to **Referred**. This is the record of referral.
+4. Set the status to **Closed** when nothing more is needed.
 
 Concerns are personal data. The reporter's identity is never published, and is shared with an authority only with their agreement. Patterns in the concerns appear in Analytics under **Places with the most safety concerns**.
+
+## Feedback
+
+**Feedback** lists what people sent from the feedback form in ABOUT & RESOURCES, newest first, with their username or “A visitor”. Read it regularly and pass recurring points to the project team; it is part of the stakeholder feedback the project reports.
 
 ## Approvals
 

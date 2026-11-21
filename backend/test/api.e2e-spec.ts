@@ -299,7 +299,10 @@ describe('sharing a story and AI review', () => {
     expect(green).toMatchObject({ status: 'published', code: expect.stringMatching(/^MS-\d{4}-\d{5}$/), place: { name: 'Likoni', county: 'Mombasa' }, tags: ['ferry', 'crew'], author: { username: 'omari_test', avatar: 'avatar:dhow' } });
     expect(green.media[0].altText).toBe('A blue sea');
     const st = await request(http).get(`${api}/stories/${green.id}/review`).set(bearer(omari.token)).expect(200);
-    expect(st.body).toMatchObject({ done: true, flag: 'GREEN', message: 'Your story is live!' });
+    // A Contributor's first story gets a word of thanks (Section 11.5).
+    expect(st.body).toMatchObject({ done: true, flag: 'GREEN', message: 'Your first story is live! Thank you for adding your memory to the archive.' });
+    const firstNote = (await request(http).get(`${api}/me/notifications`).set(bearer(omari.token)).expect(200)).body.items.find((n: any) => n.kind === 'story.green');
+    expect(firstNote.title).toBe('Your first story is live! Thank you for adding your memory to the archive.');
     expect((await request(http).get(`${api}/stories?placeId=${place.id}`).expect(200)).body.items.some((s: any) => s.id === green.id)).toBe(true);
     expect((await request(http).get(`${api}/stories?authorId=${omari.id}`).expect(200)).body.items).toHaveLength(1);
     expect((await request(http).get(`/og/stories/${green.code}`).expect(200)).headers['content-type']).toBe('image/webp');
@@ -444,6 +447,8 @@ describe('engagement, comments and social features', () => {
     expect((await request(http).get(`${api}/stories/${id}/comments?sort=recent`).expect(200)).body.items[0].text).toBe('Thank you both.');
     const notes = (await request(http).get(`${api}/me/notifications`).set(bearer(omari.token)).expect(200)).body.items.map((n: any) => n.kind);
     expect(notes).toEqual(expect.arrayContaining(['comment.mention', 'story.reaction']));
+    const reactionTitles = (await request(http).get(`${api}/me/notifications`).set(bearer(omari.token)).expect(200)).body.items.filter((n: any) => n.kind === 'story.reaction').map((n: any) => n.title);
+    expect(reactionTitles.some((t: string) => /the first reaction to it/.test(t))).toBe(true);
     const held = await request(http).post(`${api}/stories/${id}/comments`).set(bearer(baraka.token)).send({ text: 'You deserve to die for this.' }).expect(201);
     expect(held.body).toMatchObject({ held: true, message: expect.stringMatching(/not posted/) });
     expect((await request(http).get(`${api}/stories/${id}/comments`).expect(200)).body.count).toBe(3);

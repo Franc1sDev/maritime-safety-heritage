@@ -24,6 +24,9 @@ try {
   Step '1/4  Checking Node.js and installing packages'
   if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Fail 'Node.js is not installed. Install the LTS version from https://nodejs.org and run this again.' }
   Write-Host "Node.js $(node -v)"
+  # The image library (sharp 0.35) needs Node.js 20.9 or later.
+  $nodeVersion = [version]((node -v).TrimStart('v'))
+  if ($nodeVersion -lt [version]'20.9.0') { Fail "Node.js $nodeVersion is too old. Install the current LTS version (22 or later) from https://nodejs.org and run this again." }
   & npm install --no-audit --no-fund 2>&1 | Tee-Object -FilePath $log -Append | Select-Object -Last 3
   if ($LASTEXITCODE -ne 0) { Fail 'npm install failed. Check your internet connection and the log.' }
 

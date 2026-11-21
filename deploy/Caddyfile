@@ -22,8 +22,10 @@
 
 	log {
 		output file /data/access.log {
+			# Server logs are kept for 90 days (master plan, Section 7.3).
 			roll_size 20MiB
-			roll_keep 10
+			roll_keep 100
+			roll_keep_for 2160h
 		}
 	}
 }

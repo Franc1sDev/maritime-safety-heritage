@@ -88,6 +88,11 @@ const M: Record<string, Text> = {
   review_in_progress: { en: 'Checking your story… This takes up to 3 minutes.', sw: 'Tunakagua hadithi yako… Hii huchukua hadi dakika 3.' },
   outcome_green: { en: 'Your story is live!', sw: 'Hadithi yako imechapishwa!' },
   outcome_yellow: { en: 'Your story is live, with a warning.', sw: 'Hadithi yako imechapishwa, pamoja na onyo.' },
+  // Encouragement after a Contributor's first story and the first reactions to it (Section 11.5).
+  first_story_live: { en: 'Your first story is live! Thank you for adding your memory to the archive.', sw: 'Hadithi yako ya kwanza imechapishwa! Asante kwa kuongeza kumbukumbu yako kwenye hifadhi.' },
+  first_story_thanks: { en: 'Thank you for your first story. Every story helps others remember, and stay safe on the water.', sw: 'Asante kwa hadithi yako ya kwanza. Kila hadithi huwasaidia wengine kukumbuka, na kuwa salama majini.' },
+  first_reaction: { en: '{name} reacted to your story: the first reaction to it. People are reading what you shared.', sw: '{name} ameonyesha hisia kwa hadithi yako: hiyo ni ya kwanza. Watu wanasoma ulichoshiriki.' },
+  story_reaction: { en: '{name} reacted to your story', sw: '{name} ameonyesha hisia kwa hadithi yako' },
   outcome_red: { en: 'Your story was not posted.', sw: 'Hadithi yako haikuchapishwa.' },
   edit_under_review: { en: 'Your changes are being checked. The story will update when the review is complete.', sw: 'Mabadiliko yako yanakaguliwa. Hadithi itasasishwa ukaguzi ukikamilika.' },
   user_blocked: { en: '@{name} is blocked.', sw: '@{name} amezuiwa.' },
