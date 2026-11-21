@@ -1,20 +1,32 @@
 import { open } from 'fs/promises';
-import type { RecordFormat } from '../database/entities';
+export type MediaKind = 'audio' | 'video' | 'image' | 'document';
 
-export interface Detected { mime: string; ext: string; format: RecordFormat }
+export interface Detected { mime: string; ext: string; format: MediaKind }
 
 const ascii = (b: Buffer, start: number, end: number) => b.subarray(start, end).toString('latin1');
 
 /**
  * Works out a file's real type from its first bytes, ignoring the name and the type the browser claimed.
- * Only archive formats are accepted: audio, video, images, PDF and plain UTF-8 text.
+ * Only archive formats are accepted: audio, video, images, PDF, Office and OpenDocument files, and plain UTF-8 text.
+ * Programs, scripts, archives and web pages are refused.
  */
-export function detect(b: Buffer): Detected | null {
+const OFFICE: Record<string, string> = {
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', odt: 'application/vnd.oasis.opendocument.text',
+};
+export function detect(b: Buffer, name = ''): Detected | null {
   if (b.length < 4) return null;
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { mime: 'image/jpeg', ext: 'jpg', format: 'image' };
   if (b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return { mime: 'image/png', ext: 'png', format: 'image' };
   if (ascii(b, 0, 6) === 'GIF87a' || ascii(b, 0, 6) === 'GIF89a') return { mime: 'image/gif', ext: 'gif', format: 'image' };
   if ((b[0] === 0x49 && b[1] === 0x49 && b[2] === 0x2a && b[3] === 0) || (b[0] === 0x4d && b[1] === 0x4d && b[2] === 0 && b[3] === 0x2a)) return { mime: 'image/tiff', ext: 'tif', format: 'image' };
+  if (b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04) {
+    // Office and OpenDocument files are ZIP containers; any other ZIP is refused.
+    const ext = (name.split('.').pop() ?? '').toLowerCase();
+    const head = b.toString('latin1');
+    const looksOffice = head.includes('[Content_Types].xml') || head.includes('word/') || head.includes('xl/') || head.includes('ppt/') || head.includes('mimetypeapplication/vnd.oasis');
+    return OFFICE[ext] && looksOffice ? { mime: OFFICE[ext], ext, format: 'document' } : null;
+  }
   if (ascii(b, 0, 5) === '%PDF-') return { mime: 'application/pdf', ext: 'pdf', format: 'document' };
   if (ascii(b, 0, 4) === 'RIFF' && ascii(b, 8, 12) === 'WEBP') return { mime: 'image/webp', ext: 'webp', format: 'image' };
   if (ascii(b, 0, 4) === 'RIFF' && ascii(b, 8, 12) === 'WAVE') return { mime: 'audio/wav', ext: 'wav', format: 'audio' };
@@ -31,21 +43,22 @@ export function detect(b: Buffer): Detected | null {
     return { mime: 'video/mp4', ext: 'mp4', format: 'video' };
   }
   // Plain text: valid UTF-8 with no control bytes other than tab, newline and carriage return
+  if (/^\s*(<!doctype|<html|<script|<svg|<\?xml|#!)/i.test(ascii(b, 0, 64))) return null;
   if (!b.some((c) => c < 9 || (c > 13 && c < 32) || c === 0x7f)) {
     try {
       new TextDecoder('utf-8', { fatal: true }).decode(b.subarray(0, Math.max(0, b.length - 4)));
-      return { mime: 'text/plain; charset=utf-8', ext: 'txt', format: 'text' };
+      return { mime: 'text/plain; charset=utf-8', ext: 'txt', format: 'document' };
     } catch { /* not text */ }
   }
   return null;
 }
 
-export async function detectFile(path: string): Promise<Detected | null> {
+export async function detectFile(path: string, name = ''): Promise<Detected | null> {
   const fh = await open(path, 'r');
   try {
     const buf = Buffer.alloc(4100);
     const { bytesRead } = await fh.read(buf, 0, buf.length, 0);
-    return detect(buf.subarray(0, bytesRead));
+    return detect(buf.subarray(0, bytesRead), name);
   } finally {
     await fh.close();
   }

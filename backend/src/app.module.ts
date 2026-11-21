@@ -2,34 +2,39 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ActivityModule } from './activity/activity.module';
+import { AiModule } from './ai/ai.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { ApprovalsModule } from './approvals/approvals.module';
+import { ArchiveModule } from './archive/archive.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './common/auth.guard';
+import { CoreModule } from './common/core.module';
 import { DEFAULT_LIMIT } from './common/rate-limits';
 import { config } from './config/config';
 import { dataSourceOptions } from './database/data-source';
-import { User } from './database/entities';
 import { HealthController } from './health/health.controller';
+import { InboxModule } from './inbox/inbox.module';
 import { MediaModule } from './media/media.module';
-import { MessagesModule } from './messages/messages.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { RecordsModule } from './records/records.module';
-import { ReportsModule } from './reports/reports.module';
-import { SubmissionsModule } from './submissions/submissions.module';
+import { ModerationModule } from './moderation/moderation.module';
+import { StoriesModule } from './stories/stories.module';
+import { TeamModule } from './team/team.module';
 import { UsersModule } from './users/users.module';
-import { VocabModule } from './vocab/vocab.module';
 
+/**
+ * A modular monolith (Section 2.1): each area of the platform is its own module with clear boundaries, so any module
+ * can later be split into a separate service if load requires it.
+ */
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: () => dataSourceOptions() }),
-    TypeOrmModule.forFeature([User]),
     ThrottlerModule.forRoot([{ ...DEFAULT_LIMIT, limit: DEFAULT_LIMIT.limit * config.rateLimitScale }]),
-    ActivityModule, AuthModule, NotificationsModule, UsersModule, VocabModule, RecordsModule, MediaModule, SubmissionsModule, MessagesModule, ReportsModule,
+    CoreModule, MediaModule, AiModule, ApprovalsModule, InboxModule,
+    AuthModule, UsersModule, StoriesModule, ModerationModule, ArchiveModule, AnalyticsModule, TeamModule,
   ],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useExisting: AuthGuard },
   ],
 })
 export class AppModule {}

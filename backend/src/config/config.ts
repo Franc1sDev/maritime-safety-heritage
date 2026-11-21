@@ -65,7 +65,7 @@ export const config = {
   media: {
     signingSecret: secret('MEDIA_SIGNING_SECRET'),
     linkTtlSeconds: int('MEDIA_LINK_TTL_SECONDS', 3600),
-    maxUploadMb: int('MAX_UPLOAD_MB', 500),
+    maxUploadMb: int('MAX_UPLOAD_MB', 200),
     /** Key for encrypting stored files. Keep it safe and backed up: without it, encrypted files cannot be read. */
     encryptionKey: secret('MEDIA_ENCRYPTION_KEY'),
     encryptAtRest: (process.env.MEDIA_ENCRYPT_AT_REST ?? 'true') === 'true',
@@ -124,6 +124,53 @@ export const config = {
     appleClientIds: (process.env.APPLE_CLIENT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
     androidPackage: process.env.ANDROID_PACKAGE ?? 'ke.rememberingthewaters.maritime_heritage',
   },
+  /** Redis for the job queue, cache and live-update fan-out. Without it, jobs run from a database queue inside the API process. */
+  redisUrl: process.env.REDIS_URL ?? '',
+  /** Run background jobs in this process (set JOBS_WORKER=false on API-only copies when separate workers run). */
+  jobsWorker: (process.env.JOBS_WORKER ?? 'true') === 'true',
+  /**
+   * AI services (Section 5). provider: anthropic, openai, gemini, rules (a built-in rule-based stand-in for development and
+   * test hosting) or none (everything is held as "Pending review" for admins).
+   */
+  ai: {
+    provider: (process.env.AI_PROVIDER ?? (process.env.AI_API_KEY ? 'anthropic' : (isProd ? 'none' : 'rules'))) as 'anthropic' | 'openai' | 'gemini' | 'rules' | 'none',
+    apiKey: process.env.AI_API_KEY ?? '',
+    model: process.env.AI_MODEL ?? '',
+    /** A smaller, cheaper model for simple tasks (suggestions, alt text). */
+    smallModel: process.env.AI_SMALL_MODEL ?? '',
+    dailyLimit: int('AI_DAILY_LIMIT', 2000),
+    guidanceVersion: process.env.AI_GUIDANCE_VERSION ?? '2026-11',
+    transcribeKey: process.env.AI_TRANSCRIBE_KEY ?? '',
+    reviewTimeoutMs: int('AI_REVIEW_TIMEOUT_MS', 170_000),
+  },
+  push: {
+    /** Firebase service account JSON (one line) for Android and iOS push. */
+    fcmServiceAccount: process.env.FCM_SERVICE_ACCOUNT ?? '',
+    vapidPublic: process.env.VAPID_PUBLIC_KEY ?? '',
+    vapidPrivate: process.env.VAPID_PRIVATE_KEY ?? '',
+    vapidSubject: process.env.VAPID_SUBJECT ?? 'mailto:admin@localhost',
+  },
+  sms: { username: process.env.AT_USERNAME ?? '', apiKey: process.env.AT_API_KEY ?? '', from: process.env.AT_SENDER_ID ?? '' },
+  /** Appendix B: approval by a set majority of active admins (default two-thirds) or by ALL admins, with a deadline. */
+  approvals: {
+    rule: (process.env.APPROVAL_RULE ?? 'majority') as 'majority' | 'all',
+    majority: Number(process.env.APPROVAL_MAJORITY ?? 2 / 3),
+    deadlineDays: int('APPROVAL_DEADLINE_DAYS', 7),
+  },
+  limits: {
+    videoMb: int('MAX_VIDEO_MB', 200), videoMinutes: int('MAX_VIDEO_MINUTES', 5), audioMb: int('MAX_AUDIO_MB', 100),
+    imageMb: int('MAX_IMAGE_MB', 25), documentMb: int('MAX_DOCUMENT_MB', 25),
+    images: 20, documents: 4,
+  },
+  minAge: int('MINIMUM_AGE', 18),
+  /** Human-verification check (Cloudflare Turnstile) on the forms open to visitors. Empty = honeypot and rate limits only. */
+  turnstileSecret: process.env.TURNSTILE_SECRET ?? '',
+  /** App versions older than this are asked to update (Section 9.5). */
+  minAppVersion: process.env.MIN_APP_VERSION ?? '2.0.0',
+  /** Local demo and automated tests only: sign in as a sample contributor without Google or Apple. Never on in production. */
+  demoSignIn: !isProd && (process.env.DEMO_SIGN_IN ?? 'true') === 'true',
+  reportEscalateHours: int('REPORT_ESCALATE_HOURS', 48),
+  removedStoryRetentionDays: int('REMOVED_STORY_RETENTION_DAYS', 365),
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
   /** Folder with the website, served from the same address as the API. Empty string turns it off. */

@@ -6,7 +6,9 @@ import helmet from 'helmet';
 import { join } from 'path';
 import { ErrorsFilter } from './common/errors.filter';
 import { config } from './config/config';
-import { registerPublicPages } from './public/seo';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import type { ServerOptions } from 'socket.io';
+import { registerAppFallback, registerPublicPages } from './public/seo';
 
 /** Security and request handling shared by the server and the automated tests. */
 export function configureApp(app: INestApplication) {
@@ -18,13 +20,14 @@ export function configureApp(app: INestApplication) {
       directives: {
         defaultSrc: ["'self'"],
         // Sign in with Google (Google Identity Services) and Sign in with Apple load their own scripts.
-        scriptSrc: ["'self'", 'https://accounts.google.com/gsi/client', 'https://appleid.cdn-apple.com'],
+        scriptSrc: ["'self'", 'https://accounts.google.com/gsi/client', 'https://appleid.cdn-apple.com', 'https://challenges.cloudflare.com', 'https://maps.googleapis.com'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com/gsi/style'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.basemaps.cartocdn.com', 'https://assets.mixkit.co'],
-        mediaSrc: ["'self'", 'blob:', 'https://assets.mixkit.co'],
-        connectSrc: ["'self'", 'https://accounts.google.com/gsi/'],
-        frameSrc: ["'self'", 'https://accounts.google.com/gsi/', 'https://appleid.apple.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.googleusercontent.com', 'https://maps.gstatic.com', 'https://*.googleapis.com', 'https://*.ggpht.com', 'https://*.basemaps.cartocdn.com', 'https://*.tile.openstreetmap.org'],
+        mediaSrc: ["'self'", 'blob:'],
+        connectSrc: ["'self'", 'https://accounts.google.com/gsi/', 'https://challenges.cloudflare.com', 'https://maps.googleapis.com', ...(config.isProd ? [config.siteUrl.replace(/^http/, 'ws')] : ['ws:', 'wss:'])],
+        workerSrc: ["'self'", 'blob:'],
+        frameSrc: ["'self'", 'https://accounts.google.com/gsi/', 'https://appleid.apple.com', 'https://challenges.cloudflare.com'],
         frameAncestors: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -42,7 +45,7 @@ export function configureApp(app: INestApplication) {
     origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Client'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Client', 'X-Language', 'Idempotency-Key', 'X-Refresh-Token'],
     maxAge: 600,
   });
   app.setGlobalPrefix('api/v1');
@@ -50,8 +53,11 @@ export function configureApp(app: INestApplication) {
   registerPublicPages(app);
   // The website lives in ../web and is served from the same address, so its sign-in cookie stays first-party.
   if (config.webDir && existsSync(join(config.webDir, 'index.html'))) {
-    express.useStaticAssets(config.webDir, { index: 'index.html', maxAge: config.isProd ? '1h' : 0, dotfiles: 'ignore' });
+    // Files with a content hash in their name never change, so browsers may keep them for a year.
+    express.useStaticAssets(config.webDir, { index: false, maxAge: config.isProd ? '1h' : 0, dotfiles: 'ignore',
+      setHeaders: (res: { setHeader: (k: string, v: string) => void }, path: string) => { if (/[.-][0-9a-f]{8,}\.(js|css|woff2|png|svg|webp)$/i.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); } });
   }
+  registerAppFallback(app);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new ErrorsFilter());
   express.useBodyParser('json', { limit: '1mb' });
@@ -65,6 +71,26 @@ export function configureApp(app: INestApplication) {
       .setVersion('1.0').addBearerAuth().build();
     SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, doc));
   }
+  app.useWebSocketAdapter(new RealtimeAdapter(app));
   app.enableShutdownHooks();
   return app;
+}
+
+/** Socket.IO for live updates. With REDIS_URL set, events are shared across every copy of the API through Redis. */
+class RealtimeAdapter extends IoAdapter {
+  private redis?: (nsp: unknown) => unknown;
+  constructor(app: INestApplication) {
+    super(app);
+    if (config.redisUrl) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { createAdapter } = require('@socket.io/redis-adapter'); const Redis = require('ioredis');
+      const pub = new Redis(config.redisUrl), sub = pub.duplicate();
+      this.redis = createAdapter(pub, sub);
+    }
+  }
+  createIOServer(port: number, options?: ServerOptions) {
+    const server = super.createIOServer(port, { ...options, cors: { origin: (origin: string | undefined, cb: (e: Error | null, ok?: boolean) => void) => cb(null, !origin || config.corsOrigins.includes(origin) || origin === config.siteUrl), credentials: true } });
+    if (this.redis) server.adapter(this.redis);
+    return server;
+  }
 }

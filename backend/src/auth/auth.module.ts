@@ -1,16 +1,7 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MailService } from '../common/mail.service';
-import { PasswordResetToken, RefreshToken, User } from '../database/entities';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { OAuthService } from './oauth.service';
 
-@Module({
-  imports: [JwtModule.register({}), TypeOrmModule.forFeature([User, RefreshToken, PasswordResetToken])],
-  controllers: [AuthController],
-  providers: [AuthService, OAuthService, MailService],
-  exports: [AuthService, OAuthService, MailService, JwtModule],
-})
+@Module({ controllers: [AuthController], providers: [AuthService, OAuthService], exports: [AuthService, OAuthService] })
 export class AuthModule {}
