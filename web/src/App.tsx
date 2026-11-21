@@ -21,6 +21,7 @@ const Detail = lazy(() => import('./pages/Detail'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Responsibilities = lazy(() => import('./pages/Responsibilities'));
 const Super = lazy(() => import('./pages/Super'));
+const RulesFrame = lazy(() => import('./pages/About').then((m) => ({ default: m.RulesFrame })));
 
 interface Notice { id: string; kind: string; title: string; body: string; link: string; priority: boolean; readAt: string | null; doneAt: string | null; createdAt: string }
 
@@ -73,6 +74,9 @@ export default function App() {
   const priority = useMemo(() => (notices.data?.items ?? []).filter((n) => n.priority && !n.doneAt), [notices.data]);
   // Shown once per sign-in (not again on every page load in the same browser session).
   useEffect(() => { if (me?.id) { let seen = false; try { seen = sessionStorage.getItem('floated') === me.id; } catch { /* private mode */ } setFloating(!seen); } }, [me?.id]);
+  // A short welcome after a first profile is set up: the rules and how moderation works.
+  const [welcome, setWelcome] = useState(false);
+  useEffect(() => { if (me?.id && !shown) { try { if (sessionStorage.getItem('welcome')) { sessionStorage.removeItem('welcome'); setWelcome(true); } } catch { /* private mode */ } } }, [me?.id, shown]);
   useEffect(() => { if (me?.id && !floating) { try { sessionStorage.setItem('floated', me.id); } catch { /* private mode */ } } }, [floating, me?.id]);
   const showFloat = floating && priority.length > 0 && me?.profileComplete !== false;
   const openNotice = (n: Notice) => { setFloating(false); void post(`/me/notifications/${n.id}/read`).catch(() => undefined); nav(n.link.replace(/^https?:\/\/[^/]+/, '') || '/'); };
@@ -144,7 +148,15 @@ export default function App() {
         <p className="small">© {new Date().getFullYear()} Remembering the Waters{config?.emergencyNumbers?.length ? ` · ${t('In an emergency on the water call {numbers}', { numbers: config.emergencyNumbers.join(' / ') })}` : ''}</p>
       </footer>
 
-      <Guide ready={ready && !shown && !showFloat} />
+      <Guide ready={ready && !shown && !showFloat && !welcome} />
+      {welcome && (
+        <Dialog title={t('Welcome to Remembering the Waters')} onClose={() => setWelcome(false)} wide>
+          <p>{t('Thank you for joining. Before you share or comment, here is how the archive works.')}</p>
+          <Suspense fallback={<Spinner label={t('Loading…')} />}><RulesFrame /></Suspense>
+          <p className="small">{t('You can read these rules again at any time from the Rules button.')}</p>
+          <p><button className="btn primary" autoFocus onClick={() => setWelcome(false)}>{t('Start exploring')}</button></p>
+        </Dialog>
+      )}
       {showFloat && (
         <div className="floaters" onClick={() => setFloating(false)} role="dialog" aria-modal="true" aria-label={t('Needs your action')}>
           <div onClick={(e) => e.stopPropagation()}>

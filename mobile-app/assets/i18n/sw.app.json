@@ -39,5 +39,13 @@
 "Message": "Tuma ujumbe",
 "Opens in a secure viewer": "Hufunguka katika kitazamaji salama",
 "Choose how to browse at the top: trending, by place, by incident and more. Swipe up to move to the next story.": "Chagua juu jinsi ya kuvinjari: zinazovuma, kwa mahali, kwa tukio na zaidi. Telezesha juu kwenda hadithi inayofuata.",
-"Tap the plus to tell your own story in words, photos, audio or video.": "Gusa alama ya kujumlisha ili kusimulia hadithi yako kwa maneno, picha, sauti au video."
+"Tap the plus to tell your own story in words, photos, audio or video.": "Gusa alama ya kujumlisha ili kusimulia hadithi yako kwa maneno, picha, sauti au video.",
+"App lock": "Kufuli ya programu",
+"Unlock with fingerprint or face": "Fungua kwa alama ya kidole au uso",
+"Asks for your fingerprint, face or screen lock when the app opens, and after a minute away.": "Huomba alama ya kidole, uso au kufuli ya skrini programu inapofunguliwa, na baada ya dakika moja nje ya programu.",
+"Confirm it is you": "Thibitisha kuwa ni wewe",
+"Set up a fingerprint, face or screen lock on this phone first.": "Kwanza weka alama ya kidole, uso au kufuli ya skrini kwenye simu hii.",
+"The app is locked": "Programu imefungwa",
+"Use your fingerprint, face or screen lock to open Remembering the Waters.": "Tumia alama ya kidole, uso au kufuli ya skrini kufungua Remembering the Waters.",
+"Unlock": "Fungua"
 }

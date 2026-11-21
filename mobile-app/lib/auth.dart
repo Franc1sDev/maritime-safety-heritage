@@ -212,7 +212,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       await app.setLanguage(language);
       if (!mounted) return;
       toast(context, str(r['message'], t('Saved.')));
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      final nav = Navigator.of(context);
+      nav.popUntil((r) => r.isFirst);
+      // A first profile is followed by a short welcome: the rules and how moderation works.
+      if (!widget.editing) sheet(nav.context, t('Welcome to Remembering the Waters'), (c) => const WelcomeText(), tall: true);
     } catch (e) { if (mounted) setState(() => error = errText(e)); } finally { if (mounted) setState(() => busy = false); }
   }
 

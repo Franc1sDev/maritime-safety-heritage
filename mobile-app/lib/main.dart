@@ -28,9 +28,39 @@ class HeritageApp extends StatelessWidget {
       title: 'Remembering the Waters', debugShowCheckedModeBanner: false, themeMode: mode,
       theme: appTheme(dark: false, highContrast: s.ready && s.highContrast), darkTheme: appTheme(dark: true, highContrast: s.ready && s.highContrast),
       builder: (c, child) => MediaQuery(data: MediaQuery.of(c).copyWith(textScaler: TextScaler.linear((s.ready ? s.textScale : 1.0) * MediaQuery.of(c).textScaler.scale(1)), disableAnimations: (s.ready && s.reducedMotion) || MediaQuery.of(c).disableAnimations),
-          child: Directionality(textDirection: I18n.code == 'ar' ? TextDirection.rtl : TextDirection.ltr, child: child!)),
+          child: Directionality(textDirection: I18n.code == 'ar' ? TextDirection.rtl : TextDirection.ltr, child: Stack(children: [child!, if (s.ready && s.locked) const Positioned.fill(child: LockScreen())]))),
       home: s.ready ? const Shell() : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
+  }
+}
+
+/// Shown over the whole app while an admin's app lock is on: nothing behind it can be read or touched.
+class LockScreen extends StatefulWidget {
+  const LockScreen({super.key});
+  @override
+  State<LockScreen> createState() => _LockScreenState();
+}
+
+class _LockScreenState extends State<LockScreen> {
+  bool asking = false;
+  @override
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _ask()); }
+  Future<void> _ask() async {
+    if (asking || !mounted) return;
+    setState(() => asking = true);
+    await AppScope.read(context).unlock(t('Confirm it is you'));
+    if (mounted) setState(() => asking = false);
+  }
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(color: cs.surface, child: SafeArea(child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Icon(Icons.lock_outline, size: 54, color: cs.primary), const SizedBox(height: 14),
+      Text(t('The app is locked'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800), textAlign: TextAlign.center), const SizedBox(height: 6),
+      Text(t('Use your fingerprint, face or screen lock to open Remembering the Waters.'), textAlign: TextAlign.center), const SizedBox(height: 18),
+      FilledButton.icon(onPressed: asking ? null : _ask, icon: const Icon(Icons.fingerprint), label: Text(t('Unlock'))), const SizedBox(height: 6),
+      TextButton(onPressed: () => AppScope.read(context).signOut(), child: Text(t('Sign out'))),
+    ])))));
   }
 }
 
@@ -41,18 +71,27 @@ class Shell extends StatefulWidget {
   State<Shell> createState() => _ShellState();
 }
 
-class _ShellState extends State<Shell> {
+class _ShellState extends State<Shell> with WidgetsBindingObserver {
   final stories = GlobalKey<StoriesScreenState>();
   StreamSubscription<Uri>? _links;
+
+  // Admin app lock: asks again after a minute away from the app.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final s = AppScope.read(context);
+    if (state == AppLifecycleState.paused) s.leftApp();
+    if (state == AppLifecycleState.resumed) s.cameBack();
+  }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Deep links: a shared story link opens directly in the app.
     try { _links = AppLinks().uriLinkStream.listen(_openLink, onError: (_) {}); } catch (_) {}
   }
   @override
-  void dispose() { _links?.cancel(); super.dispose(); }
+  void dispose() { WidgetsBinding.instance.removeObserver(this); _links?.cancel(); super.dispose(); }
 
   void _openLink(Uri u) => openPath(u.path + (u.hasQuery ? '?${u.query}' : ''));
 

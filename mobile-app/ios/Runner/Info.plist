@@ -28,6 +28,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Take photos and videos to add to the story you are sharing or to a safety concern.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Unlock the app with Face ID when the admin app lock is on.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Record your story by voice, and the sound for videos you share.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

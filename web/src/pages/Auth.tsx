@@ -153,6 +153,8 @@ export function ProfileSetup({ editing, onDone }: { editing?: boolean; onDone?: 
     try {
       const r = await post('/auth/profile', { useProviderIdentity: useProvider, username: useProvider ? undefined : username.trim(), avatar: useProvider || photo ? undefined : avatar, photoMediaId: !useProvider && photo ? photo.id : undefined, language, theme, acceptTerms: editing ? undefined : terms, ageConfirmed: editing ? undefined : age });
       setMe(r.user); toast(r.message);
+      // A first profile is followed by a short welcome on the STORIES page.
+      if (!editing) { try { sessionStorage.setItem('welcome', '1'); } catch { /* private mode */ } }
       if (onDone) onDone(); else nav('/');
     } catch (er: any) { setError(er.message); } finally { setBusy(false); }
   }

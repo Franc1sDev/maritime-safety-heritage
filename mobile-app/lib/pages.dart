@@ -16,6 +16,18 @@ import 'stories.dart';
 Scaffold page(String title, Widget body, {List<Widget>? actions, Widget? fab}) => Scaffold(appBar: AppBar(title: Text(title), actions: actions), body: SafeArea(child: body), floatingActionButton: fab);
 
 // ---------- Rules, legal, about ----------
+/// The short welcome after a first profile is set up.
+class WelcomeText extends StatelessWidget {
+  const WelcomeText({super.key});
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    Text(t('Thank you for joining. Before you share or comment, here is how the archive works.')), const SizedBox(height: 10),
+    const RulesText(), const SizedBox(height: 10),
+    Text(t('You can read these rules again at any time from the Rules button.'), style: const TextStyle(fontSize: 12.5)), const SizedBox(height: 8),
+    FilledButton(onPressed: () => Navigator.pop(context), child: Text(t('Start exploring'))),
+  ]);
+}
+
 class RulesText extends StatelessWidget {
   const RulesText({super.key});
   @override
@@ -582,6 +594,11 @@ class SettingsView extends StatelessWidget {
         Choice<String>(t('Text size'), str(s['textSize'], 'medium'), {'small': t('Small'), 'medium': t('Medium'), 'large': t('Large'), 'xlarge': t('Extra large')}, (v) => set({'textSize': v})),
         Choice<String>(t('Language'), I18n.code, I18n.launch, (v) => set({'language': v})),
         sw(t('High contrast'), 'highContrast'), sw(t('Reduce motion (fewer animations)'), 'reducedMotion'),
+      ]),
+      if (app.isTeam) Section(t('App lock'), [
+        SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(t('Unlock with fingerprint or face')),
+          subtitle: Text(t('Asks for your fingerprint, face or screen lock when the app opens, and after a minute away.')), value: app.bioLock,
+          onChanged: (v) async { final ok = await app.setBioLock(v, t('Confirm it is you')); if (!ok && context.mounted) toast(context, t('Set up a fingerprint, face or screen lock on this phone first.'), error: true); }),
       ]),
       Section(t('Hints'), [
         Text(t('A short guide to browsing, reacting, commenting and sharing a story.')),

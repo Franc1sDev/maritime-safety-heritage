@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:local_auth/local_auth.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,6 +101,30 @@ class AppState extends ChangeNotifier {
   void nextGuide(int total) { if (guideStep == null) return; if (guideStep! + 1 >= total) { endGuide(); } else { guideStep = guideStep! + 1; notifyListeners(); } }
   void endGuide() { prefs.setBool('guided', true); guideStep = null; notifyListeners(); }
 
+  // Optional fingerprint or face unlock for admin accounts. The choice is kept on this phone.
+  bool get isTeam => isAdmin || isSuper;
+  bool get bioLock => isTeam && (prefs.getBool('bioLock') ?? false);
+  bool locked = false;
+  DateTime? _leftAt;
+  Future<bool> confirmOwner(String reason) async {
+    try {
+      final auth = LocalAuthentication();
+      if (!await auth.isDeviceSupported()) return false;
+      return await auth.authenticate(localizedReason: reason, options: const AuthenticationOptions(stickyAuth: true));
+    } catch (_) { return false; }
+  }
+  /// Turning the lock on or off both need the owner's fingerprint, face or screen lock.
+  Future<bool> setBioLock(bool on, String reason) async {
+    if (!await confirmOwner(reason)) return false;
+    await prefs.setBool('bioLock', on);
+    notifyListeners();
+    return true;
+  }
+  void lockIfSet() { if (bioLock && !locked) { locked = true; notifyListeners(); } }
+  void leftApp() => _leftAt ??= DateTime.now();
+  void cameBack() { final at = _leftAt; _leftAt = null; if (at != null && DateTime.now().difference(at) > const Duration(seconds: 60)) lockIfSet(); }
+  Future<void> unlock(String reason) async { if (await confirmOwner(reason)) { locked = false; notifyListeners(); } }
+
   String get role => str(me?['role']);
   bool get signedIn => me != null;
   bool get isAdmin => role == 'admin';
@@ -119,6 +144,7 @@ class AppState extends ChangeNotifier {
     try { me = await api.restore(); } catch (_) {}
     if (me != null) await setLanguage(str(me!['language'], I18n.code), save: false);
     unawaited(loadConfig());
+    if (bioLock) locked = true;
     ready = true;
     notifyListeners();
     refresh();
@@ -128,7 +154,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() { _poll?.cancel(); super.dispose(); }
 
-  void _signedOut() { me = null; counts = {}; priority = []; notifyListeners(); }
+  void _signedOut() { me = null; counts = {}; priority = []; locked = false; notifyListeners(); }
 
   Future<void> loadConfig() async {
     try { config = asMap(await api.get('/config')); online = true; } on ApiError catch (e) { if (e.status == 0) online = false; if (e.status == 426) updateRequired = true; }
