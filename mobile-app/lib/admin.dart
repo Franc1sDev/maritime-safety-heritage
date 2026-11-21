@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'core.dart';
 import 'pages.dart';
 import 'share.dart';
-import 'stories.dart';
 
 const adminTabs = <(String, IconData, String)>[
   ('moderation', Icons.shield, 'Moderation'), ('reports', Icons.flag, 'Reports'), ('safety', Icons.warning_amber, 'Safety concerns'), ('approvals', Icons.how_to_vote, 'Approvals'), ('company', Icons.auto_stories, 'Company stories'),
