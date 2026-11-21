@@ -107,7 +107,7 @@ function MyStories() {
           </li>
         ))}</ul>
       )}
-      {del && <Confirm title={t('Delete this story?')} text={t('It is removed at once. You can ask the admins to restore it within 30 days; after that it is erased permanently.')} yes={t('Delete')} danger onClose={() => setDel(null)} onYes={async () => { try { const r = await api(`/stories/${del.id}`, { method: 'DELETE' }); toast(r?.message ?? t('Story deleted.')); void qc.invalidateQueries({ queryKey: ['my-stories'] }); void qc.invalidateQueries({ queryKey: ['stories'] }); } catch (e: any) { toast(e.message, 'error'); } }} />}
+      {del && <Confirm title={t('Delete this story? This cannot be undone.')} text={t('It is removed at once and erased permanently after 30 days.')} yes={t('Delete')} danger onClose={() => setDel(null)} onYes={async () => { try { const r = await api(`/stories/${del.id}`, { method: 'DELETE' }); toast(r?.message ?? t('Story deleted.')); void qc.invalidateQueries({ queryKey: ['my-stories'] }); void qc.invalidateQueries({ queryKey: ['stories'] }); } catch (e: any) { toast(e.message, 'error'); } }} />}
       {why && <AskWhy storyId={why.id} onClose={() => setWhy(null)} />}
     </div>
   );
@@ -326,7 +326,7 @@ function DeleteAccount() {
   return (
     <div>
       <h2>{t('Delete account')}</h2>
-      <p className="note warn">{t('Your account and everything you posted are removed at once and permanently erased after 30 days. Until then you can restore the account by signing in again.')}</p>
+      <p className="note warn">{t('Your account and content will be removed at once and permanently erased after 30 days. To restore it, sign in again within 30 days.')}</p>
       <fieldset style={{ border: 0, padding: 0 }}><legend className="label">{t('Why are you leaving? Pick one.')}</legend>
         {config?.deletionReasons.map((r) => <label key={r.key} className="check"><input type="radio" name="why" checked={reason === r.key} onChange={() => setReason(r.key)} /><span>{r.label}</span></label>)}
       </fieldset>

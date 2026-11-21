@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -49,7 +50,14 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
   final source = {for (final k in ['institution', 'reference', 'originalDate', 'creator', 'rightsStatement', 'obtained']) k: TextEditingController()};
   final slots = <_Slot>[];
   late final Uploads _uploads;
+  late final AppState _app;
   bool _handedOver = false;
+  // The story is also kept on the phone while it is being written, so a dropped connection or a closed app never loses it.
+  Timer? _autosave;
+  String _kept = '';
+  bool _sent = false;
+  final _sendKey = Api.newKey();
+  bool get _isNew => widget.editId == null && !widget.company;
   String language = I18n.code, category = '', postedAs = 'self', rights = 'All rights reserved', type = 'community', consentType = 'written';
   int? placeId;
   LatLng? pos;
@@ -75,13 +83,21 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
   @override
   void initState() {
     super.initState();
-    _uploads = AppScope.read(context).uploads..addListener(_onUploads);
+    _app = AppScope.read(context);
+    _uploads = _app.uploads..addListener(_onUploads);
+    if (_isNew) {
+      final d = _app.localDraft;
+      if (d != null) _restoreLocal(d);
+      _autosave = Timer.periodic(const Duration(seconds: 5), (_) => _keepLocal());
+    }
     if (widget.company) postedAs = 'company';
     draftId = widget.editId;
     if (widget.editId != null) _loadExisting();
   }
   @override
   void dispose() {
+    _autosave?.cancel();
+    _keepLocal();
     _uploads.removeListener(_onUploads);
     // Leaving without sending: uploads nobody is waiting for are stopped.
     if (!_handedOver) { for (final s in slots) { if (s.task != null && s.task!.active) _uploads.cancel(s.task!); } }
@@ -106,12 +122,40 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
     } catch (e) { if (mounted) { toast(context, errText(e), error: true); Navigator.pop(context); } }
   }
 
+  // ---- kept on this phone ----
+  J _local(bool waiting) => {'title': title.text, 'text': text.text, 'placeName': placeName.text, 'vessel': vessel.text, 'tags': tags.text, 'toldBy': toldBy.text, 'language': language, 'category': category,
+    'postedAs': postedAs, 'rights': rights, 'approx': approx, 'year': year.text, 'eventDate': eventDate?.toIso8601String(), 'allowDownload': allowDownload, 'sensitive': sensitive, 'waiting': waiting};
+  void _restoreLocal(J d) {
+    title.text = str(d['title']); text.text = str(d['text']); placeName.text = str(d['placeName']); vessel.text = str(d['vessel']); tags.text = str(d['tags']); toldBy.text = str(d['toldBy']); year.text = str(d['year']);
+    language = str(d['language'], language); category = str(d['category']); rights = str(d['rights'], rights);
+    if (const ['self', 'anonymous', 'told_by'].contains(d['postedAs'])) postedAs = str(d['postedAs']);
+    approx = d['approx'] == true; eventDate = DateTime.tryParse(str(d['eventDate'])); allowDownload = d['allowDownload'] != false; sensitive = d['sensitive'] == true;
+    _kept = jsonEncode(_local(d['waiting'] == true));
+  }
+  /// Keeps what has been written so far. Not used once the story is on the account (as a draft or sent).
+  void _keepLocal({bool? waiting}) {
+    if (!_isNew || _sent || draftId != null) return;
+    if (title.text.trim().isEmpty && text.text.trim().isEmpty) return;
+    final d = _local(waiting ?? (_app.localDraft?['waiting'] == true));
+    final now = jsonEncode(d);
+    if (now == _kept) return;
+    _kept = now;
+    _app.setLocalDraft(d);
+  }
+  /// Offline while saving or sending: the words are kept on the phone and offered again when the connection returns.
+  String _offline(bool draft) {
+    _keepLocal(waiting: !draft);
+    if (draft) return t('You are offline. Your draft is saved on this device.');
+    return '${t('You are offline. Your story will be sent when you are back online.')} ${slots.isEmpty ? '' : t('Files will need to be added again.')}'.trim();
+  }
+  void _onAccount() { if (_isNew) { _sent = true; _app.setLocalDraft(null); } }
+
   // ---- files ----
   Future<void> _add(String path, String name, int size) async {
     final kind = _kindOf(name);
     if (kind == null) { setState(() => errors = [t('“{name}”: this file type is not supported.', {'name': name})]); return; }
     if (count(kind) >= max(kind)) { setState(() => errors = [kind == 'image' ? t('You can add up to {n} images.', {'n': max(kind)}) : kind == 'document' ? t('You can add up to {n} documents.', {'n': max(kind)}) : kind == 'video' ? t('A story can have one video.') : t('A story can have one audio file.')]); return; }
-    if (size > maxMb(kind) * 1048576) { setState(() => errors = [t('“{name}” is too large. The limit is {mb} MB.', {'name': name, 'mb': maxMb(kind)})]); return; }
+    if (size > maxMb(kind) * 1048576) { setState(() => errors = ['“$name”: ${t('This file is too large. The maximum for {kind} is {max} MB.', {'kind': t(kind == 'video' ? 'a video' : kind == 'audio' ? 'an audio file' : kind == 'image' ? 'an image' : 'a document'), 'max': maxMb(kind)})}']); return; }
     // The upload belongs to the app, not to this form: it can be paused, waits for Wi-Fi if asked, and carries on while browsing.
     final slot = _Slot(name, kind, task: _uploads.add(LocalFile(path, name, size), 'story'));
     setState(() { slots.add(slot); errors = []; });
@@ -126,11 +170,12 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
     final wasPub = wasPublished;
     try {
       if (!wasPub) {
-        final d = draftId != null ? asMap(await api.patch('/stories/$draftId', _payload(true))) : asMap(await api.post('/stories', _payload(true)));
+        final d = draftId != null ? asMap(await api.patch('/stories/$draftId', _payload(true))) : asMap(await api.post('/stories', _payload(true), _sendKey));
         draftId = str(d['id']);
+        _onAccount();
       }
     } on ApiError catch (e) {
-      if (mounted) setState(() { busy = null; errors = [e.status == 0 ? t('You are offline. Your story will be kept on this device until you are back online.') : '${e.message} ${str(asMap(e.details)['reason'])}'.trim()]; });
+      if (mounted) setState(() { busy = null; errors = [e.status == 0 ? _offline(false) : '${e.message} ${str(asMap(e.details)['reason'])}'.trim()]; });
       return;
     }
     final id = draftId!;
@@ -222,8 +267,9 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
       if (draftId != null) {
         s = asMap(await app.api.patch('/stories/$draftId', _payload(draft || !wasPublished)));
         if (!draft && !wasPublished) s = asMap(await app.api.post('/stories/$draftId/submit'));
-      } else { s = asMap(await app.api.post('/stories', _payload(draft))); }
+      } else { s = asMap(await app.api.post('/stories', _payload(draft), _sendKey)); }
       draftId = str(s['id']);
+      _onAccount();
       if (!mounted) return;
       if (draft) { toast(context, str(s['message'], t('Draft saved.'))); setState(() => busy = null); return; }
       final mod = asMap(s['moderation']);
@@ -231,7 +277,7 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
       setState(() { busy = null; reviewStart = DateTime.now(); review = {'id': s['id'], 'done': !checking, 'flag': checking ? null : mod['aiFlag'], 'message': s['message'] ?? (checking ? t('Checking your story… This takes up to 3 minutes.') : t('Submitted for approval.')), 'explanation': mod['aiExplanation'], 'status': s['status']}; });
       if (checking) _poll = Timer.periodic(const Duration(seconds: 3), (_) async { try { final r = asMap(await app.api.get('/stories/${s['id']}/review')); if (!mounted) return; setState(() => review = {...review!, ...r}); if (r['done'] == true) _poll?.cancel(); } catch (_) {} });
     } on ApiError catch (e) {
-      if (mounted) setState(() { busy = null; errors = [e.status == 0 ? t('You are offline. Your story will be kept on this device until you are back online.') : '${e.message} ${str(asMap(e.details)['reason'])}'.trim()]; });
+      if (mounted) setState(() { busy = null; errors = [e.status == 0 ? _offline(draft) : '${e.message} ${str(asMap(e.details)['reason'])}'.trim()]; });
     }
   }
 
@@ -276,11 +322,12 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
             leading: Icon(sl.kind == 'image' ? Icons.image : sl.kind == 'video' ? Icons.videocam : sl.kind == 'audio' ? Icons.graphic_eq : Icons.description),
             title: Text(sl.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: sl.error != null ? Text(sl.error!, style: const TextStyle(color: C.red)) : sl.media == null ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: sl.pct),
-                    Text(sl.task?.state == 'paused' ? '${t('Paused')} · ${(sl.pct * 100).round()}%' : sl.task?.state == 'wifi' ? t('Waiting for Wi-Fi') : '${t('Uploading…')} ${(sl.pct * 100).round()}%')])
+                    Text(sl.task?.state == 'paused' ? '${t('Paused')} · ${(sl.pct * 100).round()}%' : sl.task?.state == 'wifi' ? t('Waiting for Wi-Fi to upload.') : '${t('Uploading…')} ${(sl.pct * 100).round()}%')])
                 : sl.kind == 'document' && postedAs == 'told_by' ? InkWell(onTap: () => setState(() { for (final x in slots) { x.consentForm = identical(x, sl) ? !sl.consentForm : false; } }), child: Text('${sl.consentForm ? '☑' : '☐'} ${t('This is the signed consent form (kept private)')}')) : Text(t('Ready')),
             trailing: Wrap(children: [
               if (sl.error != null) IconButton(icon: const Icon(Icons.refresh), tooltip: t('Retry'), onPressed: () => _uploads.resume(sl.task!)),
               if (sl.task != null && sl.task!.large && sl.task!.state == 'sending') IconButton(icon: const Icon(Icons.pause), tooltip: t('Pause'), onPressed: () => _uploads.pause(sl.task!)),
+              if (sl.task?.state == 'wifi') TextButton(onPressed: _uploads.uploadNow, child: Text(t('Upload now'))),
               if (sl.task?.state == 'paused') IconButton(icon: const Icon(Icons.play_arrow), tooltip: t('Resume'), onPressed: () => _uploads.resume(sl.task!)),
               IconButton(icon: const Icon(Icons.close), tooltip: t('Remove {name}', {'name': sl.name}), onPressed: () => _remove(sl)),
             ])),

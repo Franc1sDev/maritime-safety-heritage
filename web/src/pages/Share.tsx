@@ -85,7 +85,7 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
       const kind = kindOf(file);
       if (!kind) { errs.push(t('“{name}”: this file type is not supported.', { name: file.name })); continue; }
       if (taken[kind] >= max[kind]) { errs.push(kind === 'image' ? t('You can add up to {n} images.', { n: max.image }) : kind === 'document' ? t('You can add up to {n} documents.', { n: max.document }) : kind === 'video' ? t('A story can have one video.') : t('A story can have one audio file.')); continue; }
-      if (file.size > maxMb[kind] * 1048576) { errs.push(t('“{name}” is too large. The limit is {mb} MB.', { name: file.name, mb: maxMb[kind] })); continue; }
+      if (file.size > maxMb[kind] * 1048576) { errs.push(`“${file.name}”: ${t('This file is too large. The maximum for {kind} is {max} MB.', { kind: t(kind === 'video' ? 'a video' : kind === 'audio' ? 'an audio file' : kind === 'image' ? 'an image' : 'a document'), max: maxMb[kind] })}`); continue; }
       taken[kind]++;
       const k = newKey();
       const slot: Slot = { key: k, name: file.name, kind, pct: 0, step: kind === 'image' ? 'compressing' : 'uploading', preview: kind === 'image' ? URL.createObjectURL(file) : undefined };
@@ -155,7 +155,7 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
     if (errs.length) return null;
     if (!online) {
       await store.put('drafts', { id: 'new', form: f, at: Date.now(), waiting: !draft });
-      toast(t('You are offline. Your story is saved on this device and will be waiting in My Profile › Drafts.'), 'info');
+      toast(draft ? t('You are offline. Your draft is saved on this device.') : `${t('You are offline. Your story will be sent when you are back online.')} ${t('It is waiting in My Profile › Drafts.')}`, 'info');
       return null;
     }
     setBusy(draft ? 'draft' : 'send');
@@ -371,7 +371,7 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
           <label className="check"><input type="checkbox" checked={f.sensitive} onChange={(e) => set({ sensitive: e.target.checked })} /><span>{t('This story describes loss of life or may be distressing')}</span></label>
         </div>
       </div>
-      {!online && <p className="note warn small">{t('You are offline. Your story will be kept on this device until you are back online.')}</p>}
+      {!online && <p className="note warn small">{t('You are offline. Your story will be sent when you are back online.')}</p>}
       {errors.length > 0 && <div className="note bad" role="alert">{errors.map((e, i) => <p key={i} style={{ margin: '.15rem 0' }}>{e}</p>)}</div>}
       <div className="actions sticky">
         <button className="btn quiet" onClick={onClose}>{t('Cancel')}</button>

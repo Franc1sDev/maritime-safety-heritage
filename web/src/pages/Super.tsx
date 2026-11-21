@@ -77,7 +77,7 @@ function ManageAdmins() {
       {ask?.kind === 'approve' && <Confirm title={t('Approve {name} as an admin?', { name: ask.a.name })} yes={t('Approve')} onClose={() => setAsk(null)} onYes={() => run(() => post(`/super/admins/${ask.a.id}/decision`, { approve: true }))} />}
       {ask?.kind === 'decline' && <Confirm title={t('Decline this registration?')} yes={t('Decline')} danger onClose={() => setAsk(null)} onYes={() => run(() => post(`/super/admins/${ask.a.id}/decision`, { approve: false }))} />}
       {ask?.kind === 'promote' && <Confirm title={t('Make {name} a Super Admin?', { name: ask.a.name })} text={t('Super Admins manage admins and see all analytics and the full audit log. They no longer moderate stories.')} yes={t('Make Super Admin')} onClose={() => setAsk(null)} onYes={() => run(() => post(`/super/admins/${ask.a.id}/promote`))} />}
-      {ask?.kind === 'remove' && <Confirm title={t('Remove {name}?', { name: ask.a.name })} text={t('They lose access immediately.')} needReason={t('Reason')} yes={t('Remove')} danger onClose={() => setAsk(null)} onYes={(reason) => run(() => post(`/super/admins/${ask.a.id}/remove`, { reason }))} />}
+      {ask?.kind === 'remove' && <Confirm title={t('Remove {name}?', { name: ask.a.name })} text={t('They will lose access immediately.')} needReason={t('Reason')} yes={t('Remove')} danger onClose={() => setAsk(null)} onYes={(reason) => run(() => post(`/super/admins/${ask.a.id}/remove`, { reason }))} />}
     </div>
   );
 }

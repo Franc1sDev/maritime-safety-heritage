@@ -8,6 +8,7 @@ import 'admin.dart';
 import 'auth.dart';
 import 'core.dart';
 import 'pages.dart';
+import 'share.dart';
 import 'stories.dart';
 
 /// Remembering the Waters: the Android and iOS app. Same API, accounts and design as the website.
@@ -55,14 +56,15 @@ class UploadsBar extends StatelessWidget {
       final waitingWifi = !sending && u.live.any((x) => x.state == 'wifi');
       final line = failed.isNotEmpty ? '${t('Could not send “{title}”. It is saved in your drafts.', {'title': failed.first.title})} ${failed.first.error}'
           : u.pending.isNotEmpty ? t('Sending “{title}” when its files finish', {'title': u.pending.first.title})
-          : waitingWifi ? t('Waiting for Wi-Fi') : sending ? t('Uploading… {n}%', {'n': (u.pct * 100).round()}) : t('Paused');
+          : waitingWifi ? t('Waiting for Wi-Fi to upload.') : sending ? t('Uploading… {n}%', {'n': (u.pct * 100).round()}) : t('Paused');
       return Container(width: double.infinity, color: failed.isNotEmpty ? cs.errorContainer : cs.surfaceContainerHighest, padding: const EdgeInsets.only(left: 12), child: Column(mainAxisSize: MainAxisSize.min, children: [
         Row(children: [
           Expanded(child: Text(line, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
           if (failed.isNotEmpty) ...[
             IconButton(icon: const Icon(Icons.refresh, size: 20), tooltip: t('Retry'), onPressed: () => u.retry(failed.first)),
             IconButton(icon: const Icon(Icons.close, size: 20), tooltip: t('Close'), onPressed: () { for (final x in List.of(failed.first.needs)) { if (x.active || x.state == 'failed') u.cancel(x); } u.drop(failed.first); }),
-          ] else if (u.live.any((x) => x.large || x.state != 'sending')) IconButton(icon: Icon(sending ? Icons.pause : Icons.play_arrow, size: 20), tooltip: sending ? t('Pause') : t('Resume'), onPressed: sending ? u.pauseAll : u.resumeAll),
+          ] else if (waitingWifi) TextButton(onPressed: u.uploadNow, child: Text(t('Upload now')))
+          else if (u.live.any((x) => x.large || x.state != 'sending')) IconButton(icon: Icon(sending ? Icons.pause : Icons.play_arrow, size: 20), tooltip: sending ? t('Pause') : t('Resume'), onPressed: sending ? u.pauseAll : u.resumeAll),
         ]),
         if (u.live.isNotEmpty) Padding(padding: const EdgeInsets.only(right: 12, bottom: 6), child: LinearProgressIndicator(value: u.pct)),
       ]));
@@ -182,6 +184,19 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       s.floated = true;
       WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) _float(s); });
     }
+    // A story written offline: once the connection is back, offer to send it (it is never sent without the person's say-so).
+    if (s.offerWaitingStory) {
+      s.offeredWaitingStory();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final ok = await confirm(context, t('You are back online'), text: t('The story you wrote while offline is waiting. Open it to check it and send it?'), yes: t('Open my story'));
+        if (ok != null && mounted) go(const ShareStoryPage());
+      });
+    }
+    if (s.backOnline) {
+      s.backOnline = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) toast(context, t('Back online.')); });
+    }
     final storiesIcon = _round(Icons.auto_stories, t('STORIES'), () { Navigator.of(context).popUntil((r) => r.isFirst); stories.currentState?.open('trending'); }, centre: true, on: true);
     final icons = !s.signedIn
         ? [_round(Icons.info_outline, t('ABOUT & RESOURCES'), () => go(const AboutPage())), storiesIcon, _round(Icons.login, t('SIGN IN'), () => go(const SignInPage()))]
@@ -199,6 +214,9 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
         if (s.priority.isNotEmpty) SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
           for (final n in s.priority.take(4)) Padding(padding: const EdgeInsets.only(right: 6), child: ActionChip(avatar: const Icon(Icons.notifications_active, size: 16), label: Text(str(n['title']), style: const TextStyle(fontSize: 12)), onPressed: () => _openNotice(s, n))),
         ])),
+        if (s.suggestLowData) MaterialBanner(content: Text(t('Your connection looks slow. Turn on low-data mode? Pictures and video then load only when you select them.')), actions: [
+          TextButton(onPressed: () => s.answerLowData(false), child: Text(t('Not now'))), TextButton(onPressed: () => s.answerLowData(true), child: Text(t('Turn on'))),
+        ]),
         const UploadsBar(),
         Expanded(child: StoriesScreen(key: stories)),
         if (s.isAdmin) SafeArea(top: false, child: Padding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 6), child: FilledButton.icon(onPressed: () => openAdminPanel(context), icon: const Icon(Icons.tune), label: Text(t('ADMINISTRATIVE CONTROLS'))))),

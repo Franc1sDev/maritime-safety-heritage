@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { get, post } from './lib/api';
 import { useApp, useSaveSettings } from './lib/app';
-import { onQueue, queued } from './lib/offline';
+import { onQueue, queued, store } from './lib/offline';
 import { Icon } from './components/Icon';
 import { Dialog, Spinner, Toasts } from './components/ui';
 import { Guide } from './components/Guide';
@@ -74,6 +74,15 @@ export default function App() {
   const priority = useMemo(() => (notices.data?.items ?? []).filter((n) => n.priority && !n.doneAt), [notices.data]);
   // Shown once per sign-in (not again on every page load in the same browser session).
   useEffect(() => { if (me?.id) { let seen = false; try { seen = sessionStorage.getItem('floated') === me.id; } catch { /* private mode */ } setFloating(!seen); } }, [me?.id]);
+  // A story written offline: once the connection is back, offer to open it (it is never sent without the person's say-so).
+  const [waitingStory, setWaitingStory] = useState(false);
+  useEffect(() => {
+    if (!online || !me?.id) return;
+    let live = true;
+    void store.get<{ waiting?: boolean }>('drafts', 'new').then((d) => { let asked = false; try { asked = sessionStorage.getItem('offered') === '1'; } catch { /* private mode */ } if (live && d?.waiting && !asked) setWaitingStory(true); });
+    return () => { live = false; };
+  }, [online, me?.id]);
+  const answerWaiting = (open: boolean) => { setWaitingStory(false); try { sessionStorage.setItem('offered', '1'); } catch { /* private mode */ } if (open) nav('/?share=1'); };
   // A short welcome after a first profile is set up: the rules and how moderation works.
   const [welcome, setWelcome] = useState(false);
   useEffect(() => { if (me?.id && !shown) { try { if (sessionStorage.getItem('welcome')) { sessionStorage.removeItem('welcome'); setWelcome(true); } } catch { /* private mode */ } } }, [me?.id, shown]);
@@ -149,6 +158,12 @@ export default function App() {
       </footer>
 
       <Guide ready={ready && !shown && !showFloat && !welcome} />
+      {waitingStory && !shown && (
+        <Dialog title={t('You are back online')} onClose={() => answerWaiting(false)}>
+          <p>{t('The story you wrote while offline is waiting. Open it to check it and send it?')}</p>
+          <p className="row"><button className="btn primary" autoFocus onClick={() => answerWaiting(true)}>{t('Open my story')}</button><button className="btn quiet" onClick={() => answerWaiting(false)}>{t('Not now')}</button></p>
+        </Dialog>
+      )}
       {welcome && (
         <Dialog title={t('Welcome to Remembering the Waters')} onClose={() => setWelcome(false)} wide>
           <p>{t('Thank you for joining. Before you share or comment, here is how the archive works.')}</p>

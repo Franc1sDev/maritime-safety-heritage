@@ -198,8 +198,8 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
               : !current ? (
                 <Zone>
                   {routeCode && one.error ? <Problem error={one.error} />
-                    : tab === 'following' ? <Empty icon="follow" title={t('You are not following anyone yet')}><p>{t('Follow Contributors to see their stories here.')}</p><button className="btn primary" onClick={() => pickTab('contributors')}>{t('Find Contributors')}</button></Empty>
-                    : tab === 'favorites' ? <Empty icon="star" title={t('No favorites yet')}><p>{t('Select the star on a story to keep it here.')}</p></Empty>
+                    : tab === 'following' ? <Empty icon="follow" title={t('You are not following anyone yet')}><p>{t('Follow contributors to see their stories here.')}</p><button className="btn primary" onClick={() => pickTab('contributors')}>{t('Find Contributors')}</button></Empty>
+                    : tab === 'favorites' ? <Empty icon="star" title={t('No favorites yet')}><p>{t('Select ☆ on a story to save it here.')}</p></Empty>
                     : tab === 'location' ? <Empty icon="pin" title={t('No stories for this location.')} />
                     : tab === 'contributors' ? <Empty icon="people" title={t('No Contributor with this username has posted a story, or their stories may have been deleted.')} />
                     : <Empty title={filters.q ? t('Nothing matches your search') : t('No stories here yet')}><p>{t('Be the first to share one.')}</p><button className="btn primary" onClick={() => { if (need()) setMode('share'); }}>{t('Share my story')}</button></Empty>}

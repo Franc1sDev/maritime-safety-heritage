@@ -166,8 +166,8 @@ class StoriesScreenState extends State<StoriesScreen> {
     if (error != null) return EmptyState(errText(error!), icon: Icons.wifi_off, action: OutlinedButton(onPressed: load, child: Text(t('Retry'))));
     if (items.isEmpty) {
       return switch (tab) {
-        'following' => EmptyState(t('You are not following anyone yet'), icon: Icons.group_add, text: t('Follow Contributors to see their stories here.'), action: FilledButton(onPressed: () => open('contributors'), child: Text(t('Find Contributors')))),
-        'favorites' => EmptyState(t('No favorites yet'), icon: Icons.star_border, text: t('Select the star on a story to keep it here.')),
+        'following' => EmptyState(t('You are not following anyone yet'), icon: Icons.group_add, text: t('Follow contributors to see their stories here.'), action: FilledButton(onPressed: () => open('contributors'), child: Text(t('Find Contributors')))),
+        'favorites' => EmptyState(t('No favorites yet'), icon: Icons.star_border, text: t('Select ☆ on a story to save it here.')),
         'location' => EmptyState(t('No stories for this location.'), icon: Icons.place),
         'contributors' => EmptyState(t('No Contributor with this username has posted a story, or their stories may have been deleted.'), icon: Icons.groups),
         _ => EmptyState(filters['q'] != null ? t('Nothing matches your search') : t('No stories here yet'), text: t('Be the first to share one.')),
@@ -278,8 +278,14 @@ class _StoryViewState extends State<StoryView> {
     if (next != null) c[key[next]!] = num0(c[key[next]]) + 1;
     _set({'counts': c, 'viewer': {...viewer, 'reaction': next}});
     HapticFeedback.lightImpact();
-    try { final r = asMap(await api.put('/stories/${s['id']}/reaction', {'type': type})); _set({'counts': {...counts, ...asMap(r['counts'])}, 'viewer': {...viewer, 'reaction': r['reaction']}}); }
-    catch (e) { if (mounted) { setState(() => s = before); toast(context, errText(e), error: true); } }
+    try {
+      // Offline: the reaction is kept on the phone and sent when the connection returns.
+      final sent = await AppScope.read(context).outbox.send(t('Reaction'), 'PUT', '/stories/${s['id']}/reaction', {'type': type});
+      if (!mounted) return;
+      if (sent == null) { toast(context, t('Waiting to send')); return; }
+      final r = asMap(sent);
+      _set({'counts': {...counts, ...asMap(r['counts'])}, 'viewer': {...viewer, 'reaction': r['reaction']}});
+    } catch (e) { if (mounted) { setState(() => s = before); toast(context, errText(e), error: true); } }
   }
 
   Future<void> _favourite() async {
@@ -287,7 +293,11 @@ class _StoryViewState extends State<StoryView> {
     final on = viewer['favourited'] != true;
     _set({'viewer': {...viewer, 'favourited': on}});
     HapticFeedback.mediumImpact();
-    try { final r = asMap(await api.put('/stories/${s['id']}/favourite')); if (mounted) toast(context, str(r['message'], on ? t('Added to Favorites.') : t('Removed from Favorites.'))); }
+    try {
+      final sent = await AppScope.read(context).outbox.send(t('Favorite'), 'PUT', '/stories/${s['id']}/favourite');
+      if (!mounted) return;
+      toast(context, sent == null ? t('Waiting to send') : str(asMap(sent)['message'], on ? t('Added to Favorites.') : t('Removed from Favorites.')));
+    }
     catch (e) { if (mounted) { _set({'viewer': {...viewer, 'favourited': !on}}); toast(context, errText(e), error: true); } }
   }
 
@@ -439,6 +449,12 @@ class _MediaTileState extends State<MediaTile> {
   bool load = false, failed = false;
   J get urls => asMap(widget.m['urls']);
   String get kind => str(widget.m['kind']);
+  /// The approximate size of what would load, shown before it loads (low-data mode).
+  String _size(String which) {
+    final n = num0(asMap(widget.m['sizes'])[which] ?? (which == 'web' ? widget.m['sizeBytes'] : 0));
+    if (n <= 0) return '';
+    return ' · ${(n / 1048576).toStringAsFixed(n > 10485760 ? 0 : 1)} MB';
+  }
 
   @override
   void didChangeDependencies() { super.didChangeDependencies(); if (!load && !AppScope.of(context).lowData) { load = true; if (kind == 'video' && widget.active) _start(muted: true); } }
@@ -467,13 +483,13 @@ class _MediaTileState extends State<MediaTile> {
       body = Note(t('This file is still being prepared.'));
     } else if (kind == 'image') {
       final u = urls['medium'] ?? urls['full'] ?? urls['thumb'];
-      body = !load || u == null ? _placeholder(Icons.image, t('Tap to load the picture'))
+      body = !load || u == null ? _placeholder(Icons.image, '${t('Tap to load the picture')}${_size('medium')}')
           : ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(api.abs(str(u)), fit: BoxFit.contain, semanticLabel: str(m['altText'], t('Picture in this story')),
               loadingBuilder: (c, w, p) => p == null ? w : const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())), errorBuilder: (_, __, ___) => _placeholder(Icons.broken_image, t('Retry'))));
     } else if (kind == 'video' || kind == 'audio') {
       final v = c;
       if (failed) { body = _placeholder(Icons.error_outline, t('Retry')); }
-      else if (v == null || !v.value.isInitialized) { body = _placeholder(kind == 'video' ? Icons.play_circle : Icons.graphic_eq, v == null ? (kind == 'video' ? t('Tap to load the video') : t('Tap to load the audio')) : '…'); }
+      else if (v == null || !v.value.isInitialized) { body = _placeholder(kind == 'video' ? Icons.play_circle : Icons.graphic_eq, v == null ? '${kind == 'video' ? t('Tap to load the video') : t('Tap to load the audio')}${_size('web')}' : '…'); }
       else {
         body = Column(children: [
           if (kind == 'video') ClipRRect(borderRadius: BorderRadius.circular(12), child: AspectRatio(aspectRatio: v.value.aspectRatio == 0 ? 16 / 9 : v.value.aspectRatio, child: VideoPlayer(v))),
@@ -531,10 +547,15 @@ class _CommentsSheetState extends State<CommentsSheet> {
   Future<void> _send() async {
     if (!need(context) || ctl.text.trim().isEmpty) return;
     setState(() => busy = true);
-    final r = await run(context, () => AppScope.read(context).api.post('/stories/${widget.story['id']}/comments', {'text': ctl.text.trim(), if (replyTo != null) 'parentId': replyTo!['id']}));
-    if (!mounted) return;
-    setState(() => busy = false);
-    if (r != null) { ctl.clear(); replyTo = null; await _load(); }
+    try {
+      // Offline: the comment is kept on the phone and sent when the connection returns.
+      final r = await AppScope.read(context).outbox.send(t('Comment'), 'POST', '/stories/${widget.story['id']}/comments', {'text': ctl.text.trim(), if (replyTo != null) 'parentId': replyTo!['id']});
+      if (!mounted) return;
+      if (r == null) { toast(context, t('Waiting to send')); } else if (asMap(r)['message'] is String) { toast(context, str(asMap(r)['message'])); }
+      ctl.clear(); replyTo = null;
+      if (r != null) await _load();
+    } catch (e) { if (mounted) toast(context, errText(e), error: true); }
+    if (mounted) setState(() => busy = false);
   }
   Widget _one(J c, {bool reply = false}) {
     final a = asMap(c['author']);

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Directory;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:local_auth/local_auth.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,6 +81,46 @@ String ago(dynamic iso) {
   return fmtDate(iso);
 }
 
+// ---------- Actions made while offline ----------
+/// Reactions, favourites, comments and messages made while offline are kept on the phone, labelled
+/// “Waiting to send”, and sent in order when the connection returns (Section 8.3). Admin actions are never
+/// queued: moderation and approvals need a live connection.
+class Outbox extends ChangeNotifier {
+  Outbox(this.prefs, this.api);
+  final SharedPreferences prefs;
+  final Api api;
+  static const _slot = 'outbox';
+  bool _flushing = false;
+
+  List<J> get items {
+    try { return (jsonDecode(prefs.getString(_slot) ?? '[]') as List).map((e) => asMap(e)).toList(); } catch (_) { return []; }
+  }
+  Future<void> _save(List<J> l) async { await prefs.setString(_slot, jsonEncode(l)); notifyListeners(); }
+
+  /// Sends now if possible. If the archive cannot be reached the action is kept for later and null is returned.
+  Future<dynamic> send(String label, String method, String path, [Object? body]) async {
+    final key = Api.newKey();
+    try { return await api.request(method, path, body: body ?? const <String, dynamic>{}, key: key); }
+    on ApiError catch (e) { if (e.status != 0) rethrow; }
+    await _save([...items, {'id': key, 'label': label, 'method': method, 'path': path, 'body': body ?? const <String, dynamic>{}, 'at': DateTime.now().millisecondsSinceEpoch}]);
+    return null;
+  }
+
+  /// Sends what is waiting, oldest first. Stops at the first one that cannot reach the archive; one the archive refuses is dropped.
+  Future<void> flush() async {
+    if (_flushing) return;
+    _flushing = true;
+    try {
+      for (final q in items) {
+        try { await api.request(str(q['method']), str(q['path']), body: q['body'], key: str(q['id'])); }
+        on ApiError catch (e) { if (e.status == 0) break; }
+        await _save(items.where((x) => x['id'] != q['id']).toList());
+      }
+    } finally { _flushing = false; }
+  }
+  Future<void> clear() => _save([]);
+}
+
 // ---------- Uploads that carry on while the person browses ----------
 /// A story waiting for its files: it is sent as soon as they have all arrived.
 class PendingSend {
@@ -106,7 +148,10 @@ class Uploads extends ChangeNotifier {
   int _shownPct = -1;
   String _shownText = '';
 
-  bool get wifiOnly => app.settings['wifiOnly'] == true;
+  bool get wifiOnly => app.settings['wifiOnly'] == true && !_anyNetwork;
+  /// “Upload now”: the person chose to use mobile data for what is waiting (until the app is next opened).
+  bool _anyNetwork = false;
+  void uploadNow() { _anyNetwork = true; _network(); }
   List<UploadTask> get live => tasks.where((x) => x.active).toList();
   bool get busy => live.isNotEmpty || pending.isNotEmpty;
   double get pct { final l = tasks.where((x) => x.active || x.state == 'done').toList(); if (l.isEmpty) return 0; final total = l.fold<int>(0, (a, x) => a + x.file.size); return total == 0 ? 0 : l.fold<double>(0, (a, x) => a + x.pct * x.file.size) / total; }
@@ -125,6 +170,7 @@ class Uploads extends ChangeNotifier {
       if (wifiOnly && !onWifi && (x.state == 'sending' || x.state == 'waiting')) x.hold('wifi');
       if ((!wifiOnly || onWifi) && x.state == 'wifi') _run(x);
     }
+    app.checkReach();
     _changed();
   }
   void settingsChanged() => _network();
@@ -172,7 +218,7 @@ class Uploads extends ChangeNotifier {
   void _notify() {
     final l = live;
     final sending = l.where((x) => x.state == 'sending').length;
-    final text = l.isEmpty ? '' : sending > 0 ? t('Uploading… {n}%', {'n': (pct * 100).round()}) : l.any((x) => x.state == 'wifi') ? t('Waiting for Wi-Fi') : t('Paused');
+    final text = l.isEmpty ? '' : sending > 0 ? t('Uploading… {n}%', {'n': (pct * 100).round()}) : l.any((x) => x.state == 'wifi') ? t('Waiting for Wi-Fi to upload.') : t('Paused');
     final p = l.isEmpty ? -1 : (pct * 100).round();
     if (text == _shownText && (p - _shownPct).abs() < 2) return;
     _shownText = text; _shownPct = p;
@@ -189,6 +235,40 @@ class AppState extends ChangeNotifier {
   late SharedPreferences prefs;
   late Api api;
   late final Uploads uploads = Uploads(this);
+  late final Outbox outbox = Outbox(prefs, api);
+  /// Set when the connection has just come back, so the main screen can say so once.
+  bool backOnline = false;
+  /// Set when reads keep being slow, so the main screen can suggest low-data mode once.
+  bool suggestLowData = false;
+  int _slowReads = 0;
+
+  void _reach(bool reached) {
+    if (reached == online) return;
+    online = reached;
+    if (reached) { backOnline = true; _offered = false; unawaited(outbox.flush()); }
+    notifyListeners();
+  }
+  void _timing(Duration took) {
+    if (took < const Duration(seconds: 4)) { if (_slowReads > 0) _slowReads--; return; }
+    if (++_slowReads >= 3 && !lowData && !suggestLowData && prefs.getBool('lowDataAsked') != true) { suggestLowData = true; notifyListeners(); }
+  }
+  void answerLowData(bool turnOn) {
+    suggestLowData = false;
+    prefs.setBool('lowDataAsked', true);
+    notifyListeners();
+    if (turnOn) unawaited(saveSettings({'lowData': true}).catchError((_) {}));
+  }
+  /// The story being written on this phone (text and details, not files): kept so a dropped connection or a closed app never loses it.
+  J? get localDraft { try { final d = asMap(jsonDecode(prefs.getString('localDraft') ?? 'null')); return d.isEmpty ? null : d; } catch (_) { return null; } }
+  Future<void> setLocalDraft(J? d) async { if (d == null) { await prefs.remove('localDraft'); } else { await prefs.setString('localDraft', jsonEncode(d)); } notifyListeners(); }
+  /// True once per return of the connection when a story written offline is waiting, so the main screen can offer to send it.
+  bool get offerWaitingStory => online && signedIn && localDraft?['waiting'] == true && !_offered;
+  bool _offered = false;
+  void offeredWaitingStory() => _offered = true;
+
+  /// Asks the archive again when the phone's network changes or while it is unreachable.
+  void checkReach() { unawaited(loadConfig()); }
+  void _owner() { api.cacheOwner = me == null ? 'visitor' : str(me!['id'], 'visitor'); if (me != null) prefs.setString('me', jsonEncode(me)); }
   J? me;
   J config = {};
   J counts = {};
@@ -247,7 +327,12 @@ class AppState extends ChangeNotifier {
     prefs = await SharedPreferences.getInstance();
     api = Api(prefs.getString('server') ?? defaultServer)..onSignedOut = _signedOut;
     await setLanguage(prefs.getString('lang') ?? 'en', save: false);
+    api..onReach = _reach..onTiming = _timing;
+    try { final dir = Directory('${(await getTemporaryDirectory()).path}/answers'); await dir.create(recursive: true); api.cacheDir = dir.path; unawaited(api.clearCache(all: false)); } catch (_) {/* no offline reading on this device */}
     try { me = await api.restore(); } catch (_) {}
+    // Offline at start: the saved session is kept, so the person stays signed in with what the phone last knew about them.
+    if (me == null && api.hasSession) { try { me = asMap(jsonDecode(prefs.getString('me') ?? 'null')); if (me!.isEmpty) me = null; } catch (_) { me = null; } }
+    _owner();
     if (me != null) await setLanguage(str(me!['language'], I18n.code), save: false);
     unawaited(loadConfig());
     uploads.watchNetwork();
@@ -255,16 +340,16 @@ class AppState extends ChangeNotifier {
     ready = true;
     notifyListeners();
     refresh();
-    _poll = Timer.periodic(const Duration(seconds: 40), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 40), (_) { if (!online) checkReach(); refresh(); });
   }
 
   @override
   void dispose() { _poll?.cancel(); super.dispose(); }
 
-  void _signedOut() { me = null; counts = {}; priority = []; locked = false; notifyListeners(); }
+  void _signedOut() { me = null; counts = {}; priority = []; locked = false; prefs.remove('me'); _owner(); unawaited(api.clearCache()); unawaited(outbox.clear()); notifyListeners(); }
 
   Future<void> loadConfig() async {
-    try { config = asMap(await api.get('/config')); online = true; } on ApiError catch (e) { if (e.status == 0) online = false; if (e.status == 426) updateRequired = true; }
+    try { config = asMap(await api.get('/config')); } on ApiError catch (e) { if (e.status == 426) updateRequired = true; }
     notifyListeners();
   }
 
@@ -282,10 +367,8 @@ class AppState extends ChangeNotifier {
       final r = asMap(await api.get('/me/notifications'));
       counts = asMap(r['counts']);
       priority = asList(r['items']).where((n) => n['priority'] == true && n['doneAt'] == null).toList();
-      if (!online) online = true;
       notifyListeners();
     } on ApiError catch (e) {
-      if (e.status == 0 && online) { online = false; notifyListeners(); }
       if (e.status == 426) { updateRequired = true; notifyListeners(); }
     }
   }
@@ -293,6 +376,7 @@ class AppState extends ChangeNotifier {
   Future<void> useSession(J s) async {
     api.useSession(s);
     me = asMap(s['user']);
+    _owner();
     floated = false;
     await setLanguage(str(me!['language'], I18n.code), save: false);
     notifyListeners();

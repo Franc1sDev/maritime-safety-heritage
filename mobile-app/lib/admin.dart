@@ -485,7 +485,7 @@ class ManageAdmins extends StatelessWidget {
           Wrap(spacing: 6, children: [
             if (a['status'] == 'pending') ...[FilledButton(onPressed: () => go(() => api.post('/super/admins/${a['id']}/decision', {'approve': true})), child: Text(t('Approve'))), OutlinedButton(onPressed: () => go(() => api.post('/super/admins/${a['id']}/decision', {'approve': false})), child: Text(t('Decline')))],
             if (a['status'] == 'active' && a['role'] == 'admin') TextButton(onPressed: () async { final ok = await confirm(context, t('Make {name} a Super Admin?', {'name': a['name']}), text: t('Super Admins manage admins and see all analytics and the full audit log. They no longer moderate stories.'), yes: t('Make Super Admin')); if (ok != null) await go(() => api.post('/super/admins/${a['id']}/promote')); }, child: Text(t('Make Super Admin'))),
-            if (a['id'] != app.me?['id'] && a['status'] != 'pending' && a['status'] != 'removed') TextButton(onPressed: () async { final r = await confirm(context, t('Remove {name}?', {'name': a['name']}), text: t('They lose access immediately.'), yes: t('Remove'), reasonLabel: t('Reason'), danger: true); if (r != null) await go(() => api.post('/super/admins/${a['id']}/remove', {'reason': r})); }, child: Text(t('Remove'))),
+            if (a['id'] != app.me?['id'] && a['status'] != 'pending' && a['status'] != 'removed') TextButton(onPressed: () async { final r = await confirm(context, t('Remove {name}?', {'name': a['name']}), text: t('They will lose access immediately.'), yes: t('Remove'), reasonLabel: t('Reason'), danger: true); if (r != null) await go(() => api.post('/super/admins/${a['id']}/remove', {'reason': r})); }, child: Text(t('Remove'))),
           ]),
         ]))),
       ]);

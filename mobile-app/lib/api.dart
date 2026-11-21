@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show File;
+import 'dart:io' show Directory, File;
+import 'dart:math' show Random;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -51,7 +52,7 @@ class UploadTask {
 /// The access token is kept in memory only. The refresh token is kept in the phone's
 /// secure storage (Android Keystore / iOS Keychain) and rotated on every use.
 class Api {
-  Api(this.base);
+  Api(this.base, {http.Client? client}) : _client = client ?? http.Client();
 
   String base;
   String? _access;
@@ -66,7 +67,57 @@ class Api {
   static const _store = FlutterSecureStorage();
   static const _refreshKey = 'msh_refresh_token';
   static const _timeout = Duration(seconds: 30);
-  final _client = http.Client();
+  final http.Client _client;
+
+  // ---- Weak and missing connections (Section 8) ----
+  /// How many times a request that failed because of the network is tried again, and the first wait (it doubles each time).
+  static int retries = 2;
+  static Duration retryWait = const Duration(milliseconds: 600);
+  /// Folder where answers are kept, so pages already seen can still be read offline. Set by the app at start.
+  String? cacheDir;
+  /// Whose answers they are: one person's pages are never shown to another.
+  String cacheOwner = 'visitor';
+  /// Told true when the archive answers and false when it cannot be reached.
+  void Function(bool reached)? onReach;
+  /// Told how long each read took, so a slow connection can be noticed.
+  void Function(Duration took)? onTiming;
+
+  /// A fresh key for a submission, so a retry never creates a duplicate.
+  static String newKey() { final r = Random.secure(); return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join(); }
+
+  static final _keep = RegExp(r'^/(config|stories|incidents|announcements|resources|collections|timeline|places|contributors|people|inbox|me/stories|me/notifications|me/reminders)(/|$)');
+  File? _cacheFile(Uri uri) {
+    final dir = cacheDir;
+    if (dir == null) return null;
+    // FNV-1a hash of the address, language and owner: a short, safe file name.
+    var h = 0x811c9dc5;
+    for (final c in utf8.encode('$cacheOwner|$language|$uri')) { h = ((h ^ c) * 0x01000193) & 0xffffffff; }
+    return File('$dir/${h.toRadixString(16).padLeft(8, '0')}.json');
+  }
+  Future<void> _remember(Uri uri, String body) async {
+    try { await _cacheFile(uri)?.writeAsString(jsonEncode({'for': '$cacheOwner|$language|$uri', 'body': body}), flush: false); } catch (_) {/* a full disk must not break reading */}
+  }
+  Future<dynamic> _remembered(Uri uri) async {
+    try {
+      final f = _cacheFile(uri);
+      if (f == null || !await f.exists()) return null;
+      final saved = jsonDecode(await f.readAsString());
+      if (saved is! Map || saved['for'] != '$cacheOwner|$language|$uri') return null;
+      return _decode(saved['body'] as String);
+    } catch (_) { return null; }
+  }
+  /// Forgets everything kept for offline reading (on sign-out), or only the oldest when there is a lot.
+  Future<void> clearCache({bool all = true}) async {
+    final dir = cacheDir;
+    if (dir == null) return;
+    try {
+      final files = await Directory(dir).list().where((e) => e is File && e.path.endsWith('.json')).cast<File>().toList();
+      if (all) { for (final f in files) { await f.delete(); } return; }
+      if (files.length <= 400) return;
+      final dated = [for (final f in files) (f, await f.lastModified())]..sort((a, b) => a.$2.compareTo(b.$2));
+      for (final (f, _) in dated.take(files.length - 300)) { await f.delete(); }
+    } catch (_) {}
+  }
 
   bool get hasSession => _refresh != null;
 
@@ -160,30 +211,49 @@ class Api {
     if (_refresh != null && (_access == null || DateTime.now().isAfter(_accessExpires))) await refresh();
   }
 
-  Future<dynamic> request(String method, String path, {Object? body, Map<String, Object?>? query, bool retry = true}) async {
+  /// One call to the archive.
+  /// Reads, and submissions that carry a [key], are tried again after a network failure, waiting longer each time;
+  /// the key makes sure a retry never creates a duplicate. A read that still fails is answered from what was
+  /// kept the last time it worked, so pages already seen stay readable offline.
+  Future<dynamic> request(String method, String path, {Object? body, Map<String, Object?>? query, bool retry = true, String? key}) async {
     if (!path.startsWith('/auth/')) await _ensureFresh();
-    final req = http.Request(method, _uri(path, query))..headers.addAll(_headers(json: body != null));
-    if (body != null) req.body = jsonEncode(body);
-    http.Response res;
-    try {
-      res = await http.Response.fromStream(await _client.send(req).timeout(_timeout));
-    } on TimeoutException {
-      throw ApiError(0, 'The archive is taking too long to answer. Try again.');
-    } catch (_) {
-      throw ApiError(0, _message(null, 0));
+    final uri = _uri(path, query);
+    final read = method == 'GET';
+    final again = read || key != null;
+    final keep = read && _keep.hasMatch(path);
+    final started = DateTime.now();
+    late http.Response res;
+    for (var attempt = 0; ; attempt++) {
+      final req = http.Request(method, uri)..headers.addAll(_headers(json: body != null));
+      if (key != null) req.headers['Idempotency-Key'] = key;
+      if (body != null) req.body = jsonEncode(body);
+      try {
+        res = await http.Response.fromStream(await _client.send(req).timeout(_timeout));
+        if (again && attempt < retries && res.statusCode >= 502 && res.statusCode <= 504) { await Future<void>.delayed(retryWait * (1 << attempt)); continue; }
+        break;
+      } catch (e) {
+        final slow = e is TimeoutException;
+        if (again && !slow && attempt < retries) { await Future<void>.delayed(retryWait * (1 << attempt)); continue; }
+        onReach?.call(false);
+        if (keep) { final saved = await _remembered(uri); if (saved != null) return saved; }
+        throw ApiError(0, slow ? 'The archive is taking too long to answer. Try again.' : _message(null, 0));
+      }
     }
+    onReach?.call(true);
+    if (read) onTiming?.call(DateTime.now().difference(started));
     if (res.statusCode == 401 && retry && !path.startsWith('/auth/') && _refresh != null) {
-      if (await refresh()) return request(method, path, body: body, query: query, retry: false);
+      if (await refresh()) return request(method, path, body: body, query: query, retry: false, key: key);
       await _clear();
       onSignedOut?.call();
     }
     final data = _decode(res.body);
     if (res.statusCode >= 400) throw ApiError(res.statusCode, _message(data, res.statusCode), code: data is Map ? '${data['code'] ?? ''}' : '', details: data is Map ? data['details'] : null);
+    if (keep) unawaited(_remember(uri, res.body));
     return data;
   }
 
   Future<dynamic> get(String path, [Map<String, Object?>? query]) => request('GET', path, query: query);
-  Future<dynamic> post(String path, [Object? body]) => request('POST', path, body: body ?? const {});
+  Future<dynamic> post(String path, [Object? body, String? key]) => request('POST', path, body: body ?? const {}, key: key);
   Future<dynamic> patch(String path, Object body) => request('PATCH', path, body: body);
   Future<dynamic> put(String path, [Object? body]) => request('PUT', path, body: body ?? const {});
 
@@ -292,7 +362,7 @@ class Api {
         } on ApiError catch (e) {
           // A dropped connection: wait a little, ask the server how much arrived, and carry on from there.
           if (e.status != 0 || ++fails > 6) rethrow;
-          await Future<void>.delayed(Duration(seconds: 2 * fails));
+          await Future<void>.delayed(retryWait * (3 * fails));
           if (t._halt) return null;
           try { offset = await arrived(); } on ApiError catch (e2) { if (e2.status != 0) rethrow; }
         }

@@ -89,7 +89,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const off = () => setOnline(false);
     window.addEventListener('online', on); window.addEventListener('offline', off);
     const c = (navigator as any).connection;
-    const speed = () => setSlow(!!c && (c.saveData || ['slow-2g', '2g'].includes(c.effectiveType)));
+    let told = false;
+    const speed = () => {
+      const isSlow = !!c && (c.saveData || ['slow-2g', '2g'].includes(c.effectiveType));
+      setSlow(isSlow);
+      // Said once: low-data mode has been turned on because the connection is slow.
+      if (isSlow && !told) { told = true; toast(i18n.t('Your connection looks slow, so low-data mode is on: pictures and video load only when you select them.'), 'info'); }
+    };
     speed(); c?.addEventListener?.('change', speed);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); c?.removeEventListener?.('change', speed); };
   }, [qc, toast]);

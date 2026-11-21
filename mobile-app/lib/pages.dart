@@ -348,12 +348,16 @@ class _ThreadPageState extends State<ThreadPage> {
   Future<void> _send() async {
     if (ctl.text.trim().isEmpty && files.isEmpty) return;
     setState(() => busy = true);
-    final r = await run(context, () async => asMap(await AppScope.read(context).api.post('/inbox', {
-      if (id != null) 'conversationId': id, if (id == null && widget.toUser != null) 'toUserId': widget.toUser!['id'], if (id == null && widget.toAdmins) 'toAdmins': true, if (id == null && widget.toAdmins && topic.text.trim().isNotEmpty) 'topic': topic.text.trim(),
-      if (ctl.text.trim().isNotEmpty) 'text': ctl.text.trim(), if (files.isNotEmpty) 'mediaIds': files.map((f) => f['id']).toList()})));
-    if (!mounted) return;
-    setState(() => busy = false);
-    if (r != null) { ctl.clear(); files.clear(); id ??= str(r['conversationId']); await _load(); }
+    try {
+      // Offline: the message is kept on the phone, shown as “Waiting to send”, and sent when the connection returns.
+      final sent = await AppScope.read(context).outbox.send(t('Message'), 'POST', '/inbox', {
+        if (id != null) 'conversationId': id, if (id == null && widget.toUser != null) 'toUserId': widget.toUser!['id'], if (id == null && widget.toAdmins) 'toAdmins': true, if (id == null && widget.toAdmins && topic.text.trim().isNotEmpty) 'topic': topic.text.trim(),
+        if (ctl.text.trim().isNotEmpty) 'text': ctl.text.trim(), if (files.isNotEmpty) 'mediaIds': files.map((f) => f['id']).toList()});
+      if (!mounted) return;
+      if (sent == null) { toast(context, t('Waiting to send')); ctl.clear(); files.clear(); }
+      else { final r = asMap(sent); ctl.clear(); files.clear(); id ??= str(r['conversationId']); await _load(); }
+    } catch (e) { if (mounted) toast(context, errText(e), error: true); }
+    if (mounted) setState(() => busy = false);
   }
   Future<void> _attach() async {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2560, imageQuality: 86);
@@ -370,6 +374,13 @@ class _ThreadPageState extends State<ThreadPage> {
     final isRequest = asMap(data?['conversation'])['isRequest'] == true;
     return page(title, Column(children: [
       Expanded(child: ListView(reverse: true, padding: const EdgeInsets.all(12), children: [
+        for (final q in app.outbox.items.reversed.where((q) => q['path'] == '/inbox' && id != null && asMap(q['body'])['conversationId'] == id)) Align(alignment: Alignment.centerRight, child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 3), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .8),
+            decoration: BoxDecoration(color: cs.primary.withValues(alpha: .55), borderRadius: BorderRadius.circular(16)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(str(asMap(q['body'])['text']), style: const TextStyle(color: Colors.white)),
+              Text(t('Waiting to send'), style: const TextStyle(fontSize: 10.5, color: Colors.white70)),
+            ]))),
         for (final m in asList(data?['items']).reversed) Align(alignment: m['system'] == true ? Alignment.center : m['mine'] == true ? Alignment.centerRight : Alignment.centerLeft, child: Container(
             margin: const EdgeInsets.symmetric(vertical: 3), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .8),
             decoration: BoxDecoration(color: m['system'] == true ? Colors.transparent : m['mine'] == true ? cs.primary : cs.primary.withValues(alpha: .12), borderRadius: BorderRadius.circular(16)),
@@ -461,6 +472,40 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
+/// A story written on this phone and not yet sent (for example because the phone was offline).
+class LocalDraftCard extends StatelessWidget {
+  const LocalDraftCard({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.of(context);
+    final d = app.localDraft;
+    if (d == null) return const SizedBox.shrink();
+    final name = str(d['title']).isNotEmpty ? str(d['title']) : (str(d['text']).length > 60 ? str(d['text']).substring(0, 60) : str(d['text']));
+    return Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
+      Text(d['waiting'] == true ? t('Waiting to send') : t('Saved on this device'), style: const TextStyle(fontSize: 12.5)),
+      Row(children: [
+        FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareStoryPage())), child: Text(t('Continue'))), const SizedBox(width: 8),
+        TextButton(onPressed: () => app.setLocalDraft(null), child: Text(t('Discard'))),
+      ]),
+    ])));
+  }
+}
+
+/// Reactions, comments and messages made offline that have not been sent yet.
+class WaitingList extends StatelessWidget {
+  const WaitingList({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final box = AppScope.read(context).outbox;
+    return ListenableBuilder(listenable: box, builder: (context, _) {
+      final items = box.items;
+      if (items.isEmpty) return const SizedBox.shrink();
+      return Note('${t('Waiting to send')}: ${items.map((q) => str(q['label'])).join(', ')}');
+    });
+  }
+}
+
 class MyStories extends StatefulWidget {
   final bool drafts;
   const MyStories({super.key, required this.drafts});
@@ -476,13 +521,15 @@ class _MyStoriesState extends State<MyStories> {
     void edit(String? id) => Navigator.push(context, MaterialPageRoute(builder: (_) => ShareStoryPage(editId: id))).then((_) { if (mounted) setState(() => gen++); });
     return Loader<List<J>>(key: ValueKey(gen), load: () async => asList(await api.get('/me/stories', widget.drafts ? {'status': 'draft'} : null)).where((s) => (s['status'] == 'draft') == widget.drafts).toList(), builder: (c, list, reload) => ListView(padding: const EdgeInsets.all(12), children: [
       Align(alignment: Alignment.centerRight, child: FilledButton.icon(onPressed: () => edit(null), icon: const Icon(Icons.add), label: Text(t('Add a new story')))),
+      if (widget.drafts) const LocalDraftCard(),
+      if (widget.drafts) const WaitingList(),
       if (list.isEmpty) EmptyState(widget.drafts ? t('No drafts') : t('You have not shared a story yet'), icon: widget.drafts ? Icons.edit_note : Icons.waves, text: widget.drafts ? t('Unfinished stories you save appear here.') : null),
       for (final s in list) Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text(str(s['title']).isNotEmpty ? str(s['title']) : (str(s['text']).length > 60 ? str(s['text']).substring(0, 60) : str(s['text'], t('Untitled draft'))), style: const TextStyle(fontWeight: FontWeight.w700))),
           if (const ['published', 'pending_review', 'draft'].contains(s['status'])) IconButton(icon: const Icon(Icons.edit), tooltip: widget.drafts ? t('Continue') : t('Edit story'), onPressed: () => edit(str(s['id']))),
           IconButton(icon: const Icon(Icons.delete_outline), tooltip: widget.drafts ? t('Delete draft') : t('Delete story'), onPressed: () async {
-            final ok = await confirm(context, t('Delete this story?'), text: t('It is removed at once. You can ask the admins to restore it within 30 days; after that it is erased permanently.'), yes: t('Delete'), danger: true);
+            final ok = await confirm(context, t('Delete this story? This cannot be undone.'), text: t('It is removed at once and erased permanently after 30 days.'), yes: t('Delete'), danger: true);
             if (ok != null && context.mounted) { await run(context, () => api.delete('/stories/${s['id']}'), ok: t('Story deleted.')); reload(); }
           }),
         ]),
@@ -708,7 +755,7 @@ class _DeleteAccountState extends State<DeleteAccount> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return ListView(padding: const EdgeInsets.all(16), children: [
-      Note(t('Your account and everything you posted are removed at once and permanently erased after 30 days. Until then you can restore the account by signing in again.'), color: C.yellow),
+      Note(t('Your account and content will be removed at once and permanently erased after 30 days. To restore it, sign in again within 30 days.'), color: C.yellow),
       Text(t('Why are you leaving? Pick one.'), style: const TextStyle(fontWeight: FontWeight.w700)),
       for (final r in asList(app.config['deletionReasons'])) RadioListTile<String>(contentPadding: EdgeInsets.zero, dense: true, value: str(r['key']), groupValue: reason, onChanged: (v) => setState(() => reason = v), title: Text(str(r['label']))),
       Field(t('Or tell us in your own words (optional)'), other, lines: 2),
