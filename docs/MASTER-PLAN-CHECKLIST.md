@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 499 of 1190 items ticked, 180 partly done**
+**Progress: 508 of 1190 items ticked, 187 partly done**
 
 How to read it:
 
@@ -1218,35 +1218,35 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 9.1 Environments
 
-- [ ] **Local**: Each developer’s computer, with a demo database and sample content.
-- [ ] **Staging**: A copy of production with test data, where every change is checked and demos are reviewed before release.
+- [x] **Local**: Each developer’s computer, with a demo database and sample content.
+- [~] **Staging**: A copy of production with test data, where every change is checked and demos are reviewed before release. — *Left: the free Render site serves as the test and review site for now*
 - [ ] **Production**: The live platform used by the public.
 
 ### 9.2 Test Hosting (During Development)
 
-- [ ] During development, the website and API will run on free hosting (Render) for testing, with a free PostgreSQL database, configured from the repository so nothing is set up by hand.
-- [ ] The Android app will be tested by installing test builds (APK) and through Google Play internal testing. iOS testing will begin once a Mac build environment and an Apple Developer account are available.
-- [ ] Free hosting limits to plan around: the service sleeps after a period without visitors and takes about a minute to wake; the free database is small and expires unless upgraded; there is no virus scanner; email must be sent through a relay. Test hosting is never used for real user data.
+- [x] During development, the website and API will run on free hosting (Render) for testing, with a free PostgreSQL database, configured from the repository so nothing is set up by hand.
+- [~] The Android app will be tested by installing test builds (APK) and through Google Play internal testing. iOS testing will begin once a Mac build environment and an Apple Developer account are available. — *Left: a test APK is built on every change; Google Play internal testing needs the Play Console account; iOS needs the Apple account*
+- [x] Free hosting limits to plan around: the service sleeps after a period without visitors and takes about a minute to wake; the free database is small and expires unless upgraded; there is no virus scanner; email must be sent through a relay. Test hosting is never used for real user data.
 
 ### 9.3 Production Hosting
 
 - [ ] Before content import and go-live, the platform moves to a paid production server, with the domain and SSL certificate in place.
-- [ ] Production will run in Docker containers on a Linux server (any provider, e.g. DigitalOcean, Hetzner, AWS Lightsail, Azure or a Kenyan host): the API and website, PostgreSQL, Redis, background workers, ClamAV, Caddy (HTTPS) and the backup service.
+- [~] Production will run in Docker containers on a Linux server (any provider, e.g. DigitalOcean, Hetzner, AWS Lightsail, Azure or a Kenyan host): the API and website, PostgreSQL, Redis, background workers, ClamAV, Caddy (HTTPS) and the backup service. — *Left: prepared in deploy/ (Docker Compose with Caddy, Redis, virus scanning and backups); waits for the paid server and domain*
 - [ ] A CDN (e.g. Cloudflare) in front for media, static files and protection against attacks.
 - [ ] Managed services may replace self-hosted ones as the platform grows (e.g. managed PostgreSQL).
 
 ### 9.4 Continuous Integration and Delivery (CI/CD)
 
-- [ ] Source code in a private GitHub repository; every change is committed and pushed.
-- [ ] On every push, GitHub Actions will run all tests and security checks, and build the server image, the Android APK and Play bundle, and the iOS build.
-- [ ] Changes that pass are deployed automatically to staging. Production releases are approved manually and can be rolled back in minutes.
-- [ ] Database changes use versioned migrations, tested on staging first.
+- [~] Source code in a private GitHub repository; every change is committed and pushed. — *Left: every change is committed and pushed; the repository is currently public and can be made private in its settings*
+- [x] On every push, GitHub Actions will run all tests and security checks, and build the server image, the Android APK and Play bundle, and the iOS build.
+- [~] Changes that pass are deployed automatically to staging. Production releases are approved manually and can be rolled back in minutes. — *Left: the test site deploys from the main branch; a separate production with manual approval comes with the paid server*
+- [x] Database changes use versioned migrations, tested on staging first.
 
 ### 9.5 Mobile App Release
 
 - [ ] Android: internal testing, then closed testing with selected users, then production release on Google Play.
 - [ ] iOS: TestFlight testing, then App Store review and release.
-- [ ] App versions are numbered and the API keeps supporting older versions until users have updated; the app prompts users to update when a version is retired.
+- [~] App versions are numbered and the API keeps supporting older versions until users have updated; the app prompts users to update when a version is retired. — *Left: the app sends its version and shows an update notice when the server requires a newer one*
 
 ### 9.6 Domain, SSL and Email
 
@@ -1276,13 +1276,13 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 9.9 Tools and Technologies
 
-- [ ] **Containers**: Docker, Docker Compose | Packaging and running every service
-- [ ] **Reverse proxy and HTTPS**: Caddy | Automatic certificates and HTTPS
-- [ ] **Test hosting**: Render (free plan) | Testing during development
+- [x] **Containers**: Docker, Docker Compose | Packaging and running every service
+- [x] **Reverse proxy and HTTPS**: Caddy | Automatic certificates and HTTPS
+- [x] **Test hosting**: Render (free plan) | Testing during development
 - [ ] **Production hosting**: A Linux cloud server, e.g. DigitalOcean, Hetzner, AWS Lightsail or Azure | The live platform
 - [ ] **CDN and DNS**: Cloudflare | Domain records, CDN and protection
-- [ ] **CI/CD**: GitHub Actions | Automatic tests, builds and deployments
-- [ ] **App builds and release**: Gradle, Xcode, Fastlane; Codemagic for cloud iOS builds without a Mac | Building and publishing the apps
+- [x] **CI/CD**: GitHub Actions | Automatic tests, builds and deployments
+- [~] **App builds and release**: Gradle, Xcode, Fastlane; Codemagic for cloud iOS builds without a Mac | Building and publishing the apps — *Left: Gradle and Xcode builds run in GitHub Actions; Fastlane or Codemagic are set up with the store accounts*
 - [ ] **App distribution**: Google Play Console, App Store Connect, TestFlight | Testing and store release
 - [ ] **Email**: A transactional email service (e.g. Brevo, Postmark or Amazon SES) | Codes and notices
 - [ ] **Status page**: e.g. UptimeRobot or Better Stack | Uptime checks and public status page
