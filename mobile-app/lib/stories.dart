@@ -618,7 +618,7 @@ class GuideOverlay extends StatelessWidget {
       child: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(12, 12, 6, 12), child: Align(alignment: where,
         child: AnimatedSwitcher(duration: Duration(milliseconds: app.reducedMotion ? 1 : 260), child: KeyedSubtree(key: ValueKey(step), child: up
           ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: where.x > 0 ? CrossAxisAlignment.end : CrossAxisAlignment.center, children: [Padding(padding: const EdgeInsets.only(right: 8, bottom: 6), child: arrow), card])
-          : Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: card), const SizedBox(width: 6), arrow, const SizedBox(width: 56)]))))))));
+          : Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: card), const SizedBox(width: 6), arrow, const SizedBox(width: 56)])))))))));
   }
 }
 
