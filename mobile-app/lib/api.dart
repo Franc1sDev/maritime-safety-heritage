@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show File;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -21,6 +22,29 @@ class LocalFile {
   final String path, name;
   final int size;
   LocalFile(this.path, this.name, this.size);
+}
+
+/// One upload that can be paused, resumed and cancelled (Section 8.4). Large files go in pieces
+/// (the tus protocol) and continue from where they stopped; small ones go in one request.
+class UploadTask {
+  UploadTask(this.file, this.purpose);
+  final LocalFile file;
+  final String purpose;
+  /// waiting, sending, paused, wifi (waiting for Wi-Fi), done, failed or cancelled
+  String state = 'waiting';
+  double pct = 0;
+  String? error;
+  Map<String, dynamic>? media;
+  /// The server's id for a large upload, kept so it can continue later.
+  String? id;
+  bool _halt = false;
+  void Function()? onChange;
+  bool get active => state == 'waiting' || state == 'sending' || state == 'paused' || state == 'wifi';
+  bool get large => file.size >= Api.pieceThreshold;
+  void mark(String s, {String? err}) { state = s; error = err; onChange?.call(); }
+  /// Stops after the piece being sent. [to] is paused or wifi.
+  void hold(String to) { _halt = true; _holdAs = to; if (state != 'sending' || !large) mark(to); }
+  String _holdAs = 'paused';
 }
 
 /// Talks to the archive's secure API.
@@ -191,6 +215,104 @@ class Api {
   /// Uploads one file (story, comment, message, avatar, concern …) and returns the stored file.
   Future<Map<String, dynamic>> uploadFile(LocalFile f, String purpose, {void Function(double)? onProgress, String path = '/media', String field = 'file'}) async =>
       (await upload(path, {'purpose': purpose}, [f], fileField: field, onProgress: onProgress)) as Map<String, dynamic>;
+
+  // ---- Uploads in pieces (tus) ----
+  static const pieceThreshold = 4000000;
+  static const _piece = 1024 * 1024;
+
+  Future<http.Response> _tusCall(String method, String path, Map<String, String> headers, [List<int>? body]) async {
+    await _ensureFresh();
+    final req = http.Request(method, _uri(path))..headers.addAll(_headers())..headers.addAll({'Tus-Resumable': '1.0.0', ...headers});
+    if (body != null) req.bodyBytes = body;
+    try {
+      return await http.Response.fromStream(await _client.send(req).timeout(const Duration(minutes: 2)));
+    } catch (_) {
+      throw ApiError(0, 'The upload was interrupted. Check your connection and try again.');
+    }
+  }
+
+  ApiError _tusError(http.Response r) { final data = _decode(r.body); return ApiError(r.statusCode, _message(data, r.statusCode), code: data is Map ? '${data['code'] ?? ''}' : ''); }
+
+  /// Sends (or continues) one upload. Returns when it is done, paused, failed or cancelled; the task says which.
+  Future<void> runUpload(UploadTask t) async {
+    if (t.state == 'sending' || t.state == 'done' || t.state == 'cancelled') return;
+    t._halt = false;
+    t._holdAs = 'paused';
+    t.mark('sending');
+    try {
+      if (!t.large) {
+        final m = await uploadFile(t.file, t.purpose, onProgress: (p) { t.pct = p * .98; t.onChange?.call(); });
+        if (t.state == 'cancelled') return;
+        t.media = m;
+      } else {
+        final m = await _sendInPieces(t);
+        if (t.state == 'cancelled') return;
+        if (m == null) { t.mark(t._holdAs); return; }
+        t.media = m;
+      }
+      t.pct = 1;
+      t.mark('done');
+    } catch (e) {
+      if (t.state != 'cancelled') t.mark('failed', err: e is ApiError ? e.message : 'The upload was interrupted. Check your connection and try again.');
+    }
+  }
+
+  Future<Map<String, dynamic>?> _sendInPieces(UploadTask t) async {
+    String b64(String s) => base64.encode(utf8.encode(s));
+    final size = t.file.size;
+    if (t.id == null) {
+      final r = await _tusCall('POST', '/uploads', {'Upload-Length': '$size', 'Upload-Metadata': 'filename ${b64(t.file.name)},purpose ${b64(t.purpose)}'});
+      if (r.statusCode >= 400) throw _tusError(r);
+      t.id = (r.headers['location'] ?? '').split('/').last;
+      if (t.id!.isEmpty) { t.id = null; throw ApiError(0, 'The upload was interrupted. Check your connection and try again.'); }
+    }
+    Future<int> arrived() async {
+      final r = await _tusCall('HEAD', '/uploads/${t.id}', const {});
+      if (r.statusCode == 404) { t.id = null; throw ApiError(404, 'The upload was interrupted. Check your connection and try again.'); }
+      if (r.statusCode >= 400) throw _tusError(r);
+      return int.tryParse(r.headers['upload-offset'] ?? '') ?? 0;
+    }
+    var offset = await arrived();
+    final file = await File(t.file.path).open();
+    try {
+      var fails = 0;
+      while (offset < size) {
+        if (t._halt) return null;
+        await file.setPosition(offset);
+        final bytes = await file.read(size - offset < _piece ? size - offset : _piece);
+        try {
+          final r = await _tusCall('PATCH', '/uploads/${t.id}', {'Upload-Offset': '$offset', 'Content-Type': 'application/offset+octet-stream'}, bytes);
+          if (r.statusCode == 409) { offset = int.tryParse(r.headers['upload-offset'] ?? '') ?? await arrived(); continue; }
+          if (r.statusCode >= 500) throw ApiError(0, 'The upload was interrupted. Check your connection and try again.');
+          if (r.statusCode >= 400) throw _tusError(r);
+          offset = int.tryParse(r.headers['upload-offset'] ?? '') ?? offset + bytes.length;
+          fails = 0;
+          t.pct = offset / size * .98;
+          t.onChange?.call();
+        } on ApiError catch (e) {
+          // A dropped connection: wait a little, ask the server how much arrived, and carry on from there.
+          if (e.status != 0 || ++fails > 6) rethrow;
+          await Future<void>.delayed(Duration(seconds: 2 * fails));
+          if (t._halt) return null;
+          try { offset = await arrived(); } on ApiError catch (e2) { if (e2.status != 0) rethrow; }
+        }
+      }
+    } finally {
+      await file.close();
+    }
+    final done = await get('/uploads/${t.id}');
+    final m = done is Map ? done['media'] : null;
+    if (m is! Map<String, dynamic>) throw ApiError(0, 'The upload was interrupted. Check your connection and try again.');
+    return m;
+  }
+
+  /// Cancels an upload and removes what the server has of it.
+  void cancelUpload(UploadTask t) {
+    t._halt = true;
+    final id = t.id;
+    t.mark('cancelled');
+    if (id != null && t.media == null) _tusCall('DELETE', '/uploads/$id', const {}).then((_) {}, onError: (_) {});
+  }
 
   /// Multipart upload with progress.
   Future<dynamic> upload(String path, Map<String, String> fields, List<LocalFile> files,

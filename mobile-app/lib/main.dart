@@ -34,6 +34,42 @@ class HeritageApp extends StatelessWidget {
   }
 }
 
+/// A slim bar on the main screen while files are uploading or a story is waiting for them.
+class UploadsBar extends StatelessWidget {
+  const UploadsBar({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final u = AppScope.read(context).uploads;
+    return ListenableBuilder(listenable: u, builder: (context, _) {
+      final cs = Theme.of(context).colorScheme;
+      if (!u.busy) {
+        if (u.notice == null) return const SizedBox.shrink();
+        return Container(width: double.infinity, color: cs.primaryContainer, padding: const EdgeInsets.only(left: 12), child: Row(children: [
+          Icon(Icons.check_circle_outline, size: 18, color: cs.onPrimaryContainer), const SizedBox(width: 8),
+          Expanded(child: Text(u.notice!, style: TextStyle(fontSize: 13, color: cs.onPrimaryContainer))),
+          IconButton(icon: const Icon(Icons.close, size: 18), tooltip: t('Close'), onPressed: u.clearNotice),
+        ]));
+      }
+      final failed = u.pending.where((p) => p.error != null).toList();
+      final sending = u.live.any((x) => x.state == 'sending' || x.state == 'waiting');
+      final waitingWifi = !sending && u.live.any((x) => x.state == 'wifi');
+      final line = failed.isNotEmpty ? '${t('Could not send “{title}”. It is saved in your drafts.', {'title': failed.first.title})} ${failed.first.error}'
+          : u.pending.isNotEmpty ? t('Sending “{title}” when its files finish', {'title': u.pending.first.title})
+          : waitingWifi ? t('Waiting for Wi-Fi') : sending ? t('Uploading… {n}%', {'n': (u.pct * 100).round()}) : t('Paused');
+      return Container(width: double.infinity, color: failed.isNotEmpty ? cs.errorContainer : cs.surfaceContainerHighest, padding: const EdgeInsets.only(left: 12), child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          Expanded(child: Text(line, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+          if (failed.isNotEmpty) ...[
+            IconButton(icon: const Icon(Icons.refresh, size: 20), tooltip: t('Retry'), onPressed: () => u.retry(failed.first)),
+            IconButton(icon: const Icon(Icons.close, size: 20), tooltip: t('Close'), onPressed: () { for (final x in List.of(failed.first.needs)) { if (x.active || x.state == 'failed') u.cancel(x); } u.drop(failed.first); }),
+          ] else if (u.live.any((x) => x.large || x.state != 'sending')) IconButton(icon: Icon(sending ? Icons.pause : Icons.play_arrow, size: 20), tooltip: sending ? t('Pause') : t('Resume'), onPressed: sending ? u.pauseAll : u.resumeAll),
+        ]),
+        if (u.live.isNotEmpty) Padding(padding: const EdgeInsets.only(right: 12, bottom: 6), child: LinearProgressIndicator(value: u.pct)),
+      ]));
+    });
+  }
+}
+
 /// Shown over the whole app while an admin's app lock is on: nothing behind it can be read or touched.
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -163,6 +199,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
         if (s.priority.isNotEmpty) SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
           for (final n in s.priority.take(4)) Padding(padding: const EdgeInsets.only(right: 6), child: ActionChip(avatar: const Icon(Icons.notifications_active, size: 16), label: Text(str(n['title']), style: const TextStyle(fontSize: 12)), onPressed: () => _openNotice(s, n))),
         ])),
+        const UploadsBar(),
         Expanded(child: StoriesScreen(key: stories)),
         if (s.isAdmin) SafeArea(top: false, child: Padding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 6), child: FilledButton.icon(onPressed: () => openAdminPanel(context), icon: const Icon(Icons.tune), label: Text(t('ADMINISTRATIVE CONTROLS'))))),
       ])),

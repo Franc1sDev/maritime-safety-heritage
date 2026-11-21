@@ -15,11 +15,14 @@ import 'stories.dart';
 
 class _Slot {
   final String name, kind;
-  double pct = 0;
-  String? error;
-  J? media;
+  /// The upload in progress, for a file added now; null for a file the story already had.
+  final UploadTask? task;
+  final J? _had;
   bool consentForm = false;
-  _Slot(this.name, this.kind);
+  _Slot(this.name, this.kind, {this.task, J? media}) : _had = media;
+  double get pct => task?.pct ?? 1;
+  String? get error => task?.state == 'failed' ? (task!.error ?? '') : null;
+  J? get media => _had ?? task?.media;
 }
 
 String? _kindOf(String name) {
@@ -45,6 +48,8 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
       suggestTitle = TextEditingController(), suggestDetails = TextEditingController(), storyteller = TextEditingController();
   final source = {for (final k in ['institution', 'reference', 'originalDate', 'creator', 'rightsStatement', 'obtained']) k: TextEditingController()};
   final slots = <_Slot>[];
+  late final Uploads _uploads;
+  bool _handedOver = false;
   String language = I18n.code, category = '', postedAs = 'self', rights = 'All rights reserved', type = 'community', consentType = 'written';
   int? placeId;
   LatLng? pos;
@@ -70,12 +75,18 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
   @override
   void initState() {
     super.initState();
+    _uploads = AppScope.read(context).uploads..addListener(_onUploads);
     if (widget.company) postedAs = 'company';
     draftId = widget.editId;
     if (widget.editId != null) _loadExisting();
   }
   @override
-  void dispose() { _poll?.cancel(); _recTimer?.cancel(); recorder.dispose(); super.dispose(); }
+  void dispose() {
+    _uploads.removeListener(_onUploads);
+    // Leaving without sending: uploads nobody is waiting for are stopped.
+    if (!_handedOver) { for (final s in slots) { if (s.task != null && s.task!.active) _uploads.cancel(s.task!); } }
+    _poll?.cancel(); _recTimer?.cancel(); recorder.dispose(); super.dispose();
+  }
 
   Future<void> _loadExisting() async {
     setState(() => loading = true);
@@ -89,7 +100,7 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
         approx = s['dateApproximate'] == true; if (s['eventDate'] != null) { if (approx) { year.text = str(s['eventDate']).substring(0, 4); } else { eventDate = DateTime.tryParse(str(s['eventDate'])); } }
         consent = postedAs == 'told_by'; allowDownload = s['allowDownload'] != false; sensitive = s['sensitive'] == true;
         if (s['incident'] != null) { incidentId = str(asMap(s['incident'])['id']); incidentTitle = str(asMap(s['incident'])['title']); }
-        for (final m in asList(s['media'])) { slots.add(_Slot(str(m['name']), str(m['kind']))..media = m..pct = 1); }
+        for (final m in asList(s['media'])) { slots.add(_Slot(str(m['name']), str(m['kind']), media: m)); }
         loading = false;
       });
     } catch (e) { if (mounted) { toast(context, errText(e), error: true); Navigator.pop(context); } }
@@ -101,12 +112,44 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
     if (kind == null) { setState(() => errors = [t('“{name}”: this file type is not supported.', {'name': name})]); return; }
     if (count(kind) >= max(kind)) { setState(() => errors = [kind == 'image' ? t('You can add up to {n} images.', {'n': max(kind)}) : kind == 'document' ? t('You can add up to {n} documents.', {'n': max(kind)}) : kind == 'video' ? t('A story can have one video.') : t('A story can have one audio file.')]); return; }
     if (size > maxMb(kind) * 1048576) { setState(() => errors = [t('“{name}” is too large. The limit is {mb} MB.', {'name': name, 'mb': maxMb(kind)})]); return; }
-    final slot = _Slot(name, kind);
+    // The upload belongs to the app, not to this form: it can be paused, waits for Wi-Fi if asked, and carries on while browsing.
+    final slot = _Slot(name, kind, task: _uploads.add(LocalFile(path, name, size), 'story'));
     setState(() { slots.add(slot); errors = []; });
+  }
+  void _remove(_Slot sl) { if (sl.task != null) _uploads.cancel(sl.task!); setState(() => slots.remove(sl)); }
+  void _onUploads() { if (mounted) setState(() {}); }
+
+  /// SEND while files are still uploading: the story is kept as a draft on the account, and sent as soon as the files arrive.
+  Future<void> _sendLater() async {
+    setState(() => busy = 'send');
+    final api = app.api;
+    final wasPub = wasPublished;
     try {
-      final m = await app.api.uploadFile(LocalFile(path, name, size), 'story', onProgress: (p) { if (mounted) setState(() => slot.pct = p * .98); });
-      if (mounted) setState(() { slot.media = m; slot.pct = 1; });
-    } catch (e) { if (mounted) setState(() => slot.error = errText(e)); }
+      if (!wasPub) {
+        final d = draftId != null ? asMap(await api.patch('/stories/$draftId', _payload(true))) : asMap(await api.post('/stories', _payload(true)));
+        draftId = str(d['id']);
+      }
+    } on ApiError catch (e) {
+      if (mounted) setState(() { busy = null; errors = [e.status == 0 ? t('You are offline. Your story will be kept on this device until you are back online.') : '${e.message} ${str(asMap(e.details)['reason'])}'.trim()]; });
+      return;
+    }
+    final id = draftId!;
+    final mine = List<_Slot>.of(slots);
+    final base = _payload(!wasPub);
+    final name = title.text.trim().isEmpty ? t('Your story') : title.text.trim();
+    J full() {
+      final form = mine.where((s) => s.consentForm && s.media != null).toList();
+      return {...base, 'mediaIds': mine.where((s) => s.media != null && !s.consentForm).map((s) => s.media!['id']).toList(), if (form.isNotEmpty) 'consentFormMediaId': form.first.media!['id']};
+    }
+    _handedOver = true;
+    _uploads.sendWhenReady(PendingSend(name, mine.map((s) => s.task).whereType<UploadTask>().toList(), () async {
+      var s = asMap(await api.patch('/stories/$id', full()));
+      if (!wasPub) s = asMap(await api.post('/stories/$id/submit'));
+      return str(s['message'], t('Your story was sent and is being checked.'));
+    }));
+    if (!mounted) return;
+    toast(context, t('Your story will be sent when the files finish uploading. You can keep browsing.'));
+    Navigator.pop(context);
   }
 
   Future<void> _pick(String kind, {bool camera = false}) async {
@@ -166,12 +209,13 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
   Future<void> _save(bool draft) async {
     final errs = <String>[];
     if (!draft) {
-      if (text.text.trim().isEmpty && !slots.any((s) => s.media != null)) errs.add(t('Add text or at least one file before sending.'));
+      if (text.text.trim().isEmpty && !slots.any((s) => s.error == null)) errs.add(t('Add text or at least one file before sending.'));
       if (postedAs == 'told_by' && (toldBy.text.trim().isEmpty || !consent)) errs.add(t('Confirm that the person whose story this is has agreed to it being shared.'));
     }
-    if (uploading) errs.add(t('Wait for the files to finish uploading.'));
+    if (uploading && draft) errs.add(t('Wait for the files to finish uploading.'));
     setState(() => errors = errs);
     if (errs.isNotEmpty) return;
+    if (uploading) { await _sendLater(); return; }
     setState(() => busy = draft ? 'draft' : 'send');
     try {
       J s;
@@ -231,9 +275,15 @@ class _ShareStoryPageState extends State<ShareStoryPage> {
         for (final sl in slots) ListTile(dense: true, contentPadding: EdgeInsets.zero,
             leading: Icon(sl.kind == 'image' ? Icons.image : sl.kind == 'video' ? Icons.videocam : sl.kind == 'audio' ? Icons.graphic_eq : Icons.description),
             title: Text(sl.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: sl.error != null ? Text(sl.error!, style: const TextStyle(color: C.red)) : sl.media == null ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: sl.pct), Text('${t('Uploading…')} ${(sl.pct * 100).round()}%')])
+            subtitle: sl.error != null ? Text(sl.error!, style: const TextStyle(color: C.red)) : sl.media == null ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: sl.pct),
+                    Text(sl.task?.state == 'paused' ? '${t('Paused')} · ${(sl.pct * 100).round()}%' : sl.task?.state == 'wifi' ? t('Waiting for Wi-Fi') : '${t('Uploading…')} ${(sl.pct * 100).round()}%')])
                 : sl.kind == 'document' && postedAs == 'told_by' ? InkWell(onTap: () => setState(() { for (final x in slots) { x.consentForm = identical(x, sl) ? !sl.consentForm : false; } }), child: Text('${sl.consentForm ? '☑' : '☐'} ${t('This is the signed consent form (kept private)')}')) : Text(t('Ready')),
-            trailing: IconButton(icon: const Icon(Icons.close), tooltip: t('Remove {name}', {'name': sl.name}), onPressed: () => setState(() => slots.remove(sl)))),
+            trailing: Wrap(children: [
+              if (sl.error != null) IconButton(icon: const Icon(Icons.refresh), tooltip: t('Retry'), onPressed: () => _uploads.resume(sl.task!)),
+              if (sl.task != null && sl.task!.large && sl.task!.state == 'sending') IconButton(icon: const Icon(Icons.pause), tooltip: t('Pause'), onPressed: () => _uploads.pause(sl.task!)),
+              if (sl.task?.state == 'paused') IconButton(icon: const Icon(Icons.play_arrow), tooltip: t('Resume'), onPressed: () => _uploads.resume(sl.task!)),
+              IconButton(icon: const Icon(Icons.close), tooltip: t('Remove {name}', {'name': sl.name}), onPressed: () => _remove(sl)),
+            ])),
         const Divider(height: 28),
         Text(t('Story details'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)), const SizedBox(height: 8),
         TextField(controller: placeName, onChanged: (_) => placeId = null, decoration: InputDecoration(labelText: t('Where it happened'), suffixIcon: IconButton(icon: const Icon(Icons.search), tooltip: t('Search'), onPressed: () async {

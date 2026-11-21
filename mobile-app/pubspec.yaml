@@ -53,6 +53,8 @@ dependencies:
   record: ^6.0.0
   path_provider: ^2.1.5
   app_links: ^6.3.3
+  # Knowing when the phone is on Wi-Fi (for “Upload only on Wi-Fi”)
+  connectivity_plus: ^6.1.0
   # Optional fingerprint or face unlock for admin accounts
   local_auth: ">=2.3.0 <3.0.0"
 

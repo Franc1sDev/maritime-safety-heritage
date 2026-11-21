@@ -32,6 +32,10 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(null)
                     }
                 }
+                "uploads" -> {
+                    Uploads.update(this, call.argument<Boolean>("active") ?: false, call.argument<String>("title") ?: "", call.argument<String>("text") ?: "", call.argument<Number>("pct")?.toInt() ?: -1)
+                    result.success(null)
+                }
                 "cancel" -> {
                     call.argument<String>("id")?.let { Reminders.cancel(this, it) }
                     result.success(null)

@@ -47,5 +47,15 @@
 "Set up a fingerprint, face or screen lock on this phone first.": "Kwanza weka alama ya kidole, uso au kufuli ya skrini kwenye simu hii.",
 "The app is locked": "Programu imefungwa",
 "Use your fingerprint, face or screen lock to open Remembering the Waters.": "Tumia alama ya kidole, uso au kufuli ya skrini kufungua Remembering the Waters.",
-"Unlock": "Fungua"
+"Unlock": "Fungua",
+"Paused": "Imesitishwa kwa muda",
+"Waiting for Wi-Fi": "Inasubiri Wi-Fi",
+"Pause": "Sitisha",
+"Resume": "Endelea",
+"Uploading… {n}%": "Inapakia… {n}%",
+"Your story will be sent when the files finish uploading. You can keep browsing.": "Hadithi yako itatumwa faili zikimaliza kupakiwa. Unaweza kuendelea kuvinjari.",
+"Your story was sent and is being checked.": "Hadithi yako imetumwa na inakaguliwa.",
+"Sending “{title}” when its files finish": "Kutuma “{title}” faili zake zikimaliza",
+"Could not send “{title}”. It is saved in your drafts.": "Imeshindwa kutuma “{title}”. Imehifadhiwa katika rasimu zako.",
+"Your story": "Hadithi yako"
 }

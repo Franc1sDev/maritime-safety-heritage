@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:local_auth/local_auth.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,11 +79,116 @@ String ago(dynamic iso) {
   return fmtDate(iso);
 }
 
+// ---------- Uploads that carry on while the person browses ----------
+/// A story waiting for its files: it is sent as soon as they have all arrived.
+class PendingSend {
+  PendingSend(this.title, this.needs, this.send);
+  final String title;
+  final List<UploadTask> needs;
+  final Future<String> Function() send;
+  bool sending = false;
+  String? error;
+}
+
+/// Files are sent in pieces, can be paused, resumed and cancelled, wait for Wi-Fi when the person asked for that,
+/// and keep going while they browse. On Android a notification shows the progress and keeps the upload alive
+/// while the app is in the background.
+class Uploads extends ChangeNotifier {
+  Uploads(this.app);
+  final AppState app;
+  final tasks = <UploadTask>[];
+  final pending = <PendingSend>[];
+  /// The last thing worth telling the person (a story sent, or why it could not be).
+  String? notice;
+  bool onWifi = true;
+  StreamSubscription<List<ConnectivityResult>>? _net;
+  static const _native = MethodChannel('msh/alerts');
+  int _shownPct = -1;
+  String _shownText = '';
+
+  bool get wifiOnly => app.settings['wifiOnly'] == true;
+  List<UploadTask> get live => tasks.where((x) => x.active).toList();
+  bool get busy => live.isNotEmpty || pending.isNotEmpty;
+  double get pct { final l = tasks.where((x) => x.active || x.state == 'done').toList(); if (l.isEmpty) return 0; final total = l.fold<int>(0, (a, x) => a + x.file.size); return total == 0 ? 0 : l.fold<double>(0, (a, x) => a + x.pct * x.file.size) / total; }
+
+  void watchNetwork() {
+    bool wifi(List<ConnectivityResult> r) => r.contains(ConnectivityResult.wifi) || r.contains(ConnectivityResult.ethernet);
+    try {
+      Connectivity().checkConnectivity().then((r) { onWifi = wifi(r); _network(); }, onError: (_) {});
+      _net = Connectivity().onConnectivityChanged.listen((r) { onWifi = wifi(r); _network(); }, onError: (_) {});
+    } catch (_) {/* not available on this device: treat as Wi-Fi */}
+  }
+
+  /// When the network (or the Wi-Fi-only choice) changes: hold uploads that must wait, and continue those that can go.
+  void _network() {
+    for (final x in tasks) {
+      if (wifiOnly && !onWifi && (x.state == 'sending' || x.state == 'waiting')) x.hold('wifi');
+      if ((!wifiOnly || onWifi) && x.state == 'wifi') _run(x);
+    }
+    _changed();
+  }
+  void settingsChanged() => _network();
+  void clearNotice() { notice = null; notifyListeners(); }
+
+  UploadTask add(LocalFile f, String purpose) {
+    final x = UploadTask(f, purpose)..onChange = _changed;
+    tasks.add(x);
+    _run(x);
+    return x;
+  }
+  Future<void> _run(UploadTask x) async {
+    if (wifiOnly && !onWifi) { x.mark('wifi'); return; }
+    await app.api.runUpload(x);
+  }
+  void pause(UploadTask x) => x.hold('paused');
+  void resume(UploadTask x) { if (x.state == 'paused' || x.state == 'failed' || x.state == 'wifi') _run(x); }
+  void cancel(UploadTask x) { app.api.cancelUpload(x); tasks.remove(x); _changed(); }
+  void pauseAll() { for (final x in live) { if (x.state == 'sending' || x.state == 'waiting') pause(x); } }
+  void resumeAll() { for (final x in live) { resume(x); } }
+
+  /// Sends a story once its files have arrived, so the person does not have to wait on the form.
+  void sendWhenReady(PendingSend p) { pending.add(p); _changed(); }
+  void drop(PendingSend p) { pending.remove(p); _changed(); }
+  void retry(PendingSend p) { p.error = null; for (final x in p.needs) { resume(x); } _changed(); }
+
+  void _changed() {
+    for (final p in List<PendingSend>.of(pending)) {
+      if (p.sending || p.error != null) continue;
+      if (p.needs.any((x) => x.active)) continue;
+      if (p.needs.any((x) => x.state == 'failed')) { p.error = p.needs.firstWhere((x) => x.state == 'failed').error; continue; }
+      p.sending = true;
+      p.send().then((message) { pending.remove(p); notice = message; _tidy(); notifyListeners(); },
+          onError: (Object e) { p.sending = false; p.error = e is ApiError ? e.message : '$e'; notifyListeners(); });
+    }
+    _tidy();
+    _notify();
+    notifyListeners();
+  }
+
+  /// Finished uploads that no waiting story needs are forgotten once nothing is in flight.
+  void _tidy() { if (live.isEmpty && pending.isEmpty) tasks.removeWhere((x) => !x.active); }
+
+  /// Android: a notification with the progress, which also keeps the upload going while the app is in the background.
+  void _notify() {
+    final l = live;
+    final sending = l.where((x) => x.state == 'sending').length;
+    final text = l.isEmpty ? '' : sending > 0 ? t('Uploading… {n}%', {'n': (pct * 100).round()}) : l.any((x) => x.state == 'wifi') ? t('Waiting for Wi-Fi') : t('Paused');
+    final p = l.isEmpty ? -1 : (pct * 100).round();
+    if (text == _shownText && (p - _shownPct).abs() < 2) return;
+    _shownText = text; _shownPct = p;
+    _native.invokeMethod<void>('uploads', {'active': l.isNotEmpty, 'title': 'Remembering the Waters', 'text': text, 'pct': p}).then((_) {}, onError: (_) {});
+  }
+
+  @override
+  void dispose() { _net?.cancel(); super.dispose(); }
+}
+
 // ---------- The signed-in session, settings and counts ----------
 class AppState extends ChangeNotifier {
   static const defaultServer = String.fromEnvironment('API_URL', defaultValue: 'https://maritime-heritage.onrender.com');
   late SharedPreferences prefs;
   late Api api;
+  late final Uploads uploads = Uploads(this);
   J? me;
   J config = {};
   J counts = {};
@@ -144,6 +250,7 @@ class AppState extends ChangeNotifier {
     try { me = await api.restore(); } catch (_) {}
     if (me != null) await setLanguage(str(me!['language'], I18n.code), save: false);
     unawaited(loadConfig());
+    uploads.watchNetwork();
     if (bioLock) locked = true;
     ready = true;
     notifyListeners();
@@ -209,6 +316,7 @@ class AppState extends ChangeNotifier {
     }
     final r = asMap(await api.patch('/me/settings', patch));
     me = asMap(r['user']);
+    if (patch.containsKey('wifiOnly')) uploads.settingsChanged();
     if (patch['language'] is String) await setLanguage(patch['language'] as String);
     notifyListeners();
   }
