@@ -104,6 +104,7 @@ const M: Record<string, Text> = {
   deletion_reason_required: { en: 'Pick a reason for deleting your account.', sw: 'Chagua sababu ya kufuta akaunti yako.' },
   feedback_sent: { en: 'Thank you for your feedback.', sw: 'Asante kwa maoni yako.' },
   general_error: { en: 'Something went wrong. Please try again.', sw: 'Hitilafu imetokea. Tafadhali jaribu tena.' },
+  translation_unavailable: { en: 'Translation is not available right now. Please try again later.', sw: 'Tafsiri haipatikani kwa sasa. Tafadhali jaribu tena baadaye.' },
   already_exists: { en: 'That already exists.', sw: 'Hicho tayari kipo.' },
   blocked_interaction: { en: 'You cannot interact with this person.', sw: 'Huwezi kuwasiliana na mtu huyu.' },
   admin_story_deleted: { en: 'Story deleted. The Contributor has been notified.', sw: 'Hadithi imefutwa. Mchangiaji amearifiwa.' },

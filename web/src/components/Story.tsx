@@ -118,7 +118,7 @@ export function StoryFrame({ story: initial, active, paused, adminBar, onChanged
   const left = (
     <>
       {hasPlace && <div className="group"><Act k="map" icon="pin" label={t('Where It Happened')} on={overlay === 'map'} onClick={() => setOverlay(overlay === 'map' ? null : 'map')} /></div>}
-      <div className="group" role="group" aria-label={t('Reactions')}>
+      <div className="group" data-guide="react" role="group" aria-label={t('Reactions')}>
         <Act k="heart" icon="heart" label={t('Heart')} on={s.viewer.reaction === 'heart'} n={s.counts.hearts} onClick={() => react('heart')} filled />
         <Act k="heartbreak" icon="heartbreak" label={t('Heartbreak')} on={s.viewer.reaction === 'heartbreak'} n={s.counts.heartbreaks} onClick={() => react('heartbreak')} />
         <Act k="laugh" icon="laugh" label={t('Laugh')} on={s.viewer.reaction === 'laugh'} n={s.counts.laughs} onClick={() => react('laugh')} />
@@ -182,7 +182,7 @@ export function StoryFrame({ story: initial, active, paused, adminBar, onChanged
       </article>
       <div className="rail">
         <div className="left-items">{left}</div>
-        <Act k="comments" icon="comment" label={t('Comments')} n={s.counts.comments} onClick={() => setOverlay('comments')} />
+        <div data-guide="comment"><Act k="comments" icon="comment" label={t('Comments')} n={s.counts.comments} onClick={() => setOverlay('comments')} /></div>
         <div className="group"><Act k="share" icon="share" label={t('Share')} onClick={share} /></div>
         <div className="group">
           <Act k="copy" icon="link" label={t('Copy Link')} onClick={copyLink} />
@@ -276,12 +276,19 @@ export function ReportDialog({ targetType, targetId, author, onClose }: { target
   );
 }
 
-interface CommentItem { id: string; parentId: string | null; text: string; reactions: number; createdAt: string; author: Person; replyTo: Person | null; myReaction: string | null; own: boolean; file: MediaItem | null; replies: CommentItem[]; status: string }
+interface CommentItem { id: string; parentId: string | null; text: string; language: string; reactions: number; createdAt: string; author: Person; replyTo: Person | null; myReaction: string | null; own: boolean; file: MediaItem | null; replies: CommentItem[]; status: string }
 function Comments({ story, onClose, onCount }: { story: Story; onClose: () => void; onCount: (n: number) => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { me, need, toast } = useApp();
   const qc = useQueryClient();
   const [sort, setSort] = useState('top');
+  // Comments the reader has asked to see in their own language.
+  const [shown, setShown] = useState<Record<string, { text: string; from: string }>>({});
+  async function translateComment(c: CommentItem) {
+    if (shown[c.id]) return setShown(({ [c.id]: _, ...rest }) => rest);
+    try { const r = await get(`/comments/${c.id}/translate`, { to: i18n.language }); setShown((m) => ({ ...m, [c.id]: { text: r.text, from: r.fromName } })); }
+    catch (e: any) { toast(e.message, 'error'); }
+  }
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<CommentItem | null>(null);
   const [file, setFile] = useState<{ id: string; name: string } | null>(null);
@@ -319,11 +326,13 @@ function Comments({ story, onClose, onCount }: { story: Story; onClose: () => vo
       <Avatar person={c.author} size="sm" />
       <div className="body">
         <PersonName person={c.author} /> <span className="meta">{ago(c.createdAt, t)}{c.replyTo && <> · {t('replying to {name}', { name: c.replyTo.username ? `@${c.replyTo.username}` : c.replyTo.name })}</>}{c.status !== 'published' && <> · <span className="flag none">{t('Held for review')}</span></>}</span>
-        {c.text && <div className="text">{c.text}</div>}
+        {c.text && <div className="text" lang={shown[c.id] ? i18n.language : c.language}>{shown[c.id]?.text ?? c.text}</div>}
+        {shown[c.id] && <div className="meta">{t('Machine-translated from {language}', { language: shown[c.id].from })}</div>}
         {c.file && (c.file.kind === 'image' ? <img src={c.file.urls.medium ?? c.file.urls.thumb} alt={c.file.altText || c.file.name} style={{ maxWidth: 220, borderRadius: 10, display: 'block', marginTop: 4 }} loading="lazy" /> : <a href={c.file.urls.original ?? c.file.urls.web} target="_blank" rel="noopener noreferrer" className="small"><Icon name="clip" size={14} /> {c.file.name}</a>)}
         <div className="row small" style={{ gap: '.9rem', marginTop: 2 }}>
           <button className="linkbtn" onClick={() => reactTo(c)} aria-pressed={!!c.myReaction}><Icon name="heart" size={14} filled={!!c.myReaction} /> {c.reactions}</button>
           {!story.comments.locked && <button className="linkbtn" onClick={() => { if (need()) { setReplyTo(c); setText(c.author.username ? `@${c.author.username} ` : ''); } }}>{t('Reply')}</button>}
+          {c.text && c.language !== i18n.language && c.status === 'published' && <button className="linkbtn" onClick={() => translateComment(c)} aria-pressed={!!shown[c.id]}>{shown[c.id] ? t('Show original') : t('Translate')}</button>}
           {c.own || me?.role === 'admin' ? <button className="linkbtn" onClick={() => setRemove(c)}>{t('Delete')}</button> : <button className="linkbtn" onClick={() => need() && setReport(c)}>{t('Report')}</button>}
         </div>
       </div>

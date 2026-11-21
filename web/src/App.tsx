@@ -8,6 +8,7 @@ import { useApp, useSaveSettings } from './lib/app';
 import { onQueue, queued } from './lib/offline';
 import { Icon } from './components/Icon';
 import { Dialog, Spinner, Toasts } from './components/ui';
+import { Guide } from './components/Guide';
 import { ProviderButtons } from './pages/Auth';
 import StoriesPage from './pages/Stories';
 
@@ -143,6 +144,7 @@ export default function App() {
         <p className="small">© {new Date().getFullYear()} Remembering the Waters{config?.emergencyNumbers?.length ? ` · ${t('In an emergency on the water call {numbers}', { numbers: config.emergencyNumbers.join(' / ') })}` : ''}</p>
       </footer>
 
+      <Guide ready={ready && !shown && !showFloat} />
       {showFloat && (
         <div className="floaters" onClick={() => setFloating(false)} role="dialog" aria-modal="true" aria-label={t('Needs your action')}>
           <div onClick={(e) => e.stopPropagation()}>

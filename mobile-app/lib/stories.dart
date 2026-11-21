@@ -105,6 +105,7 @@ class StoriesScreenState extends State<StoriesScreen> {
       if (gen != _gen || !mounted) return;
       final list = asList(r['items']);
       setState(() { items = [if (top != null) top, ...list.where((x) => x['id'] != top?['id'])]; cursor = r['nextCursor'] as String?; more = cursor != null; loading = false; });
+      if (items.isNotEmpty) AppScope.read(context).startGuide();
     } catch (e) { if (gen == _gen && mounted) setState(() { error = e; loading = false; }); }
   }
 
@@ -123,6 +124,10 @@ class StoriesScreenState extends State<StoriesScreen> {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final cs = Theme.of(context).colorScheme;
+    return Stack(children: [_screen(s, cs), if (s.guideStep != null) Positioned.fill(child: GuideOverlay(step: s.guideStep!))]);
+  }
+
+  Widget _screen(AppState s, ColorScheme cs) {
     return Column(children: [
       SizedBox(height: 46, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
         Center(child: Padding(padding: const EdgeInsets.only(right: 8), child: Text(t('Stories by'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)))),
@@ -509,6 +514,14 @@ class _CommentsSheetState extends State<CommentsSheet> {
   J? replyTo;
   final ctl = TextEditingController();
   bool busy = false;
+  // Comments the reader has asked to see in their own language: id -> (text, original language).
+  final Map<String, (String, String)> shown = {};
+  Future<void> _translate(J c) async {
+    final id = str(c['id']);
+    if (shown.containsKey(id)) { setState(() => shown.remove(id)); return; }
+    try { final r = asMap(await AppScope.read(context).api.get('/comments/$id/translate', {'to': I18n.code})); if (mounted) setState(() => shown[id] = (str(r['text']), str(r['fromName']))); }
+    catch (e) { if (mounted) toast(context, errText(e), error: true); }
+  }
   @override
   void initState() { super.initState(); _load(); }
   Future<void> _load() async {
@@ -530,11 +543,13 @@ class _CommentsSheetState extends State<CommentsSheet> {
       Avatar(a, size: 30), const SizedBox(width: 8),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('${personName(a)}${a['badge'] != null ? ' · ${a['badge']}' : ''} · ${ago(c['createdAt'])}${c['status'] != 'published' ? ' · ${t('Held for review')}' : ''}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-        if (str(c['text']).isNotEmpty) Text(str(c['text'])),
-        Row(children: [
+        if (str(c['text']).isNotEmpty) Text(shown[str(c['id'])]?.$1 ?? str(c['text'])),
+        if (shown.containsKey(str(c['id']))) Text(t('Machine-translated from {language}', {'language': shown[str(c['id'])]!.$2}), style: TextStyle(fontSize: 11.5, color: Theme.of(context).hintColor)),
+        Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
           TextButton.icon(style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero), icon: Icon(c['myReaction'] != null ? Icons.favorite : Icons.favorite_border, size: 15), label: Text('${c['reactions']}'),
               onPressed: () async { if (!need(context)) return; await run(context, () => app.api.put('/comments/${c['id']}/reaction', {'type': 'heart'})); _load(); }),
           if (data?['locked'] != true) TextButton(style: TextButton.styleFrom(visualDensity: VisualDensity.compact), onPressed: () { if (need(context)) setState(() { replyTo = c; if (a['username'] != null) ctl.text = '@${a['username']} '; }); }, child: Text(t('Reply'))),
+          if (str(c['text']).isNotEmpty && str(c['language']) != I18n.code && c['status'] == 'published') TextButton(style: TextButton.styleFrom(visualDensity: VisualDensity.compact), onPressed: () => _translate(c), child: Text(shown.containsKey(str(c['id'])) ? t('Show original') : t('Translate'))),
           if (c['own'] == true || app.isAdmin) TextButton(style: TextButton.styleFrom(visualDensity: VisualDensity.compact), onPressed: () async { final ok = await confirm(context, t('Delete this comment?'), yes: t('Delete'), danger: true); if (ok != null && mounted) { await run(context, () => app.api.delete('/comments/${c['id']}')); _load(); } }, child: Text(t('Delete')))
           else TextButton(style: TextButton.styleFrom(visualDensity: VisualDensity.compact), onPressed: () { if (need(context)) sheet(context, t('Report'), (_) => ReportForm(targetType: 'comment', targetId: str(c['id']), author: a), tall: true); }, child: Text(t('Report'))),
         ]),
@@ -563,6 +578,47 @@ class _CommentsSheetState extends State<CommentsSheet> {
         ],
       ],
     ]);
+  }
+}
+
+// ---------- Guided hints on first use ----------
+/// Four short hints over the STORIES page: how to browse, react, comment and share a first story.
+/// Shown once per device, and again on request from Settings.
+class GuideOverlay extends StatelessWidget {
+  final int step;
+  const GuideOverlay({super.key, required this.step});
+  // (icon, title, text, where the card sits, which way the arrow points: up or right)
+  static const steps = <(IconData, String, String, Alignment, bool)>[
+    (Icons.swipe_up_outlined, 'Browse the stories', 'Choose how to browse at the top: trending, by place, by incident and more. Swipe up to move to the next story.', Alignment(0, -0.55), true),
+    (Icons.favorite_border, 'React to a story', 'A heart, a heartbreak or a laugh tells the storyteller how their story reached you.', Alignment(-1, -0.1), false),
+    (Icons.mode_comment_outlined, 'Join the conversation', 'Open the comments to read what others have said, and add a comment or a reply of your own.', Alignment(-1, 0.25), false),
+    (Icons.add_circle_outline, 'Share your first story', 'Tap the plus to tell your own story in words, photos, audio or video.', Alignment(1, -0.7), true),
+  ];
+  @override
+  Widget build(BuildContext context) {
+    final app = AppScope.read(context);
+    final cs = Theme.of(context).colorScheme;
+    final (icon, title, body, where, up) = steps[step.clamp(0, steps.length - 1)];
+    final last = step >= steps.length - 1;
+    final arrow = Icon(up ? Icons.arrow_upward : Icons.arrow_forward, color: Colors.white, size: 34);
+    final card = ConstrainedBox(constraints: const BoxConstraints(maxWidth: 320), child: Material(color: cs.surface, elevation: 6, borderRadius: BorderRadius.circular(18), child: Padding(padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(t('Hint {n} of {total}', {'n': step + 1, 'total': steps.length}), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
+        const SizedBox(height: 4),
+        Row(children: [Icon(icon, color: cs.primary, size: 22), const SizedBox(width: 8), Expanded(child: Text(t(title), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: cs.primary)))]),
+        const SizedBox(height: 6),
+        Text(t(body)),
+        const SizedBox(height: 6),
+        Row(children: [
+          TextButton(onPressed: app.endGuide, child: Text(t('Skip the hints'))), const Spacer(),
+          FilledButton(onPressed: () => app.nextGuide(steps.length), child: Text(last ? t('Got it') : t('Next'))),
+        ]),
+      ]))));
+    return Semantics(container: true, liveRegion: true, label: t(title), child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () {}, child: ColoredBox(color: const Color(0x9E071426),
+      child: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(12, 12, 6, 12), child: Align(alignment: where,
+        child: AnimatedSwitcher(duration: Duration(milliseconds: app.reducedMotion ? 1 : 260), child: KeyedSubtree(key: ValueKey(step), child: up
+          ? Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: where.x > 0 ? CrossAxisAlignment.end : CrossAxisAlignment.center, children: [Padding(padding: const EdgeInsets.only(right: 8, bottom: 6), child: arrow), card])
+          : Row(mainAxisSize: MainAxisSize.min, children: [Flexible(child: card), const SizedBox(width: 6), arrow, const SizedBox(width: 56)]))))))));
   }
 }
 

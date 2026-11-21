@@ -426,6 +426,11 @@ describe('engagement, comments and social features', () => {
     const c1 = await request(http).post(`${api}/stories/${id}/comments`).set(bearer(atieno.token)).send({ text: 'I remember that ferry, @omari_test!' }).expect(201);
     const c2 = await request(http).post(`${api}/stories/${id}/comments`).set(bearer(baraka.token)).send({ text: 'So do I.', parentId: c1.body.id }).expect(201);
     await request(http).post(`${api}/stories/${id}/comments`).set(bearer(omari.token)).send({ text: 'Thank you both.' }).expect(201);
+    // Translate on a comment: served from the saved translation, and a clear message when no AI provider can translate.
+    await db.q(`INSERT INTO content_translations (target_type, target_id, language, source_hash, body) VALUES ('comment', $1, 'sw', encode(sha256(convert_to('So do I.', 'UTF8')), 'hex'), 'Mimi pia.')`, [c2.body.id]);
+    await db.q(`UPDATE content_translations SET source_hash = left(source_hash, 32) WHERE target_id = $1`, [c2.body.id]);
+    expect((await request(http).get(`${api}/comments/${c2.body.id}/translate?to=sw`).expect(200)).body).toMatchObject({ language: 'sw', from: 'en', fromName: 'English', machineTranslated: true, text: 'Mimi pia.' });
+    expect((await request(http).get(`${api}/comments/${c2.body.id}/translate?to=fr`).expect(503)).body).toMatchObject({ code: 'translation_unavailable' });
     await request(http).put(`${api}/comments/${c2.body.id}/reaction`).set(bearer(omari.token)).send({ type: 'heart' }).expect(200);
     const list = await request(http).get(`${api}/stories/${id}/comments`).expect(200);
     expect(list.body.count).toBe(3);

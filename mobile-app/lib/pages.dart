@@ -583,6 +583,10 @@ class SettingsView extends StatelessWidget {
         Choice<String>(t('Language'), I18n.code, I18n.launch, (v) => set({'language': v})),
         sw(t('High contrast'), 'highContrast'), sw(t('Reduce motion (fewer animations)'), 'reducedMotion'),
       ]),
+      Section(t('Hints'), [
+        Text(t('A short guide to browsing, reacting, commenting and sharing a story.')),
+        Align(alignment: Alignment.centerLeft, child: OutlinedButton(onPressed: () { app.startGuide(again: true); Navigator.of(context).popUntil((r) => r.isFirst); }, child: Text(t('Show the hints again')))),
+      ]),
       Section(t('Data and connection'), [sw(t('Low-data mode: pictures and video load only when I select them'), 'lowData'), sw(t('Upload only on Wi-Fi (apps)'), 'wifiOnly'), sw(t('Read receipts in messages'), 'readReceipts')]),
       Section(t('Notifications'), [
         for (final (k, label) in [('engagement', t('Reactions, comments, mentions and follows')), ('messages', t('Messages')), ('announcements', t('Announcements')), ('reminders', t('Reminders'))]) Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -136,7 +136,7 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
 
   return (
     <div>
-      <div className="tabs-row" role="tablist" aria-label={t('Stories by')}>
+      <div className="tabs-row" data-guide="browse" role="tablist" aria-label={t('Stories by')}>
         <span className="label">{t('Stories by')}</span>
         {TABS.map(([k, icon, label]) => <button key={k} role="tab" aria-selected={tab === k && !filters.q} className={`tab ${tab === k && !filters.q ? 'on' : ''}`} onClick={() => pickTab(k)}><Icon name={icon} />{t(label)}</button>)}
         <form role="search" className="searchbox" onSubmit={(e) => { e.preventDefault(); if (search.trim()) nav(`/?q=${encodeURIComponent(search.trim())}`); else nav('/'); }}>
@@ -188,7 +188,7 @@ export default function StoriesPage({ paused }: { paused: boolean }) {
             <div className="story-zone top-row"><span /><div className="frame-top">
               <button className="btn small" onClick={() => setMode('rules')}><Icon name="rules" size={17} />{t('Rules')}</button>
               {items.length > 1 && <span className="counter" aria-live="polite">{index + 1} / {items.length}{feed.hasNextPage ? '+' : ''}</span>}
-              {me?.role !== 'super_admin' && <button className="plus" onClick={() => { if (need()) { setEdit(null); setCompany(false); setMode('share'); } }} aria-label={t('Share my story')} title={t('Share my story')}>+</button>}
+              {me?.role !== 'super_admin' && <button className="plus" data-guide="share" onClick={() => { if (need()) { setEdit(null); setCompany(false); setMode('share'); } }} aria-label={t('Share my story')} title={t('Share my story')}>+</button>}
             </div><span /></div>
             {listTab ? <div className="story-zone"><span /><div className="frame plain">{tab === 'incidents' ? <IncidentList /> : tab === 'map' ? <MapExplore /> : tab === 'timeline' ? <Timeline onPick={(p) => setFilter(p, 'timeline')} /> : <Collections />}</div><span /></div>
               : signedOutTab ? <Zone><Empty icon="signin" title={t('Sign in to see this tab')}><button className="btn primary" onClick={() => need()}>{t('Sign in')}</button></Empty></Zone>

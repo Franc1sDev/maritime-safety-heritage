@@ -154,6 +154,14 @@ table.table { width: 100%; border-collapse: collapse; font-size: .9rem; } .table
 .dialog h2 { margin-inline-end: 2rem; } .dialog .actions { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
 .toasts { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 90; display: flex; flex-direction: column; gap: .5rem; align-items: center; width: min(92vw, 460px); pointer-events: none; }
 .toast { background: var(--blue-ink); color: var(--bg); padding: .65rem 1rem; border-radius: 14px; box-shadow: var(--shadow); font-weight: 500; pointer-events: auto; } .toast.error { background: var(--red); color: #fff; }
+/* Guided hints on first use: a ring around the real control and a card beside it. */
+.guide { position: fixed; inset: 0; z-index: 80; overflow: hidden; }
+.guide-ring { position: fixed; border-radius: 16px; border: 3px solid var(--white); box-shadow: 0 0 0 9999px rgba(7, 20, 38, .62), 0 0 0 6px var(--blue); pointer-events: none; transition: all var(--slow) var(--ease); }
+.guide-card { position: fixed; background: var(--surface); color: var(--ink); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem 1.1rem; animation: guide-in var(--slow) var(--ease); }
+.guide-card h2 { margin: 0 0 .35rem; font-size: calc(1.08rem * var(--step)); display: flex; align-items: center; gap: .45rem; color: var(--blue); }
+.guide-card p { margin: 0 0 .8rem; }
+.guide-card .guide-count { margin: 0 0 .3rem; font-size: calc(.8rem * var(--step)); color: var(--ink-2); font-weight: 600; }
+@keyframes guide-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .floaters { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(7, 20, 38, .35); padding: 1rem; }
 .floater { background: var(--surface); border: 2px solid var(--yellow); border-radius: var(--radius); padding: 1rem 1.1rem; width: min(420px, 100%); box-shadow: var(--shadow); cursor: pointer; text-align: start; display: block; margin-bottom: .6rem; }
 @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } } .floater { animation: drift 3s ease-in-out infinite; } .floater:nth-child(2n) { animation-delay: .7s; }

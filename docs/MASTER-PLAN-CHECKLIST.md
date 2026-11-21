@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 508 of 1190 items ticked, 187 partly done**
+**Progress: 511 of 1190 items ticked, 185 partly done**
 
 How to read it:
 
@@ -310,7 +310,7 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 
 #### 3.1.3 Animation, Focus Mode and Reduced Motion
 
-- [~] Animation: the interface will be highly animated, including guided on-screen hints, icons that appear when needed and disappear when not in use, and animations for successful actions, failed actions and celebrations where appropriate. — *Left: animated icons, transitions, the favourites and success animations are built; guided on-screen hints are not yet*
+- [x] Animation: the interface will be highly animated, including guided on-screen hints, icons that appear when needed and disappear when not in use, and animations for successful actions, failed actions and celebrations where appropriate. — *Note: includes the guided hints on first use; in the app they are still to be seen on a real phone*
 - [~] Focus mode: while a user is viewing a story, animations pause so they can focus on reading, viewing and engaging. Icons around the story stay still until the user hovers over them. — *Left: the main icons stop moving when another page is open; they do not yet pause while a story is being read*
 - [x] Reduced motion: the platform respects the device’s “reduce motion” setting and offers its own toggle. When on, animations are replaced with simple fades. This also saves battery on low-end phones.
 
@@ -353,7 +353,7 @@ The platform will support the following 20 interface languages:
 
 - [x] Choosing a language: detected from the device on first sign-in and changeable at any time in MY PROFILE. The whole interface (menus, rules frame, notifications, emails and PDF reports) is translated.
 - [x] Story language: every story, comment and message is tagged with its language. Story content is not limited to the 20 interface languages: contributors can also tag local languages such as Mijikenda languages (e.g. Giriama, Digo), Bajuni, Pokomo, Suba, Luhya languages or Swahili dialects.
-- [~] Translate button: stories, comments and transcripts show a “Translate” button that translates into the reader’s language on demand, marked as machine-translated, with a link back to the original. — *Left: on stories and transcripts; not yet on individual comments on the website*
+- [x] Translate button: stories, comments and transcripts show a “Translate” button that translates into the reader’s language on demand, marked as machine-translated, with a link back to the original. — *Note: on stories, transcripts and each comment, on the website and in the app; the translation itself needs an AI key on the server*
 - [~] Right-to-left layout: Arabic switches the whole layout to right-to-left, including the icon row, story frame and comment threads. — *Left: the layout switches direction for Arabic; it will be checked when Arabic text is added in Phase 2*
 - [~] Fonts: fonts must cover every supported script (Latin, Arabic, Devanagari, Gujarati, Bengali, Chinese, Japanese, Greek and Cyrillic), for example the Noto font family. — *Left: Noto Sans is used; the other scripts load when those languages are added*
 - [~] Translation quality: English, Kiswahili and Dholuo are translated and reviewed by people for launch, Dholuo with reviewers from the Lake Victoria communities because machine translation for it is limited. The other 17 start as machine translation and are reviewed by native speakers in later phases. — *Left: Kiswahili is written and needs review by a native speaker; Dholuo needs a translator*
@@ -1377,7 +1377,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 11.5 In-Platform Onboarding
 
-- [ ] Guided on-screen hints on first use: how to browse, react, comment and share a first story.
+- [x] Guided on-screen hints on first use: how to browse, react, comment and share a first story. — *Note: four hints on the STORIES page, shown once and again from Settings, on the website and in the app; in the app still to be seen on a real phone*
 - [ ] A short welcome explaining the rules and how moderation works.
 - [ ] Encouraging messages after the first story and first reactions.
 

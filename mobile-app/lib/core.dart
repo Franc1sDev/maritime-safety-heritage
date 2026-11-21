@@ -90,6 +90,16 @@ class AppState extends ChangeNotifier {
   bool floated = false;
   Timer? _poll;
 
+  /// Guided hints on first use (how to browse, react, comment and share): the hint being shown, or null.
+  int? guideStep;
+  void startGuide({bool again = false}) {
+    if (!again && prefs.getBool('guided') == true) return;
+    if (guideStep != null) return;
+    guideStep = 0; notifyListeners();
+  }
+  void nextGuide(int total) { if (guideStep == null) return; if (guideStep! + 1 >= total) { endGuide(); } else { guideStep = guideStep! + 1; notifyListeners(); } }
+  void endGuide() { prefs.setBool('guided', true); guideStep = null; notifyListeners(); }
+
   String get role => str(me?['role']);
   bool get signedIn => me != null;
   bool get isAdmin => role == 'admin';

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Ai, AiUnavailable } from '../ai/ai.service';
 import { Db, Row } from '../common/db';
 import { AuthUser, isTeam, RequestMeta } from '../common/decorators';
-import { fail, text } from '../common/messages';
+import { fail, LANGUAGE_NAMES, text } from '../common/messages';
 import { Notify } from '../common/notify.service';
 import { Realtime } from '../common/realtime.gateway';
 import { Track } from '../common/track.service';
@@ -101,8 +101,8 @@ export class CommentsService {
   async translate(id: string, to: string) {
     const c = await this.db.one(`SELECT id, body, language FROM comments WHERE id = $1 AND status = 'published'`, [id]);
     if (!c) return fail(404, 'not_found');
-    try { const t = await this.ai.translate('comment', id, c.body, to); return { language: to, from: c.language, machineTranslated: true, text: t.body }; }
-    catch (e) { if (e instanceof AiUnavailable) return fail(503, 'general_error'); throw e; }
+    try { const t = await this.ai.translate('comment', id, c.body, to); return { language: to, from: c.language, fromName: LANGUAGE_NAMES[c.language] ?? c.language, machineTranslated: true, text: t.body }; }
+    catch (e) { if (e instanceof AiUnavailable) return fail(503, 'translation_unavailable'); throw e; }
   }
 
   async remove(id: string, user: AuthUser) {

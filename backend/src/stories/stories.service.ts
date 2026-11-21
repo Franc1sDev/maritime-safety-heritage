@@ -566,7 +566,7 @@ export class StoriesService implements OnModuleInit {
     try {
       const t = await this.ai.translate('story', s.id, source, to);
       return { language: to, from: s.language, fromName: s.languageName, machineTranslated: true, text: t.body, label: `Machine-translated from ${s.languageName}` };
-    } catch (e) { if (e instanceof AiUnavailable) return fail(503, 'general_error'); throw e; }
+    } catch (e) { if (e instanceof AiUnavailable) return fail(503, 'translation_unavailable'); throw e; }
   }
 
   /** Download: a ZIP of all the story's content, prepared in the background. Shown only where the contributor's usage rights allow it. */

@@ -6,6 +6,7 @@ import { api, get, Person, post } from '../lib/api';
 import { Me, Settings, useApp, useSaveSettings } from '../lib/app';
 import { queued, store } from '../lib/offline';
 import { Icon } from '../components/Icon';
+import { replayGuide } from '../components/Guide';
 import type { Story } from '../components/Story';
 import { ago, Avatar, compact, Confirm, Dialog, Empty, fmtDate, Problem, Skeleton } from '../components/ui';
 import { FeedbackForm } from './About';
@@ -191,6 +192,7 @@ export function Notifications() {
 
 function SettingsPart() {
   const { t, i18n } = useTranslation();
+  const nav = useNavigate();
   const { me, config, toast } = useApp();
   const save = useSaveSettings();
   const s = me!.settings;
@@ -219,6 +221,10 @@ function SettingsPart() {
         </div>
         <label className="check"><input type="checkbox" checked={s.highContrast} onChange={(e) => set({ highContrast: e.target.checked })} /><span>{t('High contrast')}</span></label>
         <label className="check"><input type="checkbox" checked={s.reducedMotion} onChange={(e) => set({ reducedMotion: e.target.checked })} /><span>{t('Reduce motion (fewer animations)')}</span></label>
+      </section>
+      <section className="card"><h3 style={{ marginTop: 0 }}>{t('Hints')}</h3>
+        <p className="small">{t('A short guide to browsing, reacting, commenting and sharing a story.')}</p>
+        <button className="btn" onClick={() => { replayGuide(); nav('/'); }}>{t('Show the hints again')}</button>
       </section>
       <section className="card"><h3 style={{ marginTop: 0 }}>{t('Data and connection')}</h3>
         <label className="check"><input type="checkbox" checked={s.lowData} onChange={(e) => set({ lowData: e.target.checked })} /><span>{t('Low-data mode: pictures and video load only when I select them')}</span></label>
