@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 511 of 1190 items ticked, 185 partly done**
+**Progress: 514 of 1190 items ticked, 186 partly done**
 
 How to read it:
 
@@ -698,8 +698,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] Camera and microphone: record audio, video and photos directly into a story. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 - [~] Native share sheet for sharing stories to any installed app. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 - [~] Deep links: a shared story link opens directly in the app if installed, otherwise on the website. — *Left: the app accepts story, incident, resource and contributor links; the website file that lets Android verify them is added at deployment*
-- [~] Background uploads that continue while the app is closed, and offline drafts (Section 8). — *Left: drafts are saved to the account; uploads run while the app is open, not yet in the background*
-- [ ] Optional fingerprint or face unlock for admin accounts.
+- [~] Background uploads that continue while the app is closed, and offline drafts (Section 8). — *Left: uploads carry on while browsing and, on Android, in the background with a progress notification; if the app is closed completely the story stays in drafts and its files are added again; still to be tried on a real phone*
+- [~] Optional fingerprint or face unlock for admin accounts. — *Left: built: admins turn it on in Settings, and it is asked when the app opens and after a minute away; still to be tried on a real phone*
 
 #### 3.3.4 App Store Requirements
 
@@ -1179,9 +1179,9 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 8.4 Uploads on Unstable Networks
 
-- [~] Resumable uploads: large files are sent in pieces and continue from where they stopped if the network drops. — *Left: the server side (tus protocol) is built and tested; the website and apps use it in stages 2 and 3*
-- [ ] Background uploads continue while the user browses or closes the app, with progress shown in a notification.
-- [ ] Users can pause, resume or cancel uploads, and can choose to upload only on Wi-Fi.
+- [x] Resumable uploads: large files are sent in pieces and continue from where they stopped if the network drops. — *Note: on the website and in the app*
+- [~] Background uploads continue while the user browses or closes the app, with progress shown in a notification. — *Left: in the app: while browsing, and on Android in the background with a notification; not after the app is closed completely, and no notification on iPhone; still to be tried on a real phone*
+- [~] Users can pause, resume or cancel uploads, and can choose to upload only on Wi-Fi. — *Left: pause, resume and cancel on the website and in the app, Wi-Fi only in the app; still to be tried on a real phone*
 
 ### 8.5 Adaptive Media
 
@@ -1207,7 +1207,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 8.9 Tools and Technologies
 
-- [~] **Resumable uploads**: tus protocol (tus server, tus-js-client, Uppy, tus client for Flutter) | Uploads that survive dropped connections — *Left: server side built; client side in stages 2 and 3*
+- [x] **Resumable uploads**: tus protocol (tus server, tus-js-client, Uppy, tus client for Flutter) | Uploads that survive dropped connections — *Note: tus server, tus-js-client on the website, and a small tus client written for the app*
 - [ ] **Offline web**: Workbox, IndexedDB | Offline cache, queued actions and drafts on the website
 - [ ] **Offline apps**: drift (SQLite), connectivity_plus, workmanager | Offline data, connection detection, background tasks
 - [ ] **Network handling**: dio with retry (apps), fetch with retry and backoff (web) | Automatic retries
@@ -1378,7 +1378,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 11.5 In-Platform Onboarding
 
 - [x] Guided on-screen hints on first use: how to browse, react, comment and share a first story. — *Note: four hints on the STORIES page, shown once and again from Settings, on the website and in the app; in the app still to be seen on a real phone*
-- [ ] A short welcome explaining the rules and how moderation works.
+- [x] A short welcome explaining the rules and how moderation works. — *Note: shown once after a first profile is set up, on the website and in the app*
 - [ ] Encouraging messages after the first story and first reactions.
 
 ### 11.6 Learning Resources, Online Exhibition and Launch Support
