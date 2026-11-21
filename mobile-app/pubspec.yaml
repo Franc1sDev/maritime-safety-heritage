@@ -50,7 +50,7 @@ dependencies:
   # Native share sheet, reading aloud, recording, deep links
   share_plus: ^10.1.4
   flutter_tts: ^4.2.0
-  record: ^5.2.0
+  record: ^6.0.0
   path_provider: ^2.1.5
   app_links: ^6.3.3
 
