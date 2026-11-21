@@ -108,7 +108,7 @@ Moving to another host or cloud takes 3 to 5 working days plus copy time: restor
 
 ## Backups
 
-The `backup` container runs every night at `BACKUP_HOUR`. It writes three files to `deploy/backups/` and keeps them for `BACKUP_KEEP_DAYS`:
+The `backup` container runs every night at `BACKUP_HOUR`. It writes three files to `deploy/backups/`, and keeps every day's for 30 days, Sunday's for 3 months and the 1st of each month's for 1 year. The full plan, with restore tests and what to do in each kind of loss, is [DISASTER-RECOVERY.md](DISASTER-RECOVERY.md).
 
 - the database, encrypted with AES-256;
 - the media files, already encrypted at rest;

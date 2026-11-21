@@ -17,10 +17,13 @@ against every requirement is in [`docs/MASTER-PLAN-CHECKLIST.md`](docs/MASTER-PL
 | For | Read |
 |---|---|
 | Everyone who uses the archive | [User guide](docs/USER-GUIDE.md) |
-| Editors and admins | [Research team guide](docs/ADMIN-GUIDE.md), [Metadata schema](docs/METADATA.md) |
-| Whoever hosts it | [Deployment](docs/DEPLOYMENT.md), [Security](docs/SECURITY.md) |
-| Publishing the app | [Store release](docs/STORE-RELEASE.md) |
-| Launch and handover | [Handover](docs/HANDOVER.md), [Accessibility](docs/ACCESSIBILITY.md) |
+| People collecting and adding stories | [Handbook](docs/HANDBOOK.md), [Metadata standard](docs/METADATA.md) and its [template](docs/metadata-template.csv) |
+| Admins | [Admin manual](docs/ADMIN-GUIDE.md) |
+| Super Admins | [Super Admin guide](docs/SUPER-ADMIN-GUIDE.md) |
+| Developers | [Architecture](docs/ARCHITECTURE.md), [API reference](docs/API.md), [Testing](docs/TESTING.md) |
+| Whoever hosts it | [Deployment](docs/DEPLOYMENT.md), [Security](docs/SECURITY.md), [Backups and disaster recovery](docs/DISASTER-RECOVERY.md), [Incident response](docs/INCIDENT-RESPONSE.md), [Maintenance](docs/MAINTENANCE.md) |
+| Publishing the apps | [Store release](docs/STORE-RELEASE.md), [iOS release](docs/IOS-RELEASE.md) |
+| Launch and handover | [Go-live checklist](docs/GO-LIVE.md), [Handover](docs/HANDOVER.md), [Accessibility](docs/ACCESSIBILITY.md) |
 
 ## Try it on Windows
 
