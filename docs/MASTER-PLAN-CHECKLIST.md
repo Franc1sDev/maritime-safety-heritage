@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 514 of 1190 items ticked, 186 partly done**
+**Progress: 652 of 1190 items ticked, 213 partly done**
 
 How to read it:
 
@@ -60,10 +60,10 @@ To develop a secure, modern, easy-to-use and open-access social platform, availa
 - [ ] **7. Bulk import and cataloguing tools**: Tools for the project team to upload the collected oral histories, photographs, records and reports with their metadata, consent and rights (Section 3.2.10).
 - [ ] **8. Learning resources area**: A library for policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions (Section 3.2.6).
 - [ ] **9. AI services**: Content review, transcription, translation and report narratives (Section 5).
-- [ ] **10. Hosting and deployment**: Test hosting, production hosting, domain, SSL, CI/CD, monitoring and backups (Sections 7 and 9).
-- [ ] **11. Documentation**: User guide, contributor handbook, admin guide, technical documentation, API reference, deployment and security guides, and handover notes.
-- [ ] **12. Training and handover**: Orientation for partners, researchers and community representatives, training sessions for admins and Super Admins, and a handover of accounts, credentials and source code.
-- [ ] **13. Sustainability inputs**: Hosting, maintenance and cost information for the project’s archive sustainability plan (Section 11.8).
+- [~] **10. Hosting and deployment**: Test hosting, production hosting, domain, SSL, CI/CD, monitoring and backups (Sections 7 and 9). — *Left: test hosting, CI/CD and the encrypted backups are built and tested; production hosting, domain, SSL and monitoring come with the paid server*
+- [x] **11. Documentation**: User guide, contributor handbook, admin guide, technical documentation, API reference, deployment and security guides, and handover notes. — *Note: docs/: user guide, handbook, admin manual, Super Admin guide, architecture, API reference, deployment, security, backups and recovery, incident response, testing, maintenance, go-live and handover; the handbook gets screenshots of the live platform at go-live*
+- [~] **12. Training and handover**: Orientation for partners, researchers and community representatives, training sessions for admins and Super Admins, and a handover of accounts, credentials and source code. — *Left: the training sessions and the handover steps are written (docs/HANDOVER.md); the sessions themselves are held before go-live*
+- [x] **13. Sustainability inputs**: Hosting, maintenance and cost information for the project’s archive sustainability plan (Section 11.8). — *Note: docs/MAINTENANCE.md: responsibilities, the task calendar and the running costs*
 
 ### 1.4 User Platforms
 
@@ -273,7 +273,7 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 
 ### 2.12 Backend Testing
 
-- [~] Unit tests for business rules and end-to-end tests for every API endpoint, run automatically on every change. — *Left: 44 end-to-end tests cover every module; not yet every single endpoint, and the automatic run on GitHub is confirmed in stage 5*
+- [x] Unit tests for business rules and end-to-end tests for every API endpoint, run automatically on every change. — *Note: 67 server tests (end-to-end and unit), plus an access test that calls every endpoint as each role and with nonsense input, all on every change*
 - [x] Priority test areas: sign-in and sessions, permissions per role, AI flag handling, the approval engine, account deletion and recovery, the last-Super-Admin rule, file uploads and signed links.
 - [ ] Load tests before each release (Section 6.6).
 
@@ -861,7 +861,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [ ] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds.
 - [~] At rest: media files encrypted with AES-256; database on encrypted disks; sensitive fields (e.g. ID numbers, MFA secrets) encrypted separately. — *Left: media files are encrypted with AES-256 and sensitive fields separately; encrypted database disks depend on the production host (stage 5)*
-- [ ] Backups: encrypted before they leave the server (Section 7.4).
+- [x] Backups: encrypted before they leave the server (Section 7.4). — *Note: AES-256, proven in the restore drill; runs once the production server is set up*
 - [x] File access: files are never public. Each file link is signed and expires (e.g. after one hour), and is issued only to users allowed to see the item.
 
 ### 4.6 Upload and Content Security
@@ -888,7 +888,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 4.9 Incident Response
 
-- [ ] A written incident response plan: who is contacted, how a breach is contained, and how service is restored.
+- [x] A written incident response plan: who is contacted, how a breach is contained, and how service is restored. — *Note: docs/INCIDENT-RESPONSE.md; the project fills in the names and phone numbers*
 - [ ] Personal data breaches are reported to the Data Protection Commissioner within the time required by law (72 hours), and affected users are informed where required.
 - [ ] After each incident, a review records the cause and the fix.
 
@@ -896,7 +896,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] Automated security tests for sign-in, lockout, token reuse, permissions, signed links, encryption and file-type checks on every change.
 - [ ] An independent penetration test before public launch, with all high and critical findings fixed before go-live.
-- [ ] A security review at least once a year after launch.
+- [~] A security review at least once a year after launch. — *Left: scheduled in docs/MAINTENANCE.md; starts after launch*
 
 ### 4.11 Rights, Consent and Content Protection
 
@@ -1102,7 +1102,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] **Sessions, cache, job queue**: Redis | Temporary data only; can be rebuilt — *Left: cache and job queue use Redis; sign-in sessions are kept (hashed) in PostgreSQL so they survive a Redis restart*
 - [x] **Analytics events**: Separate PostgreSQL tables (later a separate analytics database) | Pseudonymised user references
 - [x] **Audit log**: PostgreSQL (append-only) | Cannot be edited or deleted
-- [ ] **Backups**: Separate off-site storage provider | Encrypted
+- [~] **Backups**: Separate off-site storage provider | Encrypted — *Left: encrypted off-site copy built (rclone); needs the second provider account*
 
 ### 7.2 Media Storage
 
@@ -1118,21 +1118,21 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Reports and moderation decisions**: Kept while the account exists, then anonymised
 - [x] **Audit log**: At least 5 years
 - [ ] **Server logs**: 90 days
-- [ ] **Backups**: Daily for 30 days, weekly for 3 months, monthly for 1 year
+- [x] **Backups**: Daily for 30 days, weekly for 3 months, monthly for 1 year — *Note: 30 days daily, 3 months weekly, 1 year monthly, tested on 420 days of sample files; runs once the production server is set up*
 
 ### 7.4 Backup Strategy
 
-- [ ] Database: continuous backup with point-in-time recovery, plus a full encrypted backup every day.
-- [ ] Media: daily encrypted backup of new and changed files.
-- [ ] 3-2-1 rule: three copies of the data, on two different types of storage, with one copy off-site at a different provider.
-- [ ] Backups are encrypted before they leave the server, and checked with checksums.
+- [~] Database: continuous backup with point-in-time recovery, plus a full encrypted backup every day. — *Left: the daily full encrypted backup is built and tested; continuous backup (WAL archiving or a managed database) is set up with the production server*
+- [x] Media: daily encrypted backup of new and changed files. — *Note: a full encrypted copy every day; runs once the production server is set up*
+- [~] 3-2-1 rule: three copies of the data, on two different types of storage, with one copy off-site at a different provider. — *Left: built; the off-site copy needs the second provider account*
+- [x] Backups are encrypted before they leave the server, and checked with checksums. — *Note: proven in the restore drill: a damaged file is caught by the checksum, a wrong passphrase is refused*
 - [ ] **Maximum data loss (RPO)**: 15 minutes for the database; 24 hours for media
-- [ ] **Maximum time to restore service (RTO)**: 4 hours
+- [~] **Maximum time to restore service (RTO)**: 4 hours — *Left: the restore drill took under a minute on test data; to be timed on production data*
 
 ### 7.5 Restore Testing and Disaster Recovery
 
-- [ ] A full restore to a test server is carried out every quarter and timed, to prove that backups work.
-- [ ] A written disaster recovery plan covers server loss, storage loss, accidental deletion and a security breach.
+- [~] A full restore to a test server is carried out every quarter and timed, to prove that backups work. — *Left: a full drill was done on 21 November 2026 (all tables and files identical); the quarterly tests start on the production server*
+- [x] A written disaster recovery plan covers server loss, storage loss, accidental deletion and a security breach. — *Note: docs/DISASTER-RECOVERY.md*
 
 ### 7.6 Long-Term Preservation
 
@@ -1151,7 +1151,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [ ] **Database**: PostgreSQL with PostGIS | Structured data
 - [ ] **Object storage**: Cloudflare R2, Backblaze B2, AWS S3 or similar (with an archive tier for originals) | Media files
 - [ ] **Database backups**: WAL-G or pgBackRest | Continuous backup and point-in-time recovery
-- [ ] **File backups**: restic or rclone (encrypted) | Media backups to a second provider
+- [~] **File backups**: restic or rclone (encrypted) | Media backups to a second provider — *Left: rclone off-site copy built into the backup script; needs the second provider account*
 - [x] **Integrity**: SHA-256 checksums | Detecting damaged files
 - [x] **Metadata standard**: Dublin Core | Archive-standard descriptions of each story
 
@@ -1258,7 +1258,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [ ] All Phase 1 features accepted on staging against this plan.
 - [ ] Penetration test passed and findings fixed (Section 4.10).
 - [ ] Load test targets met (Section 6).
-- [ ] Backups running and a restore test completed (Section 7.5).
+- [~] Backups running and a restore test completed (Section 7.5). — *Left: scripts built and a restore drill passed; still to run on production. Full go-live list: docs/GO-LIVE.md*
 - [ ] Privacy policy, terms and rules published; ODPC registration and DPIA complete.
 - [ ] Monitoring, alerts and status page active.
 - [ ] Admin and Super Admin accounts created; admins trained.
@@ -1272,7 +1272,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [ ] Monitoring of errors, uptime and performance, with alerts to the support team.
 - [ ] Regular updates: security patches promptly; feature releases on a planned schedule.
 - [ ] A public status page linked to “Scheduled maintenance” announcements.
-- [ ] Quarterly reviews of performance, AI quality, security and costs.
+- [~] Quarterly reviews of performance, AI quality, security and costs. — *Left: the review checklist is in docs/MAINTENANCE.md*
 
 ### 9.9 Tools and Technologies
 
@@ -1291,19 +1291,19 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 10.1 Testing Approach
 
-- [ ] Testing will run throughout development, not only at the end, with phased testing and regular feedback from users. Every change is tested automatically before it is merged; each stage ends with a demo on staging; and the finished platform is confirmed through user acceptance testing (UAT) with partners and selected users before go-live.
+- [~] Testing will run throughout development, not only at the end, with phased testing and regular feedback from users. Every change is tested automatically before it is merged; each stage ends with a demo on staging; and the finished platform is confirmed through user acceptance testing (UAT) with partners and selected users before go-live. — *Left: every change is tested automatically (docs/TESTING.md); demos on staging and user testing follow*
 
 ### 10.2 Types of Testing
 
-- [ ] **Unit tests**: Business rules, calculations (e.g. trending, AI flag thresholds), helpers | Every change
-- [ ] **API end-to-end tests**: Every endpoint, permissions per role, approval workflows, account deletion, last-Super-Admin rule | Every change
+- [x] **Unit tests**: Business rules, calculations (e.g. trending, AI flag thresholds), helpers | Every change — *Note: unit tests of the rules; end-to-end tests of each module including approvals, account deletion and the last-Super-Admin rule; every endpoint checked for each role on every change*
+- [x] **API end-to-end tests**: Every endpoint, permissions per role, approval workflows, account deletion, last-Super-Admin rule | Every change — *Note: unit tests of the rules; end-to-end tests of each module including approvals, account deletion and the last-Super-Admin rule; every endpoint checked for each role on every change*
 - [ ] **Web interface tests**: Key journeys in a real browser: sign-in, posting a story, commenting, moderation, approvals | Every change to the website
-- [ ] **App tests**: Widget and integration tests of the Flutter apps; tests on real Android and iOS devices | Every change to the apps; each release
-- [ ] **Accessibility tests**: WCAG 2.2 AA: automated checks plus manual screen-reader and keyboard tests | Each release
+- [~] **App tests**: Widget and integration tests of the Flutter apps; tests on real Android and iOS devices | Every change to the apps; each release — *Left: tests of the network layer and helpers, and Android and iOS builds, on every change; real devices still to come*
+- [~] **Accessibility tests**: WCAG 2.2 AA: automated checks plus manual screen-reader and keyboard tests | Each release — *Left: automated axe checks (WCAG A and AA) and a keyboard test on every change; screen-reader tests by hand still to come*
 - [ ] **Language tests**: Every interface language, right-to-left Arabic, long translations, all scripts | Each release
 - [ ] **Network tests**: Slow, unstable and offline conditions (Section 8) | Each release
 - [ ] **Performance and load tests**: Targets in Section 6.1 | Each release
-- [ ] **Security tests**: Automated scans every change; penetration test before launch (Section 4.10) | Continuous; before launch
+- [~] **Security tests**: Automated scans every change; penetration test before launch (Section 4.10) | Continuous; before launch — *Left: CodeQL, dependency checks and the access test on every change; penetration test before launch*
 - [ ] **AI evaluation**: AI review accuracy on a fixed set of sample stories (Section 5.7) | Before launch; after any AI change
 - [ ] **User acceptance testing**: Partners and selected users check the platform against this plan | Before launch
 
@@ -1332,7 +1332,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [ ] **Backend**: Jest, Supertest | Unit and API end-to-end tests
 - [ ] **Website**: Vitest, React Testing Library, Playwright | Component and browser tests
 - [ ] **Apps**: flutter_test, integration_test, Firebase Test Lab | Widget, integration and device tests
-- [ ] **Accessibility**: axe-core, Lighthouse, TalkBack, VoiceOver | Automated and manual checks
+- [~] **Accessibility**: axe-core, Lighthouse, TalkBack, VoiceOver | Automated and manual checks — *Left: axe-core and Lighthouse automated; TalkBack and VoiceOver by hand still to come*
 - [ ] **Load**: k6 | Load and stress tests
 - [ ] **Security**: OWASP ZAP, Dependabot, CodeQL | Vulnerability scans
 - [ ] **Tracking**: GitHub Issues and GitHub Projects | Defects and test progress
@@ -1360,17 +1360,17 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [ ] The project runs a basic archive documentation and digital platform orientation for partners, researchers and community representatives, covering how to upload materials, how to document stories and how to use the archive.
 - [ ] Because this orientation comes before the platform is built, it will use the clickable prototype, which shows how the finished website and app will look and behave, together with a draft handbook.
-- [ ] The handbook (“how to upload materials” and “navigation and use of the digital archive”) is finalised at go-live with screenshots of the real platform and published in the learning resources area.
+- [~] The handbook (“how to upload materials” and “navigation and use of the digital archive”) is finalised at go-live with screenshots of the real platform and published in the learning resources area. — *Left: draft written (docs/HANDBOOK.md); screenshots and publication in Learning resources at go-live*
 
 ### 11.4 Metadata Template, Cataloguing, Validation and Import
 
 - [ ] Community meetings and storytelling sessions in coastal communities and communities around Lake Victoria record testimonies and oral histories; the team also gathers historical records, photographs, newspaper articles and reports.
-- [ ] So that everything collected can be imported cleanly, the developer supplies a metadata spreadsheet template and the matching consent fields before collection starts, aligned with the project’s interview guides, consent forms and data collection templates.
-- [ ] Recording guidance (file formats, naming, minimum quality) is included in the handbook.
+- [x] So that everything collected can be imported cleanly, the developer supplies a metadata spreadsheet template and the matching consent fields before collection starts, aligned with the project’s interview guides, consent forms and data collection templates. — *Note: docs/metadata-template.csv (the same file the platform gives admins) and docs/METADATA.md*
+- [x] Recording guidance (file formats, naming, minimum quality) is included in the handbook. — *Note: in docs/HANDBOOK.md*
 - [ ] Priority themes and stories identified with communities become the archive’s categories, collections and incident records.
 - [ ] The project’s collected oral histories, photographs, historical records, reports and testimonies are catalogued with metadata (Section 7.6), consent and rights records, and uploaded through bulk import (Section 3.2.10).
 - [ ] Each item records who told or created it, where and when, its language, its incident (where there is one), consent status and usage rights.
-- [ ] Validation: before a testimony is published, the storyteller confirms how their contribution is represented, in the project’s feedback and validation meetings; the item is then marked as validated.
+- [x] Validation: before a testimony is published, the storyteller confirms how their contribution is represented, in the project’s feedback and validation meetings; the item is then marked as validated. — *Note: enforced by the server: a testimony is published only once its consent record is complete and it is validated*
 - [ ] Narrators who wish to remain anonymous are published anonymously.
 - [ ] The platform should go live with a strong set of stories, so that the first visitors find a living archive rather than an empty feed.
 - [ ] Suggested target: at least 100 published items at go-live, covering the coast, islands, Lake Victoria and rivers, including the major documented incidents.
@@ -1393,8 +1393,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 11.7 Documentation and Handover Package
 
-- [ ] User documentation: public user guide (stories, search, map, sharing), admin manual (moderation, reports, approvals, company stories, analytics), Super Admin guide.
-- [ ] Technical documentation: architecture, API reference, set-up, deployment, security, backup and restore guides, and metadata and cataloguing standards.
+- [x] User documentation: public user guide (stories, search, map, sharing), admin manual (moderation, reports, approvals, company stories, analytics), Super Admin guide. — *Note: in docs/*
+- [x] Technical documentation: architecture, API reference, set-up, deployment, security, backup and restore guides, and metadata and cataloguing standards. — *Note: in docs/*
 - [ ] Full source code in a repository the project owns, with its history.
 - [ ] Admin access and all credentials, handed over securely.
 - [ ] Hosting, domain, app store, Google Cloud, Apple and AI provider accounts in the project’s name.
@@ -1402,19 +1402,19 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 11.8 Maintenance and Continuity
 
-- [ ] Security updates to the server, packages and apps, applied promptly.
-- [ ] Regular updates of frameworks and libraries, at least every quarter.
-- [ ] Yearly app updates to meet new Android and iOS requirements.
-- [ ] Renewals: domain, SSL certificate (if paid), hosting, Apple Developer Program and other subscriptions.
-- [ ] Quarterly restore tests and security reviews (Sections 4.10 and 7.5).
+- [~] Security updates to the server, packages and apps, applied promptly. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [~] Regular updates of frameworks and libraries, at least every quarter. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [~] Yearly app updates to meet new Android and iOS requirements. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [~] Renewals: domain, SSL certificate (if paid), hosting, Apple Developer Program and other subscriptions. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [~] Quarterly restore tests and security reviews (Sections 4.10 and 7.5). — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
 
 The project will produce an archive sustainability plan and a long-term continuity framework, so that the archive remains “a living resource” after the project ends. The platform contributes the following inputs:
 
-- [ ] Governance: the admin and Super Admin roles, the approval rules and the audit log give a ready structure for long-term management.
-- [ ] Institutional responsibilities: a named team of admins, with the moderation policy and response times in Appendix C.
-- [ ] Resource requirements: the yearly running costs in Appendix G and the maintenance tasks in Section 11.8, for inclusion in the sustainability plan.
-- [ ] Ongoing content and engagement: trained contributors and community champions continue to add stories; collections, announcements and exhibitions keep the archive active.
-- [ ] Technical continuity: full documentation, open formats, standard metadata and a complete export (Section 7.6), so the archive can be moved or handed to another institution without loss.
+- [x] Governance: the admin and Super Admin roles, the approval rules and the audit log give a ready structure for long-term management. — *Note: docs/MAINTENANCE.md*
+- [~] Institutional responsibilities: a named team of admins, with the moderation policy and response times in Appendix C. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [x] Resource requirements: the yearly running costs in Appendix G and the maintenance tasks in Section 11.8, for inclusion in the sustainability plan. — *Note: docs/MAINTENANCE.md*
+- [~] Ongoing content and engagement: trained contributors and community champions continue to add stories; collections, announcements and exhibitions keep the archive active. — *Left: planned in docs/MAINTENANCE.md; carried out after launch*
+- [x] Technical continuity: full documentation, open formats, standard metadata and a complete export (Section 7.6), so the archive can be moved or handed to another institution without loss. — *Note: docs/MAINTENANCE.md*
 - [ ] Scaling: the platform is documented and multilingual, so it can serve as a model for similar archives in other coastal and inland-water countries.
 
 ### 11.9 Measures the Platform Must Report
@@ -1708,7 +1708,7 @@ The project will produce an archive sustainability plan and a long-term continui
 - [ ] **T2**: Collected content arrives late or in inconsistent formats | Medium | High | Metadata template and recording guidance issued before collection; bulk import accepts batches as they arrive and reports errors row by row
 - [ ] **T3**: Technical problems in platform development | Medium | High | Phased testing and regular feedback from users; automated tests and quality gates (Section 10); staging before production
 - [ ] **T4**: AI wrongly blocks or allows content, especially in Kiswahili, Dholuo and local languages | Medium | Medium | Human review of RED items; evaluation set in the main languages; monthly recalibration; provider can be changed through the AI gateway (Section 5)
-- [ ] **T5**: Security breach or data leak | Low | High | Controls in Section 4; penetration test before go-live; incident response plan
+- [~] **T5**: Security breach or data leak | Low | High | Controls in Section 4; penetration test before go-live; incident response plan — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
 - [ ] **T6**: Sensitive testimony published without valid consent or validation | Low | High | Consent record and validation flag enforced by the backend before publication (Section 2.6); withdrawal supported
 - [ ] **T7**: Running costs for AI, storage or hosting grow faster than the budget | Medium | Medium | Spending limits and alerts, caching, free tiers, archive storage tier (Appendix G)
 - [ ] **T8**: Free test hosting limits or expiry interrupt testing | High | Low | No real data on test hosting; move to production hosting before content import (Section 9)
@@ -1718,8 +1718,8 @@ The project will produce an archive sustainability plan and a long-term continui
 - [ ] **T12**: Machine translation, transcription or speech voices are poor or missing for Dholuo and other languages | High | Medium | Human translation for English, Kiswahili and Dholuo interface text; transcripts editable; original recordings always available
 - [ ] **T13**: Orientation on uploading and using the archive is needed before the platform exists | High | Low | Clickable prototype and draft handbook; final handbook at go-live (Section 11.3)
 - [ ] **T14**: A third-party service changes its terms, price or availability (maps, AI, sign-in, push) | Medium | Medium | Each service sits behind its own module; alternatives named in the tools tables
-- [ ] **T15**: Data loss | Low | High | 3-2-1 backups, point-in-time recovery, quarterly restore tests (Section 7)
-- [ ] **T16**: Dependence on a single developer | Medium | High | Documentation, clean code, automated tests and the handover package (Section 11.7)
+- [~] **T15**: Data loss | Low | High | 3-2-1 backups, point-in-time recovery, quarterly restore tests (Section 7) — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
+- [x] **T16**: Dependence on a single developer | Medium | High | Documentation, clean code, automated tests and the handover package (Section 11.7) — *Note: full documentation, 100+ automated tests and the handover package*
 - [ ] **T17**: A safety concern is treated by its sender as an emergency call | Low | High | Clear notice and emergency numbers on the form; acknowledgement target (Appendix C)
 
 ### Appendix G: Project Cost and Running Costs
@@ -1768,4 +1768,4 @@ All work and services in this plan are delivered within the KES 550,000 budget. 
 - [ ] Use of free tiers and free test hosting during development.
 - [ ] Caching of AI results, translations and maps, so each is paid for once.
 - [ ] Lifecycle rules that move original media files to low-cost archive storage automatically.
-- [ ] A quarterly cost review (Section 9.8).
+- [~] A quarterly cost review (Section 9.8). — *Left: in the quarterly review checklist, docs/MAINTENANCE.md*
