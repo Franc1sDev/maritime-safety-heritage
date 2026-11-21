@@ -14,7 +14,7 @@ import { Celebrate, Dialog, Spinner } from '../components/ui';
 import { Combo } from './Stories';
 
 type Kind = 'video' | 'audio' | 'document' | 'image';
-interface Slot { key: string; name: string; kind: Kind; pct: number; step: 'compressing' | 'uploading' | 'done' | 'failed'; error?: string; media?: MediaItem; preview?: string; cancel?: () => void }
+interface Slot { key: string; name: string; kind: Kind; pct: number; step: 'compressing' | 'uploading' | 'done' | 'failed'; error?: string; media?: MediaItem; preview?: string; cancel?: () => void; pause?: () => void; resume?: () => void; paused?: boolean }
 interface Form {
   title: string; text: string; language: string; placeId: number | null; placeName: string; latitude: number | null; longitude: number | null; eventDate: string; dateApproximate: boolean; year: string;
   category: string; vessel: string; tags: string; incidentId: string | null; incidentTitle: string; suggestTitle: string; suggestDetails: string; postedAs: 'self' | 'told_by' | 'anonymous' | 'company'; toldBy: string;
@@ -96,9 +96,9 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
           const ready = kind === 'image' ? await compressImage(file, (pct) => upd({ pct: Math.round(pct / 4) }), blur) : file;
           upd({ step: 'uploading' });
           const h = uploadFile(ready, 'story', (pct) => upd({ pct: kind === 'image' ? 25 + Math.round(pct * 0.75) : pct }));
-          upd({ cancel: h.cancel });
+          upd({ cancel: h.cancel, pause: h.pause, resume: h.resume });
           const media = await h.promise;
-          upd({ step: 'done', pct: 100, media, cancel: undefined });
+          upd({ step: 'done', pct: 100, media, cancel: undefined, pause: undefined, resume: undefined, paused: false });
         } catch (e: any) { if (e?.name !== 'AbortError') upd({ step: 'failed', error: e.message }); }
       })();
     }
@@ -289,9 +289,10 @@ export default function ShareStory({ editId, onClose, company }: { editId: strin
             <span className="thumb">{s.preview ? <img src={s.preview} alt="" /> : <Icon name={s.kind} size={22} />}</span>
             <span className="grow" style={{ minWidth: 0 }}>
               <span className="small" style={{ overflowWrap: 'anywhere' }}>{s.name}</span>
-              {s.step === 'failed' ? <span className="error-text small" role="alert"> {s.error}</span> : s.step !== 'done' ? <><div className="progress"><i style={{ width: `${s.pct}%` }} /></div><span className="counter">{s.step === 'compressing' ? t('Compressing…') : t('Uploading…')} {s.pct}%</span></> : <span className="counter"> <Icon name="check" size={13} /> {t('Ready')}</span>}
+              {s.step === 'failed' ? <span className="error-text small" role="alert"> {s.error}</span> : s.step !== 'done' ? <><div className="progress"><i style={{ width: `${s.pct}%` }} /></div><span className="counter">{s.step === 'compressing' ? t('Compressing…') : s.paused ? t('Paused') : t('Uploading…')} {s.pct}%</span></> : <span className="counter"> <Icon name="check" size={13} /> {t('Ready')}</span>}
               {s.kind === 'document' && f.postedAs === 'told_by' && s.step === 'done' && <label className="check small"><input type="checkbox" checked={!!(s as any).consentForm} onChange={(e) => setSlots((all) => all.map((x) => ({ ...x, consentForm: x.key === s.key ? e.target.checked : false } as Slot)))} /><span>{t('This is the signed consent form (kept private)')}</span></label>}
             </span>
+            {s.step === 'uploading' && s.pause && <button className="chip" onClick={() => { if (s.paused) s.resume?.(); else s.pause?.(); setSlots((all) => all.map((x) => (x.key === s.key ? { ...x, paused: !s.paused } : x))); }}>{s.paused ? t('Resume') : t('Pause')}</button>}
             <button className="xbtn" onClick={() => removeSlot(s)} aria-label={t('Remove {name}', { name: s.name })}><Icon name="close" size={15} /></button>
           </li>
         ))}</ul>

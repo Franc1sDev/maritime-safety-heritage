@@ -32,7 +32,8 @@ export async function compressImage(file: File, onStep?: (pct: number) => void, 
 }
 export const canBlurFaces = () => typeof window !== 'undefined' && 'FaceDetector' in window;
 
-export interface UploadHandle { promise: Promise<MediaItem>; cancel: () => void }
+/** A large upload (sent in pieces) can also be paused and carried on later. */
+export interface UploadHandle { promise: Promise<MediaItem>; cancel: () => void; pause?: () => void; resume?: () => void }
 export function uploadFile(file: File, purpose: string, onProgress: (pct: number) => void, altText = ''): UploadHandle {
   if (file.size < 4_000_000) {
     const ctl = new AbortController();
@@ -61,5 +62,5 @@ export function uploadFile(file: File, purpose: string, onProgress: (pct: number
     });
     void up.findPreviousUploads().then((prev) => { if (prev.length) up.resumeFromPreviousUpload(prev[0]); up.start(); });
   });
-  return { promise, cancel: () => void up?.abort(true) };
+  return { promise, cancel: () => void up?.abort(true), pause: () => void up?.abort(), resume: () => up?.start() };
 }
