@@ -23,6 +23,13 @@ services:
     restart: unless-stopped
     volumes: [ "clamav:/var/lib/clamav" ]
 
+  # Queue and cache for background work (media processing, AI review, notifications, exports) and live updates
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    volumes: [ "redis:/data" ]
+
   api:
     build: { context: .., dockerfile: Dockerfile }
     restart: unless-stopped
@@ -33,6 +40,7 @@ services:
       DB_USER: maritime
       DB_NAME: maritime_heritage
       CLAMAV_HOST: clamav
+      REDIS_URL: redis://redis:6379
       SITE_URL: https://${SITE_DOMAIN}
       WEB_BASE_URL: https://${SITE_DOMAIN}
       COOKIE_SECURE: "true"
@@ -40,6 +48,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       clamav: { condition: service_started }
+      redis: { condition: service_started }
 
   caddy:
     image: caddy:2.8-alpine
@@ -70,6 +79,7 @@ services:
 
 volumes:
   db:
+  redis:
   media:
   clamav:
   caddy_data:

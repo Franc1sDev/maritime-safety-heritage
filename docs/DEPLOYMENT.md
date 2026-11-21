@@ -37,6 +37,30 @@ Until the project buys hosting, the archive runs free on Render at https://marit
 
 To move to paid hosting, follow the steps below. Export the test data first if any of it is worth keeping.
 
+## Master plan settings (version 2)
+
+The rebuilt platform adds these settings. All have safe defaults; the full list with explanations is in `backend/.env.example`.
+
+| Setting | What it does | Needed for |
+|---|---|---|
+| `AI_PROVIDER`, `AI_API_KEY` | AI review of stories, comments and messages. `rules` is the built-in checker that needs no key; `anthropic`, `openai` or `gemini` with a key gives the full review, translation and transcription. | Real use |
+| `GOOGLE_CLIENT_IDS`, `APPLE_CLIENT_IDS` | Sign in with Google and Apple, the only sign-in for Contributors. | Real use |
+| `DEMO_SIGN_IN` | A test sign-in with any name. `true` on the test site; must be `false` (or removed) for real use. | Test site only |
+| `REDIS_URL` | Queue, cache and live updates across more than one server. Without it the database is used, which is fine for one server. | Paid server |
+| `FCM_SERVICE_ACCOUNT`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Push notifications to the apps and to browsers. | Optional |
+| `AT_USERNAME`, `AT_API_KEY` | SMS sign-in codes for admins (Africa's Talking). Email codes work without it. | Optional |
+| `GOOGLE_MAPS_BROWSER_KEY` | Google Maps on the website. A built-in map is used without it. | Optional |
+| `APPROVAL_RULE`, `APPROVAL_DEADLINE_DAYS` | `majority` (two-thirds) or `unanimous` approval among admins, and the days before a request goes to the Super Admin. | Appendix B |
+| `ANDROID_APP_SHA256`, `APPLE_APP_ID` | Lets shared story links open in the installed apps. | App release |
+
+**Upgrading the old test site.** The first start of version 2 changes the database by itself (migrations 006 and 007):
+the old catalogue records are replaced by stories, and existing accounts keep working: the first admin becomes the
+Super Admin, editors become admins and members become Contributors. This was tried on a copy of the old database
+before release. Admins now sign in with a second step (a code by email), so email must be working.
+
+**The website is now built.** The server image builds the React site (`web/`) and serves `web/dist`. On a PC, run
+`backend\1-SETUP.bat` again after updating: it installs the packages and builds the site.
+
 ## 1. Server and domain
 
 1. Rent a server: Ubuntu 24.04, 2 vCPU, 4 GB RAM, 80 GB disk is enough to start. Choose a region near Kenya (Johannesburg or Cape Town) or use a CDN.

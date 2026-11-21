@@ -69,6 +69,18 @@ ${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).repl
     res.send(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin\nDisallow: /super\nDisallow: /inbox\nDisallow: /profile\n\nSitemap: ${site()}/sitemap.xml\n`);
   });
 
+  // App links: lets Android and iOS open shared story links in the installed app. Shown only when the app's details are set.
+  http.get('/.well-known/assetlinks.json', (_req: Request, res: Response) => {
+    const prints = (process.env.ANDROID_APP_SHA256 ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+    if (!prints.length) { res.status(404).json({ statusCode: 404, code: 'not_found', message: 'Not set up.' }); return; }
+    res.json([{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: process.env.ANDROID_APP_ID ?? 'ke.rememberingthewaters.maritime_heritage', sha256_cert_fingerprints: prints } }]);
+  });
+  http.get('/.well-known/apple-app-site-association', (_req: Request, res: Response) => {
+    const appId = process.env.APPLE_APP_ID ?? '';
+    if (!appId) { res.status(404).json({ statusCode: 404, code: 'not_found', message: 'Not set up.' }); return; }
+    res.type('application/json').send(JSON.stringify({ applinks: { apps: [], details: [{ appID: appId, paths: ['/stories/*', '/incidents/*', '/resources/*', '/contributors/*'] }] } }));
+  });
+
   http.get('/sitemap.xml', async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const day = (d: Date) => new Date(d).toISOString().slice(0, 10);
