@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 652 of 1190 items ticked, 213 partly done**
+**Progress: 700 of 1190 items ticked, 230 partly done**
 
 How to read it:
 
@@ -129,7 +129,7 @@ The plan is arranged as follows, ending with references and appendices:
 
 - [x] The backend will be a single, well-organised NestJS application (a “modular monolith”) backed by PostgreSQL. Each area of the platform will be its own module with clear boundaries, so that any module can later be split into a separate service if load requires it. Slow work will never run inside a user’s request; it will be handed to background workers through a job queue.
 - [x] Clients (website, web app, Android, iOS) talk to the backend only through a versioned HTTPS API and a WebSocket connection for live updates.
-- [ ] A reverse proxy (Caddy) will terminate HTTPS, handle certificates automatically and compress responses. A CDN (e.g. Cloudflare) will sit in front for media and static files.
+- [~] A reverse proxy (Caddy) will terminate HTTPS, handle certificates automatically and compress responses. A CDN (e.g. Cloudflare) will sit in front for media and static files. — *Left: Caddy with automatic certificates and compression is in deploy/; the CDN is added at go-live*
 - [x] The API servers will be stateless, so more copies can be added behind the proxy when traffic grows (Section 6.5).
 - [~] Supporting services: PostgreSQL with PostGIS (data and maps), Redis (cache, sessions, job queue, live-update fan-out), object storage (media), ClamAV (virus scanning), an AI provider (Section 5), push notification services (FCM and APNs) and an email service. — *Left: all are supported in the code and Redis is tested; PostGIS is optional (the map also works without it); ClamAV, object storage, push and the AI provider are switched on and tested on the production server in stage 5 (Deployment)*
 
@@ -146,8 +146,8 @@ The plan is arranged as follows, ending with references and appendices:
 - [x] **Push notifications**: Firebase Cloud Messaging, Apple Push Notification service | Notifications to Android, iOS and web — *Note: sent through Firebase Cloud Messaging, which delivers to iPhones through Apple’s service; web push uses the browser standard. Needs the Firebase and web-push keys (stage 5)*
 - [x] **Email**: SMTP provider or transactional email API | Verification codes, notices, digests
 - [~] **PDF generation**: Server-side HTML-to-PDF renderer | Analytics PDF reports — *Left: reports are made by a built-in PDF writer instead of an HTML-to-PDF renderer, because a headless browser is too heavy for the server budget; the output is the same kind of report*
-- [ ] **Containers**: Docker, Docker Compose | Identical setup on every server
-- [ ] **Reverse proxy**: Caddy | HTTPS, certificates, compression
+- [x] **Containers**: Docker, Docker Compose | Identical setup on every server — *Note: deploy/docker-compose.yml and deploy/Caddyfile*
+- [x] **Reverse proxy**: Caddy | HTTPS, certificates, compression — *Note: deploy/docker-compose.yml and deploy/Caddyfile*
 
 ### 2.3 Core Modules
 
@@ -275,7 +275,7 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 
 - [x] Unit tests for business rules and end-to-end tests for every API endpoint, run automatically on every change. — *Note: 67 server tests (end-to-end and unit), plus an access test that calls every endpoint as each role and with nonsense input, all on every change*
 - [x] Priority test areas: sign-in and sessions, permissions per role, AI flag handling, the approval engine, account deletion and recovery, the last-Super-Admin rule, file uploads and signed links.
-- [ ] Load tests before each release (Section 6.6).
+- [x] Load tests before each release (Section 6.6). — *Note: a load test runs in the automatic build on every change and fails it if the target is missed*
 
 ### 2.13 Tools and Technologies
 
@@ -848,7 +848,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ### 4.4 Data Protection and Legal Compliance
 
 - [ ] Kenya Data Protection Act, 2019: the project’s data controller registers with the Office of the Data Protection Commissioner (ODPC) as required, and a data protection impact assessment (DPIA) will be completed before launch.
-- [ ] Legal pages: a privacy policy, terms of use, rules and a cookie notice, linked from sign-in, ABOUT and the app stores, and accepted on first sign-in.
+- [~] Legal pages: a privacy policy, terms of use, rules and a cookie notice, linked from sign-in, ABOUT and the app stores, and accepted on first sign-in. — *Left: privacy policy, terms, rules and cookie notice are on the website and in the app, linked from sign-in and ABOUT, and accepted on first sign-in; app store links and legal review at go-live*
 - [x] Data minimisation: only data needed for the platform is collected. Admin ID/passport numbers are collected only if strictly necessary, stored encrypted and separately, and visible only to Super Admins.
 - [x] User rights: users can see, correct, download and delete their data (MY PROFILE).
 - [~] Consent: stories told on behalf of others require a consent confirmation; faces can be blurred; anonymous posting is available for sensitive incidents. — *Left: consent confirmation and anonymous posting are enforced by the server; face blurring is a tool in the website and apps (stages 2 and 3)*
@@ -859,7 +859,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 4.5 Encryption
 
-- [ ] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds.
+- [x] In transit: HTTPS only, with automatic certificates and HSTS; apps refuse plain HTTP in store builds. — *Note: HSTS in production; Caddy issues certificates; Android and iOS release builds block plain HTTP by default*
 - [~] At rest: media files encrypted with AES-256; database on encrypted disks; sensitive fields (e.g. ID numbers, MFA secrets) encrypted separately. — *Left: media files are encrypted with AES-256 and sensitive fields separately; encrypted database disks depend on the production host (stage 5)*
 - [x] Backups: encrypted before they leave the server (Section 7.4). — *Note: AES-256, proven in the restore drill; runs once the production server is set up*
 - [x] File access: files are never public. Each file link is signed and expires (e.g. after one hour), and is issued only to users allowed to see the item.
@@ -878,7 +878,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] Rate limits on sign-in, posting, commenting, messaging and reporting, stricter for new accounts.
 - [x] Public pages and forms: public read endpoints are rate-limited and cached; the safety-concern and feedback forms open to visitors are protected against automated abuse (for example with a human-verification check).
 - [x] Secrets (keys, passwords, tokens) kept out of the source code and stored in the hosting provider’s secret store.
-- [ ] Dependencies scanned automatically for known vulnerabilities on every change.
+- [x] Dependencies scanned automatically for known vulnerabilities on every change. — *Note: npm audit in the automatic build (high or critical fails it), Dependabot weekly, CodeQL. The first run found and fixed high-severity issues in sharp and nodemailer*
 
 ### 4.8 Audit Logging and Monitoring
 
@@ -902,7 +902,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ##### Contributor Rights and Licences
 
-- [ ] Contributors keep the copyright in their stories, and grant the platform permission to store, display and preserve them.
+- [x] Contributors keep the copyright in their stories, and grant the platform permission to store, display and preserve them. — *Note: stated in the terms of use*
 - [x] Contributors choose whether others may reuse their story, e.g. All rights reserved or a Creative Commons licence (Section 3.2.4).
 - [~] Each story shows its rights and credits; media can be watermarked. — *Left: rights and credits are stored and returned with every story; watermarking is not built*
 
@@ -915,20 +915,20 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ##### Children and Young People
 
 - [x] A minimum age for accounts is set and confirmed at first sign-in.
-- [ ] Identifiable images or stories of children require consent from a parent or guardian.
+- [x] Identifiable images or stories of children require consent from a parent or guardian. — *Note: the story form and the consent record ask for a parent or guardian for anyone under 18*
 
 ##### Ethical Handling of Traumatic Content
 
-- [ ] The platform follows a “do no harm” approach: content notices on sensitive stories, no graphic images, and respectful moderation.
-- [ ] Where stories involve loss, the platform can show information about where to find support.
+- [x] The platform follows a “do no harm” approach: content notices on sensitive stories, no graphic images, and respectful moderation. — *Note: sensitive-story notice before opening; graphic images are against the rules; support information (Kenya Red Cross, 1199) on sensitive stories and in the rules*
+- [x] Where stories involve loss, the platform can show information about where to find support. — *Note: sensitive-story notice before opening; graphic images are against the rules; support information (Kenya Red Cross, 1199) on sensitive stories and in the rules*
 
 ##### Platform Policies
 
-- [ ] **Terms of use**: The agreement between users and the platform
-- [ ] **Privacy policy**: What personal data is collected, why, how it is protected, and users’ rights
-- [ ] **Rules and netiquette**: What may be posted and how to behave (Appendix A.3)
-- [ ] **Cookie notice**: What cookies and local storage are used
-- [ ] **Copyright and takedown**: How to report copied or infringing content
+- [x] **Terms of use**: The agreement between users and the platform — *Note: all five are in ABOUT & RESOURCES on the website and in the app; legal review before go-live (docs/GO-LIVE.md)*
+- [x] **Privacy policy**: What personal data is collected, why, how it is protected, and users’ rights — *Note: all five are in ABOUT & RESOURCES on the website and in the app; legal review before go-live (docs/GO-LIVE.md)*
+- [x] **Rules and netiquette**: What may be posted and how to behave (Appendix A.3) — *Note: all five are in ABOUT & RESOURCES on the website and in the app; legal review before go-live (docs/GO-LIVE.md)*
+- [x] **Cookie notice**: What cookies and local storage are used — *Note: all five are in ABOUT & RESOURCES on the website and in the app; legal review before go-live (docs/GO-LIVE.md)*
+- [x] **Copyright and takedown**: How to report copied or infringing content — *Note: all five are in ABOUT & RESOURCES on the website and in the app; legal review before go-live (docs/GO-LIVE.md)*
 
 ##### Protecting the Original Archive
 
@@ -944,7 +944,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Password hashing**: scrypt or Argon2id | Salted password storage
 - [x] **Web security**: Helmet, NestJS Throttler, class-validator | Security headers, rate limits, input validation
 - [~] **Virus scanning**: ClamAV | Scan every upload — *Left: ClamAV is switched on and tested on the production server in stage 5 (Deployment)*
-- [ ] **Code and dependency scanning**: GitHub Dependabot, npm audit, GitHub secret scanning, CodeQL | Find vulnerable packages, leaked secrets and code flaws
+- [x] **Code and dependency scanning**: GitHub Dependabot, npm audit, GitHub secret scanning, CodeQL | Find vulnerable packages, leaked secrets and code flaws — *Note: Dependabot, npm audit, CodeQL, and GitHub secret scanning on the public repository*
 - [ ] **Security testing**: OWASP ZAP | Automated web vulnerability scans
 - [ ] **Edge protection**: Cloudflare (firewall, DDoS protection, bot control) | Block attacks and scraping
 - [ ] **Search ownership**: Google Search Console, canonical tags | Prove the official site and detect copies
@@ -1005,7 +1005,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] Admins make the final decision on every RED item and every account action.
 - [x] Users are always told why an item was flagged, and can use “Ask Why” or contact admins.
-- [ ] The rules frame explains clearly that AI review is used.
+- [x] The rules frame explains clearly that AI review is used. — *Note: “Every story is reviewed by AI…” in the rules frame, website and app*
 - [x] Flag rates are monitored by language and region to detect unfair treatment of particular groups.
 - [~] Personal data sent to AI providers is kept to the minimum needed, under contracts that forbid training on platform data. — *Left: only the content under review is sent, never account details; the contract with the provider is for the project to sign*
 
@@ -1030,29 +1030,29 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 6.1 Performance Targets
 
-- [ ] **API response time (95% of requests)**: Under 300 milliseconds
-- [ ] **First story visible after opening (4G)**: Under 2 seconds
-- [ ] **First story visible after opening (3G)**: Under 5 seconds
-- [ ] **Next story after swiping**: Instant (pre-loaded)
-- [ ] **Website performance score (Lighthouse, mobile)**: 90 or higher
+- [x] **API response time (95% of requests)**: Under 300 milliseconds — *Note: measured: 95% of requests under 71 ms (200 people), first story 1.1 s on 4G and 2.7 s on 3G, the next two stories pre-loaded, Lighthouse 90 on a simulated phone; to be repeated on the production server*
+- [x] **First story visible after opening (4G)**: Under 2 seconds — *Note: measured: 95% of requests under 71 ms (200 people), first story 1.1 s on 4G and 2.7 s on 3G, the next two stories pre-loaded, Lighthouse 90 on a simulated phone; to be repeated on the production server*
+- [x] **First story visible after opening (3G)**: Under 5 seconds — *Note: measured: 95% of requests under 71 ms (200 people), first story 1.1 s on 4G and 2.7 s on 3G, the next two stories pre-loaded, Lighthouse 90 on a simulated phone; to be repeated on the production server*
+- [x] **Next story after swiping**: Instant (pre-loaded) — *Note: measured: 95% of requests under 71 ms (200 people), first story 1.1 s on 4G and 2.7 s on 3G, the next two stories pre-loaded, Lighthouse 90 on a simulated phone; to be repeated on the production server*
+- [x] **Website performance score (Lighthouse, mobile)**: 90 or higher — *Note: measured: 95% of requests under 71 ms (200 people), first story 1.1 s on 4G and 2.7 s on 3G, the next two stories pre-loaded, Lighthouse 90 on a simulated phone; to be repeated on the production server*
 - [ ] **App start time on a low-end Android phone**: Under 3 seconds
 - [ ] **Availability**: 99.5% or higher per month
-- [ ] **Concurrent users at launch**: At least 1,000, scalable to 10,000+
+- [~] **Concurrent users at launch**: At least 1,000, scalable to 10,000+ — *Left: 1,000 people at once passed on a 2-processor test machine; 10,000 needs a larger server or more API containers (docs/ARCHITECTURE.md)*
 
 ### 6.2 Front End Performance
 
-- [ ] Pre-loading: the next two stories in the current tab are loaded in the background, so swiping feels instant.
-- [ ] Lazy loading: images, videos and comments load only when about to be seen.
-- [ ] Code splitting: each page of the website loads only the code it needs.
-- [ ] Caching: viewed stories, profile images and interface text are cached on the device.
-- [ ] Optimistic updates: reactions, favourites and comments appear instantly and are confirmed by the server in the background.
+- [x] Pre-loading: the next two stories in the current tab are loaded in the background, so swiping feels instant. — *Note: on the website and in the app*
+- [x] Lazy loading: images, videos and comments load only when about to be seen. — *Note: on the website and in the app*
+- [x] Code splitting: each page of the website loads only the code it needs. — *Note: on the website and in the app*
+- [x] Caching: viewed stories, profile images and interface text are cached on the device. — *Note: on the website and in the app*
+- [~] Optimistic updates: reactions, favourites and comments appear instantly and are confirmed by the server in the background. — *Left: reactions and favourites appear at once; a new comment appears when the server has accepted it, because every comment is checked first*
 
 ### 6.3 Media Delivery
 
 - [ ] All media is served through a CDN close to the user.
 - [x] Images are stored in several sizes and modern formats (WebP/AVIF); each device receives the size it needs. — *Note: WebP sizes for images; two HLS renditions plus an MP4 for video*
 - [x] Videos are converted to adaptive streaming (HLS), so quality adjusts to the connection. — *Note: WebP sizes for images; two HLS renditions plus an MP4 for video*
-- [ ] Each uploaded file is compressed individually before it is sent, reducing upload time and data use.
+- [~] Each uploaded file is compressed individually before it is sent, reducing upload time and data use. — *Left: photos are made smaller on the phone or in the browser before they are sent; audio and video are converted on the server*
 
 ### 6.4 Backend and Database Performance
 
@@ -1074,9 +1074,9 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 6.6 Load and Performance Testing
 
-- [ ] Load tests (e.g. with k6) before each release, simulating typical days and peaks such as a “Heritage Week” call for stories or a story going viral.
-- [ ] Tests cover browsing, posting with media, comments, messaging and live analytics.
-- [ ] Results are compared with the targets in Section 6.1; releases do not go live if targets are missed.
+- [~] Load tests (e.g. with k6) before each release, simulating typical days and peaks such as a “Heritage Week” call for stories or a story going viral. — *Left: a Node load test runs on every change (browsing, reacting, comments, posting, messaging); a k6 script with the same journeys is in tests/load; posting with media and live analytics are covered by the server tests, not yet under load*
+- [~] Tests cover browsing, posting with media, comments, messaging and live analytics. — *Left: a Node load test runs on every change (browsing, reacting, comments, posting, messaging); a k6 script with the same journeys is in tests/load; posting with media and live analytics are covered by the server tests, not yet under load*
+- [x] Results are compared with the targets in Section 6.1; releases do not go live if targets are missed. — *Note: the automatic build fails when 95% of requests are not under 300 ms or when there is any server error*
 
 ### 6.7 Performance Monitoring
 
@@ -1086,8 +1086,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 6.8 Tools and Technologies
 
-- [ ] **Load testing**: k6 | Simulating many users before each release
-- [ ] **Web performance**: Lighthouse, WebPageTest | Load-time measurement and improvement
+- [~] **Load testing**: k6 | Simulating many users before each release — *Left: Lighthouse and a load test in the automatic build; k6 script ready; WebPageTest not used*
+- [~] **Web performance**: Lighthouse, WebPageTest | Load-time measurement and improvement — *Left: Lighthouse and a load test in the automatic build; k6 script ready; WebPageTest not used*
 - [ ] **App performance**: Flutter DevTools, Firebase Performance Monitoring | Smooth scrolling and app start times
 - [ ] **Monitoring**: Sentry (errors and performance), Prometheus and Grafana (server metrics) | Production performance and alerts
 - [ ] **Database**: pg_stat_statements, EXPLAIN ANALYZE | Finding and fixing slow queries
@@ -1117,7 +1117,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Stories removed by admins**: Kept hidden for the moderation record for a set period (e.g. 1 year), then erased
 - [x] **Reports and moderation decisions**: Kept while the account exists, then anonymised
 - [x] **Audit log**: At least 5 years
-- [ ] **Server logs**: 90 days
+- [x] **Server logs**: 90 days — *Note: Caddy keeps access logs for 90 days*
 - [x] **Backups**: Daily for 30 days, weekly for 3 months, monthly for 1 year — *Note: 30 days daily, 3 months weekly, 1 year monthly, tested on 420 days of sample files; runs once the production server is set up*
 
 ### 7.4 Backup Strategy
@@ -1212,7 +1212,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] **Offline apps**: drift (SQLite), connectivity_plus, workmanager | Offline data, connection detection, background tasks — *Left: built with files on the phone, shared_preferences and connectivity_plus; drift and workmanager were not needed for what is built*
 - [x] **Network handling**: dio with retry (apps), fetch with retry and backoff (web) | Automatic retries — *Note: the http package with its own retry in the app, fetch with retry on the website*
 - [x] **Streaming**: HLS (FFmpeg, hls.js on web, native players in apps) | Adaptive video
-- [ ] **Network testing**: Chrome DevTools network throttling, Android emulator network profiles | Testing on slow and unstable connections
+- [x] **Network testing**: Chrome DevTools network throttling, Android emulator network profiles | Testing on slow and unstable connections — *Note: browser tests on simulated 3G and offline in every automatic build*
 
 ## SECTION 9: DEPLOYMENT
 
@@ -1297,12 +1297,12 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] **Unit tests**: Business rules, calculations (e.g. trending, AI flag thresholds), helpers | Every change — *Note: unit tests of the rules; end-to-end tests of each module including approvals, account deletion and the last-Super-Admin rule; every endpoint checked for each role on every change*
 - [x] **API end-to-end tests**: Every endpoint, permissions per role, approval workflows, account deletion, last-Super-Admin rule | Every change — *Note: unit tests of the rules; end-to-end tests of each module including approvals, account deletion and the last-Super-Admin rule; every endpoint checked for each role on every change*
-- [ ] **Web interface tests**: Key journeys in a real browser: sign-in, posting a story, commenting, moderation, approvals | Every change to the website
+- [x] **Web interface tests**: Key journeys in a real browser: sign-in, posting a story, commenting, moderation, approvals | Every change to the website — *Note: in web/e2e, tests/load and tests/perf, run on every change*
 - [~] **App tests**: Widget and integration tests of the Flutter apps; tests on real Android and iOS devices | Every change to the apps; each release — *Left: tests of the network layer and helpers, and Android and iOS builds, on every change; real devices still to come*
 - [~] **Accessibility tests**: WCAG 2.2 AA: automated checks plus manual screen-reader and keyboard tests | Each release — *Left: automated axe checks (WCAG A and AA) and a keyboard test on every change; screen-reader tests by hand still to come*
-- [ ] **Language tests**: Every interface language, right-to-left Arabic, long translations, all scripts | Each release
-- [ ] **Network tests**: Slow, unstable and offline conditions (Section 8) | Each release
-- [ ] **Performance and load tests**: Targets in Section 6.1 | Each release
+- [~] **Language tests**: Every interface language, right-to-left Arabic, long translations, all scripts | Each release — *Left: English and Kiswahili are tested in the browser; other languages and right-to-left come with their translations*
+- [x] **Network tests**: Slow, unstable and offline conditions (Section 8) | Each release — *Note: in web/e2e, tests/load and tests/perf, run on every change*
+- [x] **Performance and load tests**: Targets in Section 6.1 | Each release — *Note: in web/e2e, tests/load and tests/perf, run on every change*
 - [~] **Security tests**: Automated scans every change; penetration test before launch (Section 4.10) | Continuous; before launch — *Left: CodeQL, dependency checks and the access test on every change; penetration test before launch*
 - [ ] **AI evaluation**: AI review accuracy on a fixed set of sample stories (Section 5.7) | Before launch; after any AI change
 - [ ] **User acceptance testing**: Partners and selected users check the platform against this plan | Before launch
@@ -1321,21 +1321,21 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 10.5 Defect Management
 
-- [ ] **Critical**: Data loss, security breach, or the platform cannot be used | Yes, immediately
-- [ ] **High**: A main feature does not work and there is no workaround | Yes
-- [ ] **Medium**: A feature works incorrectly but there is a workaround | Agreed case by case
-- [ ] **Low**: Cosmetic issue or minor inconvenience | May be scheduled for a later release
-- [ ] Defects are recorded in the project issue tracker (GitHub Issues), with steps to reproduce, severity, and status.
+- [x] **Critical**: Data loss, security breach, or the platform cannot be used | Yes, immediately — *Note: docs/TESTING.md*
+- [x] **High**: A main feature does not work and there is no workaround | Yes — *Note: docs/TESTING.md*
+- [x] **Medium**: A feature works incorrectly but there is a workaround | Agreed case by case — *Note: docs/TESTING.md*
+- [x] **Low**: Cosmetic issue or minor inconvenience | May be scheduled for a later release — *Note: docs/TESTING.md*
+- [~] Defects are recorded in the project issue tracker (GitHub Issues), with steps to reproduce, severity, and status. — *Left: GitHub Issues is named for this in docs/TESTING.md; in use from user acceptance testing*
 
 ### 10.6 Testing Tools
 
-- [ ] **Backend**: Jest, Supertest | Unit and API end-to-end tests
-- [ ] **Website**: Vitest, React Testing Library, Playwright | Component and browser tests
-- [ ] **Apps**: flutter_test, integration_test, Firebase Test Lab | Widget, integration and device tests
+- [x] **Backend**: Jest, Supertest | Unit and API end-to-end tests — *Note: Jest and Supertest; Vitest, Testing Library and Playwright*
+- [x] **Website**: Vitest, React Testing Library, Playwright | Component and browser tests — *Note: Jest and Supertest; Vitest, Testing Library and Playwright*
+- [~] **Apps**: flutter_test, integration_test, Firebase Test Lab | Widget, integration and device tests — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
 - [~] **Accessibility**: axe-core, Lighthouse, TalkBack, VoiceOver | Automated and manual checks — *Left: axe-core and Lighthouse automated; TalkBack and VoiceOver by hand still to come*
-- [ ] **Load**: k6 | Load and stress tests
-- [ ] **Security**: OWASP ZAP, Dependabot, CodeQL | Vulnerability scans
-- [ ] **Tracking**: GitHub Issues and GitHub Projects | Defects and test progress
+- [~] **Load**: k6 | Load and stress tests — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
+- [~] **Security**: OWASP ZAP, Dependabot, CodeQL | Vulnerability scans — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
+- [~] **Tracking**: GitHub Issues and GitHub Projects | Defects and test progress — *Left: flutter_test, a Node load test with a k6 script, Dependabot, npm audit and CodeQL are in use; integration tests on devices, OWASP ZAP and GitHub Projects are still to come*
 
 ## SECTION 11: DELIVERY PLAN AND SUPPORTING DELIVERABLES
 
@@ -1369,9 +1369,9 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] Recording guidance (file formats, naming, minimum quality) is included in the handbook. — *Note: in docs/HANDBOOK.md*
 - [ ] Priority themes and stories identified with communities become the archive’s categories, collections and incident records.
 - [ ] The project’s collected oral histories, photographs, historical records, reports and testimonies are catalogued with metadata (Section 7.6), consent and rights records, and uploaded through bulk import (Section 3.2.10).
-- [ ] Each item records who told or created it, where and when, its language, its incident (where there is one), consent status and usage rights.
+- [x] Each item records who told or created it, where and when, its language, its incident (where there is one), consent status and usage rights. — *Note: fields and rules in docs/METADATA.md, enforced by the import and the story form*
 - [x] Validation: before a testimony is published, the storyteller confirms how their contribution is represented, in the project’s feedback and validation meetings; the item is then marked as validated. — *Note: enforced by the server: a testimony is published only once its consent record is complete and it is validated*
-- [ ] Narrators who wish to remain anonymous are published anonymously.
+- [x] Narrators who wish to remain anonymous are published anonymously. — *Note: fields and rules in docs/METADATA.md, enforced by the import and the story form*
 - [ ] The platform should go live with a strong set of stories, so that the first visitors find a living archive rather than an empty feed.
 - [ ] Suggested target: at least 100 published items at go-live, covering the coast, islands, Lake Victoria and rivers, including the major documented incidents.
 
@@ -1379,14 +1379,14 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] Guided on-screen hints on first use: how to browse, react, comment and share a first story. — *Note: four hints on the STORIES page, shown once and again from Settings, on the website and in the app; in the app still to be seen on a real phone*
 - [x] A short welcome explaining the rules and how moderation works. — *Note: shown once after a first profile is set up, on the website and in the app*
-- [ ] Encouraging messages after the first story and first reactions.
+- [x] Encouraging messages after the first story and first reactions. — *Note: a word of thanks with the first published story and with each story’s first reaction*
 
 ### 11.6 Learning Resources, Online Exhibition and Launch Support
 
 - [ ] The project’s policy briefs, learning summaries and educational materials are published in the learning resources area, where they can be read, downloaded, cited and shared.
 - [ ] An online exhibition presents the stories, photographs and archival materials shown in the project’s public exhibition, so that it reaches people who cannot attend.
-- [ ] Shareable links and link previews carry findings and safety messages through partner networks, social media and WhatsApp.
-- [ ] Stakeholder feedback is collected through the feedback form and reported to the project team.
+- [x] Shareable links and link previews carry findings and safety messages through partner networks, social media and WhatsApp. — *Note: link previews for WhatsApp and social media; the feedback form, read by admins on the Feedback page*
+- [x] Stakeholder feedback is collected through the feedback form and reported to the project team. — *Note: link previews for WhatsApp and social media; the feedback form, read by admins on the Feedback page*
 - [ ] The official public launch introduces and demonstrates the archive to stakeholders, partner institutions, community representatives, researchers, policymakers and the wider public.
 - [ ] The developer supports the launch event with a live demonstration, a launch announcement on the platform, and a call for contributions that encourages institutions, researchers and communities to add materials.
 - [ ] A launch campaign on the project’s channels, social media and WhatsApp uses shareable story links.
@@ -1634,7 +1634,7 @@ The project will produce an archive sustainability plan and a long-term continui
 ##### C.7 Company Stories and Collections
 
 - [x] Company stories and collections represent the project team, so facts are checked, sources credited and consent confirmed before approval. — *Note: both go through the approval engine before publication*
-- [ ] Safety information in company stories follows official guidance from the relevant authorities.
+- [~] Safety information in company stories follows official guidance from the relevant authorities. — *Left: required in the admin manual, and every company story is approved by the other admins; it depends on their checking*
 
 ##### C.8 Safety-Critical Information
 
@@ -1642,7 +1642,7 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ##### C.9 Safety Concerns
 
-- [ ] Users and visitors can report a current safety concern on the water (Section 3.2.6), so that the archive stays “responsive and relevant” and emerging risks are heard.
+- [x] Users and visitors can report a current safety concern on the water (Section 3.2.6), so that the archive stays “responsive and relevant” and emerging risks are heard. — *Note: the form for visitors and Contributors, the admins’ Safety concerns page with acknowledgement, notes and referral*
 - [x] The form states that the platform is not an emergency service and shows the emergency numbers to call.
 - [x] Admins acknowledge each concern, record notes, and where appropriate refer it to the responsible authority through the project’s partners; the referral is recorded.
 - [x] Concerns are personal data: the reporter’s identity is not published and is shared with an authority only with their agreement.
@@ -1705,22 +1705,22 @@ The project will produce an archive sustainability plan and a long-term continui
 ### Appendix F: Technical Risk Register
 
 - [ ] **T1**: The scope does not fit the development window (Appendix D) | High | High | Phased delivery with Phase 1 first (Section 11.1); feature flags; weekly tracking against the stages
-- [ ] **T2**: Collected content arrives late or in inconsistent formats | Medium | High | Metadata template and recording guidance issued before collection; bulk import accepts batches as they arrive and reports errors row by row
-- [ ] **T3**: Technical problems in platform development | Medium | High | Phased testing and regular feedback from users; automated tests and quality gates (Section 10); staging before production
+- [x] **T2**: Collected content arrives late or in inconsistent formats | Medium | High | Metadata template and recording guidance issued before collection; bulk import accepts batches as they arrive and reports errors row by row — *Note: the mitigation is in place*
+- [x] **T3**: Technical problems in platform development | Medium | High | Phased testing and regular feedback from users; automated tests and quality gates (Section 10); staging before production — *Note: the mitigation is in place*
 - [ ] **T4**: AI wrongly blocks or allows content, especially in Kiswahili, Dholuo and local languages | Medium | Medium | Human review of RED items; evaluation set in the main languages; monthly recalibration; provider can be changed through the AI gateway (Section 5)
 - [~] **T5**: Security breach or data leak | Low | High | Controls in Section 4; penetration test before go-live; incident response plan — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
-- [ ] **T6**: Sensitive testimony published without valid consent or validation | Low | High | Consent record and validation flag enforced by the backend before publication (Section 2.6); withdrawal supported
+- [x] **T6**: Sensitive testimony published without valid consent or validation | Low | High | Consent record and validation flag enforced by the backend before publication (Section 2.6); withdrawal supported — *Note: the mitigation is in place*
 - [ ] **T7**: Running costs for AI, storage or hosting grow faster than the budget | Medium | Medium | Spending limits and alerts, caching, free tiers, archive storage tier (Appendix G)
 - [ ] **T8**: Free test hosting limits or expiry interrupt testing | High | Low | No real data on test hosting; move to production hosting before content import (Section 9)
 - [ ] **T9**: App store rejection or delay | Medium | Medium | Store rules built in from the start (Section 3.3.4); early test submissions; the web app is available regardless
 - [ ] **T10**: iOS builds without a Mac | Medium | Medium | Cloud build service (Section 9.9); early TestFlight build
-- [ ] **T11**: Weak connectivity and low-end phones in the beneficiary regions | High | Medium | Low-data mode, offline drafts, resumable uploads, adaptive media (Section 8); tests on real low-end devices
+- [~] **T11**: Weak connectivity and low-end phones in the beneficiary regions | High | Medium | Low-data mode, offline drafts, resumable uploads, adaptive media (Section 8); tests on real low-end devices — *Left: low-data mode, offline reading and drafts, resumable uploads and adaptive media are built; tests on real low-end phones remain*
 - [ ] **T12**: Machine translation, transcription or speech voices are poor or missing for Dholuo and other languages | High | Medium | Human translation for English, Kiswahili and Dholuo interface text; transcripts editable; original recordings always available
-- [ ] **T13**: Orientation on uploading and using the archive is needed before the platform exists | High | Low | Clickable prototype and draft handbook; final handbook at go-live (Section 11.3)
+- [x] **T13**: Orientation on uploading and using the archive is needed before the platform exists | High | Low | Clickable prototype and draft handbook; final handbook at go-live (Section 11.3) — *Note: the mitigation is in place*
 - [ ] **T14**: A third-party service changes its terms, price or availability (maps, AI, sign-in, push) | Medium | Medium | Each service sits behind its own module; alternatives named in the tools tables
 - [~] **T15**: Data loss | Low | High | 3-2-1 backups, point-in-time recovery, quarterly restore tests (Section 7) — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
 - [x] **T16**: Dependence on a single developer | Medium | High | Documentation, clean code, automated tests and the handover package (Section 11.7) — *Note: full documentation, 100+ automated tests and the handover package*
-- [ ] **T17**: A safety concern is treated by its sender as an emergency call | Low | High | Clear notice and emergency numbers on the form; acknowledgement target (Appendix C)
+- [x] **T17**: A safety concern is treated by its sender as an emergency call | Low | High | Clear notice and emergency numbers on the form; acknowledgement target (Appendix C) — *Note: the mitigation is in place*
 
 ### Appendix G: Project Cost and Running Costs
 
