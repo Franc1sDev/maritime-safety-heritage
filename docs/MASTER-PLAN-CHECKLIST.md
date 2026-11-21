@@ -2,12 +2,12 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 0 of 1190 items ticked**
+**Progress: 0 of 1190 items ticked, 0 partly done**
 
 How to read it:
 
 - `[ ]` not done yet
-- `[x]` built and checked against the plan
+- `[x]` built and checked against the plan (☒ in the Word copy)
 - `[~]` partly done; the note after the item says what is left
 
 Some items already exist in the current build. They stay unticked until each one has been checked against the plan's wording.
