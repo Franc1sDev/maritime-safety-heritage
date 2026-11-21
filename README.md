@@ -1,13 +1,16 @@
-# Maritime Safety Heritage Archive
+# Remembering the Waters
 
-Kenya's open-access digital archive of maritime and inland-water safety heritage, built for the Remembering the Waters research team: oral histories, photographs, historical records and testimonies, searchable on the web and on an Android and iOS app.
+Kenya's open-access archive of maritime and inland-water safety heritage: stories, testimonies, historical records and
+incident records from the coast, the lakes and the rivers. Version 2 follows the *Development Master Plan* (v1.2); progress
+against every requirement is in [`docs/MASTER-PLAN-CHECKLIST.md`](docs/MASTER-PLAN-CHECKLIST.md).
 
 | Part | Folder |
 |---|---|
-| Secure API (NestJS + PostgreSQL): accounts, roles, full-text search, map, media, submissions, reports | [`backend/`](backend/README.md) |
-| Website, served by the API at the same address | [`web/`](web/README.md) |
-| Android and iOS app (Flutter), using the same API | [`mobile-app/`](mobile-app/README.md) |
-| Production hosting: Docker, automatic HTTPS, virus scanning, encrypted backups | [`deploy/`](deploy/), [`Dockerfile`](Dockerfile) |
+| API (NestJS + PostgreSQL): sign-in, stories, AI review, moderation and approvals, inbox, incidents, analytics | [`backend/`](backend/README.md) |
+| Website and web app (React + TypeScript), served by the API at the same address | [`web/`](web/README.md) |
+| Android and iOS app (Flutter), using the same API and the same wording | [`mobile-app/`](mobile-app/README.md) |
+| Hosting: Docker, automatic HTTPS, Redis, virus scanning, encrypted backups | [`deploy/`](deploy/), [`Dockerfile`](Dockerfile), [`render.yaml`](render.yaml) |
+| The earlier website and app, kept for reference | `_old_web/`, `_old_app/` |
 
 ## Documentation
 
@@ -21,11 +24,12 @@ Kenya's open-access digital archive of maritime and inland-water safety heritage
 
 ## Try it on Windows
 
-Open `backend` and double-click `4-TRY-WITH-DEMO-DATABASE.bat`. It needs no PostgreSQL setup. Then go to http://localhost:4000/ and sign in with `researcher@demo.ke` / `demo1234` or `admin@demo.ke` / `admin1234`. These demo accounts exist only outside production.
+Open `backend` and double-click `4-TRY-WITH-DEMO-DATABASE.bat`. It needs no PostgreSQL setup. Run `1-SETUP.bat` first (it installs the packages and builds the website). Then go to http://localhost:4000/. Contributors use the test sign-in (any name); admins sign in at `/admin/sign-in` with `grace@demo.ke` / `admin1234` (the sign-in code is printed in the window), and the Super Admin with `admin@demo.ke` / `admin1234`. These demo accounts exist only outside production.
 
 Every push runs the checks in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
-- the API's 40 end-to-end tests;
+- the API's 44 end-to-end tests;
+- the website's type check, tests and build;
 - the Android APK and Google Play bundle;
 - the unsigned iOS build;
 - the production server image.
