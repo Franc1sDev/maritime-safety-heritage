@@ -9,6 +9,7 @@ import { Db } from '../common/db';
 import { AuthUser, CurrentUser, Meta, RequestMeta, Roles } from '../common/decorators';
 import { decryptField, maskId } from '../common/field-crypto';
 import { MailService } from '../common/mail.service';
+import { Jobs } from '../common/jobs.service';
 import { fail, text } from '../common/messages';
 import { Notify } from '../common/notify.service';
 import { config } from '../config/config';
@@ -113,7 +114,7 @@ class OnDto { @IsBoolean() on: boolean }
 @ApiTags('Manage admins and audit log') @ApiBearerAuth()
 @Controller()
 export class TeamController {
-  constructor(private readonly team: TeamService) {}
+  constructor(private readonly team: TeamService, private readonly jobsService: Jobs) {}
   @Roles('super_admin') @Get('super/admins') @ApiOperation({ summary: 'Admins, Super Admins and registrations waiting for approval' })
   list() { return this.team.list(); }
   @Roles('super_admin') @Post('super/admins/invite') @ApiOperation({ summary: 'Add an admin by invitation' })
@@ -126,6 +127,8 @@ export class TeamController {
   promote(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.team.promote(me, id, meta); }
   @Roles('super_admin') @Get('super/admins/:id/id-number') @ApiOperation({ summary: 'Show an admin’s ID or passport number (recorded in the audit log)' })
   reveal(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.team.revealId(me, id, meta); }
+  @Roles('super_admin') @Get('super/jobs') @ApiOperation({ summary: 'Background job queue: waiting, working and failed' })
+  jobs() { return this.jobsService.status(); }
   @Roles('admin', 'super_admin') @Get('admin/audit-log') @ApiOperation({ summary: 'The audit log: Super Admins see everything, admins their own actions' })
   audit(@CurrentUser() me: AuthUser, @Query() q: Record<string, string>) { return this.team.auditLog(me, q); }
   @Roles('admin') @Put('admin/contributors/:id/trained') @ApiOperation({ summary: 'Mark a Contributor as trained (for the “active trained contributors” measure)' })

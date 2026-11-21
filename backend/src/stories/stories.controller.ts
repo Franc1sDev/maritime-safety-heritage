@@ -92,6 +92,8 @@ export class StoriesController {
   listComments(@Param('id', ParseUUIDPipe) id: string, @Query('sort') sort: string | undefined, @CurrentUser() me?: AuthUser) { return this.comments.list(id, sort, me); }
   @ApiBearerAuth() @CommentLimit() @Post('stories/:id/comments') @ApiOperation({ summary: 'Comment or reply, with text, a file, or both; tag people with @username' })
   comment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CommentDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.comments.create(id, me, dto, meta); }
+  @Public() @Get('comments/:id/translate') @ApiOperation({ summary: 'Machine translation of a comment, cached' })
+  translateComment(@Param('id', ParseUUIDPipe) id: string, @Query('to') to: string) { return this.comments.translate(id, (LANGUAGES as readonly string[]).includes(to) ? to : 'en'); }
   @ApiBearerAuth() @Delete('comments/:id') @ApiOperation({ summary: 'Delete my comment' })
   removeComment(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser) { return this.comments.remove(id, me); }
   @ApiBearerAuth() @Put('comments/:id/reaction') @ApiOperation({ summary: 'React to a comment' })

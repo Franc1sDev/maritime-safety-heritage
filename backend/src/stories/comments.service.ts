@@ -98,6 +98,13 @@ export class CommentsService {
     this.live.toAll('story.comment', { storyId: s.id, commentId, count: n?.commentCount });
   }
 
+  async translate(id: string, to: string) {
+    const c = await this.db.one(`SELECT id, body, language FROM comments WHERE id = $1 AND status = 'published'`, [id]);
+    if (!c) return fail(404, 'not_found');
+    try { const t = await this.ai.translate('comment', id, c.body, to); return { language: to, from: c.language, machineTranslated: true, text: t.body }; }
+    catch (e) { if (e instanceof AiUnavailable) return fail(503, 'general_error'); throw e; }
+  }
+
   async remove(id: string, user: AuthUser) {
     const c = await this.db.one(`SELECT id, story_id, author_id FROM comments WHERE id = $1 AND status <> 'deleted'`, [id]);
     if (!c) return fail(404, 'not_found');

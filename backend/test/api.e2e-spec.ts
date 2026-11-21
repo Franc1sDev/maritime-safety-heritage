@@ -15,13 +15,13 @@ const storageDir = mkdtempSync(join(tmpdir(), 'msh-storage-'));
 Object.assign(process.env, {
   NODE_ENV: 'test', DB_HOST: 'localhost', DB_USER: 'postgres', STORAGE_DRIVER: 'local', STORAGE_LOCAL_DIR: storageDir,
   SEED_ADMIN_EMAIL: 'super@demo.ke', SEED_ADMIN_PASSWORD: 'super1234pass', SEED_SAMPLE_DATA: 'true', RATE_LIMIT_SCALE: '200', CORS_ORIGINS: 'http://localhost:5173', MAX_FAILED_LOGINS: '5',
-  GOOGLE_CLIENT_IDS: 'web-client.apps.googleusercontent.com', APPLE_CLIENT_IDS: 'ke.test.services,ke.test.ios', AI_PROVIDER: 'rules', SITE_URL: 'http://localhost:4000', REDIS_URL: '',
+  GOOGLE_CLIENT_IDS: 'web-client.apps.googleusercontent.com', APPLE_CLIENT_IDS: 'ke.test.services,ke.test.ios', AI_PROVIDER: 'rules', NEW_ACCOUNT_DAILY_STORIES: '3', SITE_URL: 'http://localhost:4000', REDIS_URL: process.env.TEST_REDIS_URL ?? '',
 });
 
 let app: INestApplication;
 let http: any;
 let mail: { outbox: Map<string, { subject: string; text: string }> };
-let jobs: { idle: () => Promise<void>; runRecurring: (n: string) => Promise<void> };
+let jobs: { idle: (ms?: number) => Promise<void>; runRecurring: (n: string) => Promise<void> };
 let db: { q: (sql: string, p?: unknown[]) => Promise<any[]>; one: (sql: string, p?: unknown[]) => Promise<any> };
 const api = '/api/v1';
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082', 'hex');
@@ -271,6 +271,13 @@ describe('admins: registration, approval and multi-factor sign-in', () => {
 
 describe('sharing a story and AI review', () => {
   let green: any;
+  it('limits how much a brand-new account can post in its first day', async () => {
+    const fresh = await contributor('fresh_test');
+    for (let i = 0; i < 3; i++) expect((await post(fresh, { text: `Story number ${i + 1} from a new account.` }, false)).status).toBe(201);
+    expect((await post(fresh, { text: 'One too many.' }, false)).body.code).toBe('rate_limited');
+    await db.q(`UPDATE users SET created_at = now() - interval '3 days' WHERE username LIKE '%\\_test'`);
+    expect((await post(fresh, { text: 'Fine once the account is older.' })).status).toBe(201);
+  });
   it('posts a GREEN story with a photo, strips hidden data, and shows it to everyone', async () => {
     const sharp = (await import('sharp')).default;
     const jpg = await sharp({ create: { width: 1200, height: 800, channels: 3, background: '#2a6fb0' } }).withExif({ IFD0: { Copyright: 'secret-device-data' } }).jpeg().toBuffer();
@@ -313,6 +320,54 @@ describe('sharing a story and AI review', () => {
     await jobs.idle();
     expect((await story(a.body.id)).media).toHaveLength(2);
   });
+  it('resumes an upload that was cut off (tus protocol)', async () => {
+    const sharp = (await import('sharp')).default;
+    const file = await sharp({ create: { width: 900, height: 600, channels: 3, background: '#0b6fc2' } }).png().toBuffer();
+    const meta = `filename ${Buffer.from('lake.png').toString('base64')},purpose ${Buffer.from('story').toString('base64')}`;
+    await request(http).post(`${api}/uploads`).set('Tus-Resumable', '1.0.0').set('Upload-Length', String(file.length)).set('Upload-Metadata', meta).expect(401);
+    const c = await request(http).post(`${api}/uploads`).set(bearer(omari.token)).set('Tus-Resumable', '1.0.0').set('Upload-Length', String(file.length)).set('Upload-Metadata', meta).expect(201);
+    const url = c.headers.location.replace('http://localhost:4000', '');
+    const half = Math.floor(file.length / 2);
+    const p1 = await request(http).patch(url).set(bearer(omari.token)).set('Tus-Resumable', '1.0.0').set('Upload-Offset', '0').set('Content-Type', 'application/offset+octet-stream').send(file.subarray(0, half)).expect(204);
+    expect(p1.headers['upload-offset']).toBe(String(half));
+    // The connection dropped: the client asks where to continue.
+    expect((await request(http).head(url).set(bearer(omari.token)).expect(200)).headers['upload-offset']).toBe(String(half));
+    await request(http).patch(url).set(bearer(omari.token)).set('Upload-Offset', '0').set('Content-Type', 'application/offset+octet-stream').send(file.subarray(0, 10)).expect(409);
+    await request(http).head(url).set(bearer(atieno.token)).expect(404);
+    const p2 = await request(http).patch(url).set(bearer(omari.token)).set('Upload-Offset', String(half)).set('Content-Type', 'application/offset+octet-stream').send(file.subarray(half)).expect(204);
+    expect(p2.headers['upload-media-id']).toBeTruthy();
+    const done = await request(http).get(url).set(bearer(omari.token)).expect(200);
+    expect(done.body).toMatchObject({ complete: true, media: { kind: 'image', width: 900, name: 'lake.png' } });
+  });
+  it('converts audio and video for the web, with adaptive streaming, when FFmpeg is installed', async () => {
+    const { execFileSync } = await import('child_process');
+    const { readFileSync } = await import('fs');
+    try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { return; }
+    const v = join(storageDir, 'clip.mp4'), a = join(storageDir, 'voice.mp3');
+    execFileSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc=duration=3:size=640x360:rate=15', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', '-metadata', 'location=+00.0000+034.0000/', '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-shortest', v], { stdio: 'ignore' });
+    execFileSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'sine=frequency=330:duration=2', a], { stdio: 'ignore' });
+    const vid = await request(http).post(`${api}/media`).set(bearer(atieno.token)).attach('file', readFileSync(v), 'clip.mp4').expect(201);
+    const aud = await request(http).post(`${api}/media`).set(bearer(atieno.token)).attach('file', readFileSync(a), 'voice.mp3').expect(201);
+    expect(vid.body).toMatchObject({ kind: 'video', durationSeconds: 3 });
+    const s = await post(atieno, { text: 'A short clip from the beach.', mediaIds: [vid.body.id, aud.body.id] });
+    await jobs.idle(120_000);
+    const st = await story(s.body.id);
+    expect(st.status).toBe('published');
+    const video = st.media.find((m: any) => m.kind === 'video'), audio = st.media.find((m: any) => m.kind === 'audio');
+    expect(Object.keys(video.urls)).toEqual(expect.arrayContaining(['poster', 'web', 'hls', 'hls360.m3u8'.replace('.m3u8', '')]));
+    expect(video.urls.original).toBeUndefined();
+    expect(audio.urls.web).toBeTruthy();
+    const local = (u: string) => u.replace('http://localhost:4000', '');
+    const master = await request(http).get(local(video.urls.hls)).expect(200);
+    expect(master.text).toMatch(/#EXT-X-STREAM-INF:BANDWIDTH=600000/);
+    const playlist = await request(http).get(local(master.text.split('\n').find((l: string) => l.startsWith('/api'))!)).expect(200);
+    expect(playlist.text).toMatch(/#EXTINF/);
+    await request(http).get(local(playlist.text.split('\n').find((l: string) => l.startsWith('/api'))!)).expect(200).expect('content-type', 'video/mp2t');
+    const part = await request(http).get(local(video.urls.web)).set('Range', 'bytes=0-99').expect(206);
+    expect(part.headers['content-range']).toMatch(/^bytes 0-99\//);
+    const tooMany = await request(http).post(`${api}/media`).set(bearer(atieno.token)).attach('file', readFileSync(v), 'clip2.mp4').expect(201);
+    expect((await post(atieno, { text: 'two videos', mediaIds: [vid.body.id, tooMany.body.id] }, false)).status).toBe(400);
+  }, 180_000);
   it('saves drafts, then sends them', async () => {
     const d = await post(atieno, { text: 'Half a story', draft: true }, false);
     expect(d.body).toMatchObject({ status: 'draft', message: 'Draft saved.' });
@@ -573,6 +628,23 @@ describe('incidents, import, resources, safety concerns and announcements', () =
     expect(rec).toMatchObject({ typeLabel: 'Historical record', source: { institution: 'Usenge BMU', reference: 'BMU/2012/14' }, author: { name: 'Admin', avatar: 'logo' } });
     expect(rec.media).toHaveLength(1);
   });
+  it('records validation and consent withdrawal for testimonies, and safety correction notes', async () => {
+    const t = (await post(grace, { type: 'testimony', title: 'My father’s boat', text: 'He built it at Dunga in 1975.', postedAs: 'told_by', toldBy: 'Mzee Okello', consentConfirmed: true })).body;
+    expect((await story(t.id, grace)).status).toBe('awaiting_validation');
+    await request(http).get(`${api}/stories/${t.id}`).expect(404);
+    await request(http).post(`${api}/admin/stories/${t.id}/validate`).set(bearer(grace.token)).send({ storyteller: 'Mzee Okello', consentType: 'Signed form', consentDate: '2026-11-01', restrictions: { noDownloads: true } }).expect(200);
+    expect(await story(t.id)).toMatchObject({ status: 'published', consentLabel: 'Shared with consent', allowDownload: false });
+    await request(http).post(`${api}/admin/stories/${t.id}/correction`).set(bearer(grace.token)).send({ note: 'Always wear a life jacket, whatever the distance.', link: 'https://kma.go.ke/' }).expect(200);
+    expect((await story(t.id)).correction).toMatchObject({ note: 'Always wear a life jacket, whatever the distance.' });
+    await request(http).post(`${api}/admin/stories/${t.id}/withdraw-consent`).set(bearer(grace.token)).send({ reason: 'The family asked for it to be taken down.' }).expect(200);
+    await request(http).get(`${api}/stories/${t.id}`).expect(404);
+    const csv = await request(http).get(`${api}/incidents/export.csv`).expect(200);
+    expect(csv.text).toMatch(/code,title,eventDate/); expect(csv.text).toMatch(/Mtongwe ferry disaster,1994-04-29/);
+    expect((await request(http).get(`${api}/stories/${(await request(http).get(`${api}/stories?limit=1`)).body.items[0].id}/cite`).expect(200)).body.dublinCore['dc:identifier']).toMatch(/^MS-/);
+    await request(http).post(`${api}/admin/export/archive`).set(bearer(boss.token)).send({ includeMedia: true }).expect(202);
+    await jobs.idle();
+    expect((await request(http).get(`${api}/admin/export/archive`).set(bearer(boss.token)).expect(200)).body[0]).toMatchObject({ status: 'ready' });
+  });
   it('reads .xlsx spreadsheets too', async () => {
     const { parseXlsx, toDate } = await import('../src/common/spreadsheet');
     const { ZipWriter } = await import('../src/common/zip');
@@ -714,5 +786,9 @@ describe('analytics, PDF reports and the audit log', () => {
     const v = await request(http).post(`${api}/stories`).set(bearer(omari.token)).send({ text: 'x', surprise: true }).expect(400);
     expect(v.body).toMatchObject({ code: 'invalid_input', details: expect.arrayContaining([expect.stringMatching(/surprise/)]) });
     expect((await request(http).get(`${api}/stories/not-a-story`).expect(404)).body.code).toBe('not_found');
+    const old = await request(http).get(`${api}/config`).set('X-App-Version', '1.4.0').expect(426);
+    expect(old.body).toMatchObject({ code: 'app_update_required', message: 'A new version of the app is available. Please update to continue.' });
+    await request(http).get(`${api}/config`).set('X-App-Version', '2.0.0').expect(200);
+    expect((await request(http).get(`${api}/super/jobs`).set(bearer(boss.token)).expect(200)).body.failed).toBe(0);
   });
 });

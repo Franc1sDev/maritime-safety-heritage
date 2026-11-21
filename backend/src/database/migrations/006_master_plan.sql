@@ -195,6 +195,8 @@ CREATE TABLE stories (
   ai_overridden boolean NOT NULL DEFAULT false,
   pending_edit jsonb,
   removed_reason text NOT NULL DEFAULT '',
+  correction_note text NOT NULL DEFAULT '',
+  correction_link text NOT NULL DEFAULT '',
   removed_by uuid,
   comments_locked boolean NOT NULL DEFAULT false,
   comments_locked_reason text NOT NULL DEFAULT '',

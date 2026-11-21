@@ -44,8 +44,9 @@ export function configureApp(app: INestApplication) {
   app.enableCors({
     origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Client', 'X-Language', 'Idempotency-Key', 'X-Refresh-Token'],
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['Location', 'Upload-Offset', 'Upload-Length', 'Tus-Resumable', 'Upload-Media-Id'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'X-Client', 'X-Language', 'Idempotency-Key', 'X-Refresh-Token', 'X-App-Version', 'Tus-Resumable', 'Upload-Length', 'Upload-Offset', 'Upload-Metadata'],
     maxAge: 600,
   });
   app.setGlobalPrefix('api/v1');

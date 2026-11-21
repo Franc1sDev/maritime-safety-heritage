@@ -81,6 +81,7 @@ class AnnouncementDto {
   @IsOptional() @IsArray() @ArrayMaxSize(20) @ValidateNested({ each: true }) @Type(() => AnnouncementDateDto) dates?: AnnouncementDateDto[];
   @IsOptional() @IsBoolean() sendPush?: boolean;
 }
+class ExportDto { @IsOptional() @IsBoolean() includeMedia?: boolean }
 class SubmitDto { @IsOptional() @IsString() @MaxLength(2000) justification?: string }
 
 @ApiTags('Archive')
@@ -107,6 +108,8 @@ export class ArchiveController {
 
   @Public() @Get('incidents') @ApiOperation({ summary: 'Incident records, searchable by name, year, water body and type' })
   incidents(@Query() q: Record<string, string>, @CurrentUser() me?: AuthUser) { return this.archive.incidents(q, me); }
+  @Public() @Get('incidents/export.csv') @Header('Content-Type', 'text/csv; charset=utf-8') @Header('Content-Disposition', 'attachment; filename="incident-records.csv"') @ApiOperation({ summary: 'The incident records as a dataset (CSV)' })
+  incidentsCsv() { return this.archive.incidentsCsv(); }
   @ApiBearerAuth() @Post('incidents/match') @HttpCode(200) @ApiOperation({ summary: 'Suggest the incident a story may belong to, for a person to confirm' })
   match(@Body() dto: MatchDto) { return this.archive.matchIncident(dto.text, dto.eventDate, dto.vessel); }
   @Public() @Get('incidents/:id') @ApiOperation({ summary: 'An incident page with every story, testimony and record linked to it' })
@@ -163,6 +166,10 @@ export class ArchiveController {
   @Roles('admin') @ApiBearerAuth() @Delete('admin/announcements/:id') @ApiOperation({ summary: 'Delete an announcement' })
   removeAnnouncement(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.archive.removeAnnouncement(me, id, meta); }
 
+  @Roles('admin', 'super_admin') @ApiBearerAuth() @Post('admin/export/archive') @HttpCode(202) @ApiOperation({ summary: 'Export the whole archive in a standard format (prepared in the background)' })
+  exportArchive(@Body() dto: ExportDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.archive.requestArchiveExport(me, !!dto.includeMedia, meta); }
+  @Roles('admin', 'super_admin') @ApiBearerAuth() @Get('admin/export/archive') @ApiOperation({ summary: 'Archive exports' })
+  archiveExports() { return this.archive.archiveExports(); }
   @Roles('admin') @ApiBearerAuth() @Get('admin/import/template') @Header('Content-Type', 'text/csv; charset=utf-8') @Header('Content-Disposition', 'attachment; filename="metadata-template.csv"')
   @ApiOperation({ summary: 'The metadata spreadsheet template for bulk import' })
   template() { return this.imports.template(); }

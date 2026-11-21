@@ -4,6 +4,10 @@ import { Audit } from '../common/audit.service';
 import { slugify } from '../common/crypto';
 import { Db, Row } from '../common/db';
 import { AuthUser, isTeam, RequestMeta } from '../common/decorators';
+import { Jobs } from '../common/jobs.service';
+import { ZipWriter } from '../common/zip';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { DELETION_REASONS, EMERGENCY_NUMBERS, fail, LANGUAGE_NAMES, LANGUAGES, LAUNCH_LANGUAGES, MODERATION_NOTE, REPORT_REASONS, RULES, text } from '../common/messages';
 import { Notify } from '../common/notify.service';
 import { Realtime } from '../common/realtime.gateway';
@@ -22,9 +26,10 @@ export const AUDIENCES = ['General public', 'Schools', 'Community groups', 'Trai
 @Injectable()
 export class ArchiveService implements OnModuleInit {
   constructor(private readonly db: Db, private readonly audit: Audit, private readonly notify: Notify, private readonly live: Realtime, private readonly track: Track,
-    private readonly media: MediaService, private readonly approvals: Approvals, private readonly inbox: InboxService, private readonly stories: StoriesService) {}
+    private readonly media: MediaService, private readonly approvals: Approvals, private readonly inbox: InboxService, private readonly stories: StoriesService, private readonly jobs: Jobs) {}
 
   onModuleInit() {
+    this.jobs.handle('archive.export', async ({ exportId, includeMedia }) => { await this.buildArchiveExport(exportId, !!includeMedia); });
     this.approvals.on('collection', {
       approved: async (req) => { await this.db.q(`UPDATE collections SET status = 'published', published_at = now() WHERE id = $1`, [req.targetId]); },
       rejected: async (req) => { await this.db.q(`UPDATE collections SET status = 'rejected' WHERE id = $1`, [req.targetId]); },
@@ -42,6 +47,8 @@ export class ArchiveService implements OnModuleInit {
       limits: { ...config.limits, text: 200_000 }, minAge: config.minAge, minAppVersion: config.minAppVersion, storyTypes: { community: 'Community story', testimony: 'Testimony collected by the project', record: 'Historical record' },
       aiReview: { greenUpTo: 20, redFrom: 70, maxMinutes: 3 }, turnstileSiteKey: process.env.TURNSTILE_SITE_KEY ?? null, vapidPublicKey: config.push.vapidPublic || null,
       mapsKey: process.env.GOOGLE_MAPS_BROWSER_KEY ?? null,
+      // Where stories involve loss, the platform shows where to find support.
+      supportInfo: process.env.SUPPORT_INFO ?? (l === 'sw' ? 'Ikiwa hadithi hii imekugusa, zungumza na mtu unayemwamini. Kenya Red Cross hutoa ushauri nasaha bila malipo kupitia 1199.' : 'If this story has affected you, talk to someone you trust. The Kenya Red Cross offers free counselling on 1199.'),
     };
   }
 
@@ -120,6 +127,15 @@ export class ArchiveService implements OnModuleInit {
     const linked = await this.stories.feed({ incidentId: i.id, limit: '50' }, viewer);
     return { ...i, permalink: `${config.siteUrl}/incidents/${i.code}`, linked: linked.items };
   }
+  /** Incident records form a structured dataset that can be exported for research and policy work. */
+  async incidentsCsv(): Promise<string> {
+    const rows = await this.db.q(`SELECT i.code, i.title, i.event_date, i.date_approximate, i.place_name, i.water_body, i.latitude, i.longitude, i.vessel, i.incident_type, i.summary, i.outcome, i.sources,
+      (SELECT count(*)::int FROM stories s WHERE s.incident_id = i.id AND s.status = 'published') AS linked_items FROM incidents i WHERE i.status = 'published' ORDER BY i.event_date NULLS LAST`);
+    const cols = ['code', 'title', 'eventDate', 'dateApproximate', 'placeName', 'waterBody', 'latitude', 'longitude', 'vessel', 'incidentType', 'summary', 'outcome', 'sources', 'linkedItems'];
+    const cell = (v: unknown) => { const s = v instanceof Date ? v.toISOString().slice(0, 10) : String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    return '\uFEFF' + [cols.join(','), ...rows.map((r) => cols.map((c) => cell(r[c])).join(','))].join('\r\n') + '\r\n';
+  }
+
   async saveIncident(admin: AuthUser, dto: Row, id: string | undefined, meta: RequestMeta) {
     let place: Row | null = null;
     if (dto.placeId) place = await this.db.one(`SELECT * FROM places WHERE id = $1`, [dto.placeId]);
@@ -152,7 +168,7 @@ export class ArchiveService implements OnModuleInit {
       let score = 0;
       if (i.vessel && t.includes(i.vessel.toLowerCase())) score += 3;
       if (i.placeName && t.includes(i.placeName.toLowerCase())) score += 1;
-      const y = i.eventDate ? new Date(i.eventDate).getFullYear() : null;
+      const y = i.eventDate ? Number(String(i.eventDate).slice(0, 4)) : null;
       if (y && (year === y || t.includes(String(y)))) score += 2;
       for (const w of i.title.toLowerCase().split(/[^a-z0-9]+/).filter((x: string) => x.length > 4)) if (t.includes(w)) score += 1;
       return { ...i, score };
@@ -339,6 +355,52 @@ export class ArchiveService implements OnModuleInit {
     await this.db.q(`UPDATE announcements SET deleted_at = now() WHERE id = $1`, [id]);
     await this.audit.record({ actor: admin, action: 'announcement.delete', entityType: 'announcement', entityId: id, summary: `${admin.name} deleted an announcement`, ip: meta.ip });
     return { ok: true };
+  }
+
+  // ---------- full archive export ----------
+  /** The whole archive in a standard, open form (JSON and CSV with Dublin Core descriptions, plus the original files), for transfer to a future system or partner institution. */
+  async requestArchiveExport(user: AuthUser, includeMedia: boolean, meta: RequestMeta) {
+    const e = (await this.db.one(`INSERT INTO data_exports (user_id, kind) VALUES ($1, 'archive') RETURNING id`, [user.id]))!;
+    await this.jobs.add('archive.export', { exportId: e.id, includeMedia });
+    await this.audit.record({ actor: user, action: 'archive.export', entityType: 'archive', entityId: e.id, summary: `${user.name} requested a full archive export${includeMedia ? ' with media' : ''}`, ip: meta.ip });
+    return { id: e.id, message: text('export_preparing', meta.lang) };
+  }
+  async archiveExports() {
+    const rows = await this.db.q(`SELECT id, status, media_id, created_at FROM data_exports WHERE kind = 'archive' ORDER BY created_at DESC LIMIT 10`);
+    return rows.map((e) => ({ id: e.id, status: e.status, createdAt: e.createdAt, url: e.status === 'ready' && e.mediaId ? `${this.media.link(e.mediaId, 'original')}&download=1` : null }));
+  }
+  private async buildArchiveExport(exportId: string, includeMedia: boolean) {
+    const e = await this.db.one(`SELECT * FROM data_exports WHERE id = $1 AND status = 'preparing'`, [exportId]);
+    if (!e) return;
+    try {
+      const path = join(tmpdir(), `msh-archive-${exportId}.zip`);
+      const zip = new ZipWriter(path);
+      const json = (v: unknown) => Buffer.from(JSON.stringify(v, null, 1), 'utf8');
+      const ids = await this.db.q(`SELECT id FROM stories WHERE status = 'published' ORDER BY published_at`);
+      const items = [];
+      for (const { id } of ids) {
+        const s = await this.stories.get(id, null).catch(() => null);
+        if (!s) continue;
+        const cite = await this.stories.cite(id, null);
+        const consent = await this.db.one(`SELECT storyteller, consent_type, consent_date, restrictions, validated_at FROM consent_records WHERE story_id = $1`, [id]);
+        items.push({ ...cite.dublinCore, story: { ...s, media: s.media.map((m: any) => ({ name: m.name, kind: m.kind, mimeType: m.mimeType, sizeBytes: m.sizeBytes, transcript: m.transcript, altText: m.altText })) }, consent });
+      }
+      await zip.add('archive/README.txt', Buffer.from(`Remembering the Waters: full archive export, ${new Date().toISOString()}\n\nstories.json   every published item with Dublin Core metadata (dc: and dcterms: fields), its full record and its consent record\nincidents.csv  the incident records dataset\nresources.json learning resources\ncollections.json curated collections and exhibitions\nplaces.json    the places list\nmedia/<story ID>/  the original files as uploaded${includeMedia ? '' : ' (not included in this export)'}\n`, 'utf8'));
+      await zip.add('archive/stories.json', json(items));
+      await zip.add('archive/incidents.csv', Buffer.from(await this.incidentsCsv(), 'utf8'));
+      await zip.add('archive/resources.json', json(await this.db.q(`SELECT slug, title, type, summary, body, audience, language, published_at FROM resources WHERE status = 'published'`)));
+      await zip.add('archive/collections.json', json(await this.db.q(`SELECT c.id, c.kind, c.title, c.description, c.published_at, (SELECT coalesce(json_agg(s.code ORDER BY ci.position), '[]') FROM collection_items ci JOIN stories s ON s.id = ci.story_id WHERE ci.collection_id = c.id) AS stories FROM collections c WHERE c.status = 'published'`)));
+      await zip.add('archive/places.json', json(await this.db.q(`SELECT name, alt_names, type, county, water_body, latitude, longitude FROM places ORDER BY name`)));
+      if (includeMedia) {
+        for (const m of await this.db.q(`SELECT m.*, s.code FROM media_files m JOIN stories s ON s.id = m.story_id WHERE s.status = 'published' ORDER BY s.code, m.position`)) {
+          await zip.add(`archive/media/${m.code}/${m.originalName}`, (await this.media.openKey(m.storageKey, m.encrypted)).stream);
+        }
+      }
+      await zip.close();
+      const file = await this.media.storeGenerated(path, { ownerId: e.userId, purpose: 'export', name: `archive-export-${new Date().toISOString().slice(0, 10)}.zip`, mime: 'application/zip' });
+      await this.db.q(`UPDATE data_exports SET status = 'ready', media_id = $2 WHERE id = $1`, [exportId, file.id]);
+      await this.notify.send(e.userId, { group: 'account', kind: 'export.ready', title: 'The archive export is ready', link: '/admin/export' });
+    } catch (err) { await this.db.q(`UPDATE data_exports SET status = 'failed' WHERE id = $1`, [exportId]); throw err; }
   }
 
   // ---------- search ----------

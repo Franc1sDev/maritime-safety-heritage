@@ -8,6 +8,7 @@ import { Readable } from 'stream';
 import { promisify } from 'util';
 import { Db, Row } from '../common/db';
 import { Jobs } from '../common/jobs.service';
+import { MailService } from '../common/mail.service';
 import { fail } from '../common/messages';
 import { config } from '../config/config';
 import { decryptStream, encryptFile, IV_BYTES, readAll, storedRange } from './encryption';
@@ -34,11 +35,12 @@ const safeName = (name: string) => (Buffer.from(name, 'latin1').toString('utf8')
 export class MediaService implements OnModuleInit {
   private readonly log = new Logger('Media');
   private ffmpeg: boolean | null = null;
-  constructor(@Inject(STORAGE) readonly storage: Storage, private readonly db: Db, private readonly jobs: Jobs) {}
+  constructor(@Inject(STORAGE) readonly storage: Storage, private readonly db: Db, private readonly jobs: Jobs, private readonly mail: MailService) {}
 
   onModuleInit() {
     this.jobs.handle('media.process', async ({ id }) => { await this.process(id); });
     this.jobs.every('media.integrity', 6 * 3600_000, () => this.checkIntegrity());
+    this.jobs.every('media.storage_alert', 12 * 3600_000, () => this.storageAlert());
   }
 
   private async hasFfmpeg() {
@@ -249,6 +251,14 @@ export class MediaService implements OnModuleInit {
   async removeObjects(m: Row) {
     const keys = [m.storageKey, ...Object.values((m.variants ?? {}) as Record<string, Variant>).flatMap((v) => [v.key, ...(v.segments ?? []).map((s) => s.key)])].filter(Boolean);
     for (const k of keys) await this.storage.remove(k).catch((e) => this.log.error(`Could not delete ${k}: ${e.message}`));
+  }
+  /** Storage growth is watched, with an email alert before the limit is reached (Section 7.2). */
+  async storageAlert() {
+    if (!config.alerts.storageGb || !config.alerts.emails.length) return;
+    const u = await this.usage();
+    const gb = Number(u?.bytes ?? 0) / 1024 ** 3;
+    if (gb < config.alerts.storageGb * 0.8) return;
+    for (const to of config.alerts.emails) await this.mail.send(to, 'Archive storage is filling up', `The archive now stores ${gb.toFixed(1)} GB in ${u?.files} files, which is ${Math.round((gb / config.alerts.storageGb) * 100)}% of the ${config.alerts.storageGb} GB alert level.\n`);
   }
   /** Total stored bytes, for the storage-growth alert. */
   async usage() { return this.db.one(`SELECT coalesce(sum(size_bytes),0)::bigint AS bytes, count(*)::int AS files FROM media_files`); }

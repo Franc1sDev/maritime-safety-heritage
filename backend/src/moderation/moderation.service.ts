@@ -75,6 +75,7 @@ export class ModerationService implements OnModuleInit {
     if (s.authorId && s.postedAs !== 'company') {
       await this.notify.send(s.authorId, { group: 'moderation', kind: 'story.removed', title: text('story_removed', s.authorLanguage, { code: s.code }), body: '', link: `/profile/stories?open=${s.code}`, priority: true, actionKey: `story-removed:${id}`, data: { storyId: id, code: s.code, askWhy: true } });
     }
+    await this.stories.dropFeedCache();
     this.live.toAll('story.removed', { id });
     return { message: text(opts.reportDriven ? 'story_dropped' : 'admin_story_deleted', meta.lang) };
   }
@@ -112,6 +113,44 @@ export class ModerationService implements OnModuleInit {
     await this.decide(s, admin, 'release', 'Checked by an admin while AI review was unavailable');
     await this.audit.record({ actor: admin, action: 'story.release', entityType: 'story', entityId: id, summary: `${admin.name} published story ${s.code} after a manual check`, ip: meta.ip });
     if (s.authorId) await this.notify.send(s.authorId, { group: 'engagement', kind: 'story.green', title: text('outcome_green', s.authorLanguage), body: s.code, link: `/stories/${s.code}` });
+    return { ok: true };
+  }
+
+  /** The storyteller has confirmed how their testimony is represented: it is marked as validated and, if it was waiting, published. */
+  async validate(id: string, admin: AuthUser, dto: { storyteller?: string; consentType?: string; consentDate?: string; restrictions?: Record<string, unknown> }, meta: RequestMeta) {
+    const s = await this.story(id);
+    await this.db.q(`INSERT INTO consent_records (story_id, storyteller, consent_type, consent_date, restrictions, validated_at) VALUES ($1,$2,$3,$4,$5, now())
+      ON CONFLICT (story_id) DO UPDATE SET storyteller = coalesce(nullif($2, ''), consent_records.storyteller), consent_type = coalesce(nullif($3, ''), consent_records.consent_type),
+        consent_date = coalesce($4, consent_records.consent_date), restrictions = consent_records.restrictions || $5::jsonb, validated_at = now(), withdrawn_at = NULL`,
+      [id, dto.storyteller ?? s.toldBy ?? '', dto.consentType ?? '', dto.consentDate || null, JSON.stringify(dto.restrictions ?? {})]);
+    await this.db.q(`UPDATE stories SET validated = true, consent_confirmed = true, allow_download = CASE WHEN $2 THEN false ELSE allow_download END, posted_as = CASE WHEN $3 THEN 'anonymous' ELSE posted_as END WHERE id = $1`,
+      [id, dto.restrictions?.noDownloads === true, dto.restrictions?.anonymous === true]);
+    if (!(await this.stories.consentComplete(id))) return fail(400, 'consent_incomplete');
+    if (s.status === 'awaiting_validation') await this.stories.publish(id);
+    await this.audit.record({ actor: admin, action: 'story.validated', entityType: 'story', entityId: id, summary: `${admin.name} recorded that ${s.code} was validated with the storyteller`, ip: meta.ip });
+    return this.stories.get(id, admin);
+  }
+
+  /** Storytellers can withdraw consent, and their story is then removed. Participants keep control over how their stories are shared. */
+  async withdrawConsent(id: string, admin: AuthUser, reason: string, meta: RequestMeta) {
+    const s = await this.story(id);
+    await this.db.q(`INSERT INTO consent_records (story_id, storyteller, withdrawn_at) VALUES ($1,$2, now()) ON CONFLICT (story_id) DO UPDATE SET withdrawn_at = now()`, [id, s.toldBy ?? '']);
+    await this.db.q(`UPDATE stories SET status = 'removed', validated = false, removed_reason = $2, removed_by = $3, purge_at = now() + interval '30 days' WHERE id = $1`, [id, `Consent withdrawn${reason ? `: ${reason}` : ''}`, admin.id]);
+    await this.decide(s, admin, 'consent_withdrawn', reason ?? '');
+    await this.stories.dropFeedCache();
+    this.live.toAll('story.removed', { id });
+    await this.audit.record({ actor: admin, action: 'story.consent_withdrawn', entityType: 'story', entityId: id, summary: `${admin.name} removed ${s.code} because the storyteller withdrew consent`, reason, ip: meta.ip });
+    return { ok: true };
+  }
+
+  /** Where a story contains incorrect safety advice, admins may add a correction note linking to official guidance (Appendix C.8). */
+  async correction(id: string, admin: AuthUser, note: string, link: string, meta: RequestMeta) {
+    const s = await this.story(id);
+    if (link && !/^https:\/\//.test(link)) return fail(400, 'invalid_input');
+    await this.db.q(`UPDATE stories SET correction_note = $2, correction_link = $3 WHERE id = $1`, [id, note.trim(), link.trim()]);
+    await this.stories.dropFeedCache();
+    await this.audit.record({ actor: admin, action: 'story.correction', entityType: 'story', entityId: id, summary: `${admin.name} ${note.trim() ? 'added a correction note to' : 'cleared the correction note on'} ${s.code}`, reason: note, ip: meta.ip });
+    if (s.authorId && note.trim()) await this.notify.send(s.authorId, { group: 'moderation', kind: 'story.correction', title: `A safety note was added to your story ${s.code}`, body: note.trim(), link: `/stories/${s.code}` });
     return { ok: true };
   }
 

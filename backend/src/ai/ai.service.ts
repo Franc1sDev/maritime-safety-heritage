@@ -77,6 +77,7 @@ Context that matters: honest accounts of drownings, ferry and boat accidents, re
 
 The platform's rules:
 ${RULES.map((r, i) => `${i + 1}. ${r.en}`).join('\n')}
+Take extra care with stories about missing people or very recent incidents: flag anything that could interfere with an official search or investigation under "safety".
 Not allowed: harassment, hate speech, threats or personal attacks; graphic images of injured or dead people; other people's personal data without consent; misinformation, conspiracy theories or political campaigning; spam, scams, advertising or impersonation; dangerous or false safety advice.
 
 Score the item from 0 (no violation) to 100 (certain, serious violation) against each guideline:

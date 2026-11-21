@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Module, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { AuthModule } from '../auth/auth.module';
 import { AuthUser, CurrentUser, Meta, Public, RequestMeta, Roles } from '../common/decorators';
 import { REPORT_REASONS } from '../common/messages';
@@ -10,6 +10,8 @@ import { ModerationService } from './moderation.service';
 
 class ReasonDto { @IsString() @MinLength(3) @MaxLength(2000) reason: string }
 class OptionalReasonDto { @IsOptional() @IsString() @MaxLength(2000) reason?: string }
+class ValidateDto { @IsOptional() @IsString() @MaxLength(160) storyteller?: string; @IsOptional() @IsString() @MaxLength(80) consentType?: string; @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) consentDate?: string; @IsOptional() @IsObject() restrictions?: Record<string, unknown> }
+class CorrectionDto { @IsString() @MaxLength(1000) note: string; @IsOptional() @IsString() @MaxLength(400) link?: string }
 class ToggleDto { @IsBoolean() on: boolean; @IsOptional() @IsString() @MaxLength(2000) reason?: string }
 class HeldDto { @IsBoolean() allow: boolean; @IsOptional() @IsString() @MaxLength(2000) reason?: string }
 class AskWhyDto { @IsOptional() @IsString() @MaxLength(160) subject?: string; @IsString() @MinLength(3) @MaxLength(4000) description: string; @IsOptional() @IsArray() @ArrayMaxSize(6) @IsUUID('all', { each: true }) mediaIds?: string[] }
@@ -42,6 +44,12 @@ export class ModerationController {
   release(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.release(id, me, meta); }
   @Roles('admin') @Post('admin/stories/:id/override') @HttpCode(200) @ApiOperation({ summary: 'Override an AI ban: needs a justification and the other admins’ approval' })
   override(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReasonDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.override(id, me, dto.reason, meta); }
+  @Roles('admin') @Post('admin/stories/:id/validate') @HttpCode(200) @ApiOperation({ summary: 'Record that a testimony was validated with its storyteller (and publish it if it was waiting)' })
+  validate(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ValidateDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.validate(id, me, dto, meta); }
+  @Roles('admin') @Post('admin/stories/:id/withdraw-consent') @HttpCode(200) @ApiOperation({ summary: 'The storyteller withdrew consent: remove the story' })
+  withdraw(@Param('id', ParseUUIDPipe) id: string, @Body() dto: OptionalReasonDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.withdrawConsent(id, me, dto.reason ?? '', meta); }
+  @Roles('admin') @Post('admin/stories/:id/correction') @HttpCode(200) @ApiOperation({ summary: 'Add or clear a correction note linking to official safety guidance' })
+  correction(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CorrectionDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.correction(id, me, dto.note, dto.link ?? '', meta); }
   @Roles('admin') @Post('admin/stories/:id/comments-lock') @HttpCode(200) @ApiOperation({ summary: 'Lock or unlock comments, with a reason shown to Contributors' })
   lock(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ToggleDto, @CurrentUser() me: AuthUser, @Meta() meta: RequestMeta) { return this.mod.setComments(id, me, 'lock', dto.on, dto.reason ?? '', meta); }
   @Roles('admin') @Post('admin/stories/:id/comments-hide') @HttpCode(200) @ApiOperation({ summary: 'Hide or show comments, with a reason shown to Contributors' })

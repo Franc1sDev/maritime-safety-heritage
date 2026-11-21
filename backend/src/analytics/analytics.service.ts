@@ -56,9 +56,9 @@ export class AnalyticsService implements OnModuleInit {
          FROM buckets b CROSS JOIN unnest($5::text[]) AS m(metric)
          LEFT JOIN analytics_daily d ON d.metric = m.metric AND date_trunc($1, d.day::timestamp)::date = b.bucket
         GROUP BY b.bucket, m.metric ORDER BY b.bucket`, [p, span, start, end, def.series.map((s) => s.metric)]);
-    const buckets = [...new Set(rows.map((r) => new Date(r.bucket).toISOString().slice(0, 10)))];
+    const buckets = [...new Set(rows.map((r) => String(r.bucket).slice(0, 10)))];
     return { chart, title: def.title, period: p, labels: buckets,
-      series: def.series.map((s) => ({ name: s.name, metric: s.metric, color: `#${s.color}`, values: buckets.map((b) => rows.find((r) => r.metric === s.metric && new Date(r.bucket).toISOString().slice(0, 10) === b)?.value ?? 0) })) };
+      series: def.series.map((s) => ({ name: s.name, metric: s.metric, color: `#${s.color}`, values: buckets.map((b) => rows.find((r) => r.metric === s.metric && String(r.bucket).slice(0, 10) === b)?.value ?? 0) })) };
   }
 
   /** The measures the platform must report (Section 11.9), for a period or for all time. */
@@ -127,7 +127,7 @@ export class AnalyticsService implements OnModuleInit {
     const r = await this.db.one(`SELECT * FROM analytics_reports WHERE id = $1`, [id]);
     if (!r || r.status === 'ready') return;
     try {
-      const from = new Date(r.periodFrom).toISOString().slice(0, 10), to = new Date(r.periodTo).toISOString().slice(0, 10);
+      const from = String(r.periodFrom).slice(0, 10), to = String(r.periodTo).slice(0, 10);
       const days = (new Date(to).getTime() - new Date(from).getTime()) / 86400_000;
       const period: Period = days <= 45 ? 'day' : days <= 200 ? 'week' : days <= 1100 ? 'month' : 'year';
       const s = await this.summary(from, to);

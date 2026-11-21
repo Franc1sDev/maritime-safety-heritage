@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { Audit } from './audit.service';
+import { Cache } from './cache.service';
 import { AuthGuard } from './auth.guard';
 import { Db } from './db';
 import { Jobs } from './jobs.service';
@@ -13,7 +14,7 @@ import { Track } from './track.service';
 @Global()
 @Module({
   imports: [JwtModule.register({})],
-  providers: [Db, Audit, Jobs, MailService, AuthGuard, Realtime, Notify, Track],
-  exports: [Db, Audit, Jobs, MailService, AuthGuard, Realtime, Notify, Track, JwtModule],
+  providers: [Db, Cache, Audit, Jobs, MailService, AuthGuard, Realtime, Notify, Track],
+  exports: [Db, Cache, Audit, Jobs, MailService, AuthGuard, Realtime, Notify, Track, JwtModule],
 })
 export class CoreModule {}

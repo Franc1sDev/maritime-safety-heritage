@@ -115,7 +115,7 @@ ${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).repl
       const text = s.sensitive ? 'This story describes loss of life and may be distressing. Open it in the archive to read it.' : String(s.body ?? '');
       const title = s.title || `${text.split(/\s+/).slice(0, 10).join(' ')}…`;
       const description = (text.replace(/\s+/g, ' ').slice(0, 200) || `${TYPE[s.type]} in the archive.`) + (text.length > 200 ? '…' : '');
-      const when = s.event_date ? `${s.date_approximate ? 'about ' : ''}${new Date(s.event_date).getFullYear()}` : '';
+      const when = s.event_date ? `${s.date_approximate ? 'about ' : ''}${String(s.event_date).slice(0, 4)}` : '';
       return {
         title: `${title} | ${SITE}`, description, path: `/stories/${s.code}`, image: s.has_image && !s.sensitive ? `${site()}/og/stories/${s.code}` : undefined,
         jsonLd: { '@context': 'https://schema.org', '@type': 'Article', headline: title, identifier: s.code, author: { '@type': 'Person', name: who }, datePublished: s.published_at, inLanguage: s.language,
@@ -130,7 +130,7 @@ ${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).repl
       const [i] = await ds.query(`SELECT * FROM incidents WHERE upper(code) = upper($1) AND status = 'published'`, [String(req.params.code)]);
       if (!i) return null;
       const linked = await ds.query(`SELECT s.code, s.title, left(s.body, 90) AS excerpt FROM stories s LEFT JOIN users au ON au.id = s.author_id WHERE s.incident_id = $1 AND ${VISIBLE} ORDER BY s.published_at DESC LIMIT 100`, [i.id]);
-      const when = i.event_date ? new Date(i.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+      const when = i.event_date ? new Date(`${String(i.event_date).slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
       return {
         title: `${i.title} | ${SITE}`, description: String(i.summary).slice(0, 220), path: `/incidents/${i.code}`,
         jsonLd: { '@context': 'https://schema.org', '@type': 'Event', name: i.title, ...(i.event_date && { startDate: i.event_date }), ...(i.place_name && { location: { '@type': 'Place', name: i.place_name } }), description: i.summary, url: `${site()}/incidents/${i.code}` },
@@ -157,7 +157,7 @@ ${p.jsonLd ? `<script type="application/ld+json">${JSON.stringify(p.jsonLd).repl
       '/incidents': async () => {
         const rows = await ds.query(`SELECT code, title, event_date, water_body FROM incidents WHERE status = 'published' ORDER BY event_date DESC NULLS LAST LIMIT 500`);
         return { title: `Incident records | ${SITE}`, description: 'Documented water-transport incidents on Kenya’s ocean coast, lakes and rivers, with the stories and records about each.', path: '/incidents',
-          body: `<h1>Incident records</h1><ul>${rows.map((i: any) => `<li><a href="/incidents/${esc(i.code)}">${esc(i.title)}</a>${i.event_date ? `, ${new Date(i.event_date).getFullYear()}` : ''}${i.water_body ? `, ${esc(i.water_body)}` : ''}</li>`).join('')}</ul>` };
+          body: `<h1>Incident records</h1><ul>${rows.map((i: any) => `<li><a href="/incidents/${esc(i.code)}">${esc(i.title)}</a>${i.event_date ? `, ${String(i.event_date).slice(0, 4)}` : ''}${i.water_body ? `, ${esc(i.water_body)}` : ''}</li>`).join('')}</ul>` };
       },
       '/resources': async () => {
         const rows = await ds.query(`SELECT slug, title, summary FROM resources WHERE status = 'published' ORDER BY published_at DESC LIMIT 500`);

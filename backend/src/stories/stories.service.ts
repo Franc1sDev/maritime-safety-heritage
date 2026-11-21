@@ -5,6 +5,7 @@ import { join } from 'path';
 import { Ai, AiUnavailable, Review } from '../ai/ai.service';
 import { Approvals } from '../approvals/approvals.service';
 import { Audit } from '../common/audit.service';
+import { Cache } from '../common/cache.service';
 import { Db, decodeCursor, encodeCursor, pageSize, Row } from '../common/db';
 import { AuthUser, isTeam, RequestMeta } from '../common/decorators';
 import { Jobs } from '../common/jobs.service';
@@ -50,11 +51,11 @@ export class StoriesService implements OnModuleInit {
   private readonly log = new Logger('Stories');
   constructor(
     private readonly db: Db, private readonly media: MediaService, private readonly ai: Ai, private readonly jobs: Jobs, private readonly audit: Audit,
-    private readonly notify: Notify, private readonly live: Realtime, private readonly track: Track, private readonly approvals: Approvals,
+    private readonly notify: Notify, private readonly live: Realtime, private readonly track: Track, private readonly approvals: Approvals, private readonly cache: Cache,
   ) {}
 
   onModuleInit() {
-    this.jobs.handle('story.review', async ({ id, edit }, ctx) => { await this.review(id, !!edit, ctx.attempt); });
+    this.jobs.handle('story.review', async ({ id, edit, waits }) => { await this.review(id, !!edit, Number(waits ?? 0)); });
     this.jobs.handle('story.zip', async ({ id, userId }) => { await this.buildZip(id, userId); });
     this.jobs.handle('story.transcribe', async ({ mediaId }) => { await this.transcribe(mediaId); });
     this.jobs.every('stories.trending', 5 * 60_000, () => this.recalculateTrending());
@@ -92,6 +93,7 @@ export class StoriesService implements OnModuleInit {
       media: media.filter((m) => m.storyId === r.id).sort((a, b) => a.position - b.position).map((m) => this.media.view(m)),
       status: r.status, publishedAt: r.publishedAt, createdAt: r.createdAt, edited: !!r.editedAt, editedAt: r.editedAt,
       editHistory: inside || r.editedAt ? (r.editHistory ?? []).map((h: any) => ({ at: h.at, ...(inside ? { text: h.text, title: h.title } : {}) })) : [],
+      correction: r.correctionNote ? { note: r.correctionNote, link: r.correctionLink } : null,
       permalink: `${config.siteUrl}/stories/${r.code}`,
       moderation: inside ? { aiFlag: r.aiFlag, aiScore: r.aiScore == null ? null : Number(r.aiScore), aiExplanation: r.aiExplanation, overridden: r.aiOverridden, removedReason: r.removedReason, pendingEdit: !!r.pendingEdit, validated: r.validated } : undefined,
       authorId: team ? r.authorId : undefined,
@@ -104,7 +106,12 @@ export class StoriesService implements OnModuleInit {
   }
 
   /** The "Stories by" tabs, map and timeline all read from here. Cursor pagination keeps infinite scrolling fast. */
-  async feed(q: Record<string, string | undefined>, viewer?: AuthUser | null) {
+  async feed(q: Record<string, string | undefined>, viewer?: AuthUser | null): Promise<{ items: any[]; nextCursor: string | null }> {
+    // Visitors all see the same public feed, so it is cached briefly; open access does not load the database on every request.
+    if (!viewer && !q.q) return this.cache.wrap(`feed:${JSON.stringify(Object.entries(q).sort())}`, 20, () => this.feedQuery(q, null));
+    return this.feedQuery(q, viewer);
+  }
+  private async feedQuery(q: Record<string, string | undefined>, viewer?: AuthUser | null) {
     const params: unknown[] = [viewer?.id ?? null];
     const p = (v: unknown) => { params.push(v); return `$${params.length}`; };
     const where = [VISIBLE('$1::uuid')];
@@ -225,12 +232,23 @@ export class StoriesService implements OnModuleInit {
       const dup = await this.db.one(`SELECT id FROM stories WHERE author_id = $1 AND idempotency_key = $2`, [user.id, idempotencyKey]);
       if (dup) return this.get(dup.id, user);
     }
+    // Rate limits are stricter for new accounts (Section 4.7).
+    const recent = await this.db.one(`SELECT count(*)::int AS n, (SELECT created_at > now() - interval '24 hours' FROM users WHERE id = $1) AS fresh FROM stories WHERE author_id = $1 AND created_at > now() - interval '24 hours'`, [user.id]);
+    if (user.role === 'contributor' && (recent?.n ?? 0) >= (recent?.fresh ? config.newAccountDailyStories : 40)) return fail(429, 'rate_limited');
     const f = await this.fields({ language: user.language, ...dto }, user);
     const cols = ['author_id', 'idempotency_key', ...Object.keys(f)];
     const vals = [user.id, idempotencyKey ?? null, ...Object.values(f)];
     const s = (await this.db.one(`INSERT INTO stories (${cols.join(', ')}) VALUES (${vals.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING id, code`, vals))!;
-    await this.attach(s.id, user, dto.mediaIds ?? [], !!dto.draft);
-    await this.saveExtras(s.id, dto, user);
+    try {
+      await this.attach(s.id, user, dto.mediaIds ?? [], !!dto.draft);
+      await this.saveExtras(s.id, dto, user);
+      if (!dto.draft) await this.checkComplete(s.id);
+    } catch (e) {
+      // A story that fails a rule is not left behind as a stray draft.
+      await this.db.q(`UPDATE media_files SET story_id = NULL WHERE story_id = $1`, [s.id]);
+      await this.db.q(`DELETE FROM stories WHERE id = $1`, [s.id]);
+      throw e;
+    }
     if (dto.suggestIncident?.title?.trim()) {
       const inc = await this.db.one(`INSERT INTO incidents (title, summary, status, suggested_by) VALUES ($1,$2,'suggested',$3) RETURNING id`, [dto.suggestIncident.title.trim().slice(0, 200), (dto.suggestIncident.details ?? '').slice(0, 2000), user.id]);
       await this.notify.admins({ group: 'moderation', kind: 'incident.suggested', title: 'New incident suggested', body: `${user.name} suggested the incident “${dto.suggestIncident.title.trim()}” with story ${s.code}.`, link: `/admin/incidents?suggested=${inc!.id}` });
@@ -300,9 +318,9 @@ export class StoriesService implements OnModuleInit {
 
   // ---------- AI review pipeline ----------
 
-  private async reviewInput(s: Row, override?: Record<string, any>) {
+  private async reviewInput(s: Row, override?: Record<string, any>, force = false) {
     const media = await this.db.q(`SELECT * FROM media_files WHERE story_id = $1 ORDER BY position`, [s.id]);
-    if (media.some((m) => m.processing === 'queued' || m.processing === 'working')) return null;
+    if (!force && media.some((m) => m.processing === 'queued' || m.processing === 'working')) return null;
     const images: Array<{ mime: string; base64: string }> = [];
     if (this.ai.provider !== 'rules') {
       for (const m of media) {
@@ -318,11 +336,15 @@ export class StoriesService implements OnModuleInit {
     return { kind: 'story' as const, text: textParts.filter(Boolean).join('\n\n'), language: s.language, images, context: `Story type: ${TYPE_LABEL[s.type]}. Place: ${s.placeName || 'not given'}.` };
   }
 
-  private async review(id: string, edit: boolean, attempt: number) {
+  private async review(id: string, edit: boolean, waits: number) {
     const s = await this.db.one(`SELECT s.*, u.language AS author_language FROM stories s LEFT JOIN users u ON u.id = s.author_id WHERE s.id = $1`, [id]);
     if (!s || (edit ? !s.pendingEdit : s.status !== 'reviewing')) return;
-    const input = await this.reviewInput(s, edit ? s.pendingEdit : undefined);
-    if (!input) { if (attempt < 4) throw new Error('Media is still being processed.'); }
+    let input = await this.reviewInput(s, edit ? s.pendingEdit : undefined);
+    if (!input) {
+      // Video or audio is still being converted: look again shortly. After about two and a half minutes the text is reviewed on its own, so the 3-minute limit holds.
+      if (waits < 50) { await this.jobs.add('story.review', { id, edit, waits: waits + 1 }, { delayMs: config.env === 'test' ? 250 : 3000 }); return; }
+      input = await this.reviewInput(s, edit ? s.pendingEdit : undefined, true);
+    }
     const lang = s.authorLanguage ?? 'en';
     let result: Review | null = null;
     try { if (input) result = await this.ai.review({ ...input, language: lang }); }
@@ -392,6 +414,7 @@ export class StoriesService implements OnModuleInit {
     for (const m of await this.db.q(`SELECT id FROM media_files WHERE story_id = $1 AND kind IN ('audio','video') AND transcript = ''`, [id])) {
       if (this.ai.canTranscribe) await this.jobs.add('story.transcribe', { mediaId: m.id });
     }
+    await this.cache.drop('feed:');
     this.live.toAll('story.published', { id, code: s.code });
     return { ...s, authorLanguage: u?.language ?? 'en' };
   }
@@ -427,6 +450,7 @@ export class StoriesService implements OnModuleInit {
     if (!s) return fail(404, 'not_found');
     if (s.authorId !== user.id) return fail(403, 'forbidden');
     await this.db.q(`UPDATE stories SET status = 'deleted', deleted_at = now(), purge_at = now() + interval '30 days', removed_reason = 'author_deleted' WHERE id = $1`, [id]);
+    await this.cache.drop('feed:');
     await this.audit.record({ actor: user, action: 'story.delete', entityType: 'story', entityId: id, summary: `${user.name} deleted their story ${s.code}`, ip: meta.ip });
     return { message: text('story_deleted', meta.lang) };
   }
@@ -524,6 +548,10 @@ export class StoriesService implements OnModuleInit {
     const archive = 'Remembering the Waters: Kenya’s Maritime and Inland-Water Safety Heritage Archive';
     return {
       code: s.code, permalink: s.permalink, rights: s.rights,
+      // Descriptive metadata following Dublin Core, so the collection can be shared with libraries and museums.
+      dublinCore: { 'dc:identifier': s.code, 'dc:title': title, 'dc:creator': who, 'dc:contributor': s.author?.name ?? '', 'dc:type': s.typeLabel, 'dc:date': s.eventDate ? String(s.eventDate).slice(0, 10) : '', 'dcterms:issued': s.publishedAt,
+        'dc:coverage': [s.place.name, s.place.county, s.place.waterBody].filter(Boolean).join(', '), 'dc:subject': [s.category, ...(s.tags ?? [])].filter(Boolean), 'dc:language': s.language, 'dc:rights': s.rights,
+        'dc:source': s.source ? [s.source.institution, s.source.reference].filter(Boolean).join(', ') : '', 'dc:relation': s.incident ? `${config.siteUrl}/incidents/${s.incident.code}` : '', 'dc:format': s.media.map((m: any) => m.mimeType), 'dc:publisher': archive },
       apa: `${who}. (${year}). ${title} [${s.typeLabel}, ${s.code}]. ${archive}. ${s.permalink}`,
       mla: `${who}. “${title}.” ${archive}, ${year}, ${s.permalink}. Accessed ${accessed}.`,
       chicago: `${who}. “${title}.” ${s.typeLabel} ${s.code}. ${archive}, ${year}. ${s.permalink}.`,
@@ -590,6 +618,8 @@ export class StoriesService implements OnModuleInit {
       throw e;
     }
   }
+
+  dropFeedCache() { return this.cache.drop('feed:'); }
 
   async suggest(textIn: string) { return this.ai.suggest(textIn, CATEGORIES); }
 }

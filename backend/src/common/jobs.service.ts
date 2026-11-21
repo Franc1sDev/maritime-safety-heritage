@@ -64,11 +64,19 @@ export class Jobs implements OnApplicationBootstrap, OnApplicationShutdown {
 
   async add(name: string, payload: Record<string, unknown> = {}, opts: AddOptions = {}): Promise<void> {
     if (this.bull) {
-      await this.bull.queue.add(name, payload, { delay: opts.delayMs, attempts: opts.attempts ?? 4, backoff: { type: 'exponential', delay: 5000 }, removeOnComplete: 500, removeOnFail: 2000 });
+      await this.bull.queue.add(name, payload, { delay: opts.delayMs, attempts: opts.attempts ?? 4, backoff: { type: 'exponential', delay: config.env === 'test' ? 200 : 5000 }, removeOnComplete: 500, removeOnFail: 2000 });
       return;
     }
     await this.db.q(`INSERT INTO jobs (name, payload, run_at) VALUES ($1, $2, now() + ($3 || ' milliseconds')::interval)`, [name, JSON.stringify(payload), String(opts.delayMs ?? 0)]);
     setImmediate(() => void this.tick());
+  }
+
+  /** Queue health for the team: what is waiting, working and failed. */
+  async status() {
+    if (this.bull) return { driver: 'redis', ...(await this.bull.queue.getJobCounts('waiting', 'active', 'delayed', 'failed', 'completed')) };
+    const r = await this.db.one(`SELECT count(*) FILTER (WHERE status = 'queued')::int AS waiting, count(*) FILTER (WHERE status = 'working')::int AS active, count(*) FILTER (WHERE status = 'failed')::int AS failed, count(*) FILTER (WHERE status = 'done')::int AS completed FROM jobs`);
+    const failed = await this.db.q(`SELECT id, name, error, finished_at FROM jobs WHERE status = 'failed' ORDER BY id DESC LIMIT 20`);
+    return { driver: 'database', ...r, recentFailures: failed };
   }
 
   /** Runs one recurring task now (used by tests and by the admin tools). */
@@ -76,8 +84,15 @@ export class Jobs implements OnApplicationBootstrap, OnApplicationShutdown {
 
   /** Resolves when the queue is empty. Tests use it to wait for AI review and media processing. */
   async idle(timeoutMs = 30_000): Promise<void> {
-    if (this.bull) { await new Promise((r) => setTimeout(r, 300)); return; }
     const start = Date.now();
+    if (this.bull) {
+      for (;;) {
+        const c = await this.bull.queue.getJobCounts('waiting', 'active', 'delayed', 'prioritized');
+        if (!c.waiting && !c.active && !c.delayed && !c.prioritized) return;
+        if (Date.now() - start > timeoutMs) throw new Error('Background jobs did not finish in time.');
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    }
     for (;;) {
       const left = await this.db.one(`SELECT count(*)::int AS n FROM jobs WHERE status IN ('queued','working') AND run_at <= now() + interval '1 second'`);
       if (!left?.n && !this.running) return;

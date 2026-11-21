@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { config } from '../config/config';
 import { Db } from './db';
+import { AppError } from './messages';
 import { ALLOW_INCOMPLETE, AuthedRequest, AuthUser, IS_PUBLIC, Role, ROLES } from './decorators';
 
 export const displayName = (u: Record<string, any>): string =>
@@ -29,8 +30,27 @@ export class AuthGuard implements CanActivate {
     } catch { return null; }
   }
 
+  /** An outdated app version is asked to update (Section 9.5). The website never sends this header. */
+  private checkAppVersion(req: AuthedRequest) {
+    const v = String(req.headers['x-app-version'] ?? '');
+    if (!v) return;
+    const n = (s: string) => s.split('.').map((x) => parseInt(x, 10) || 0);
+    const a = n(v), b = n(config.minAppVersion);
+    for (let i = 0; i < 3; i++) { if ((a[i] ?? 0) > (b[i] ?? 0)) return; if ((a[i] ?? 0) < (b[i] ?? 0)) throw new AppError(426, 'app_update_required', {}, { minVersion: config.minAppVersion }); }
+  }
+  private readonly lastSeen = new Map<string, number>();
+  /** Notes that the person was active, at most once every ten minutes each. */
+  private seen(id: string) {
+    const now = Date.now();
+    if ((this.lastSeen.get(id) ?? 0) > now - 600_000) return;
+    if (this.lastSeen.size > 20_000) this.lastSeen.clear();
+    this.lastSeen.set(id, now);
+    void this.db.q(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [id]).catch(() => undefined);
+  }
+
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     if (ctx.getType() !== 'http') return true;
+    this.checkAppVersion(ctx.switchToHttp().getRequest<AuthedRequest>());
     const targets = [ctx.getHandler(), ctx.getClass()];
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets);
     const req = ctx.switchToHttp().getRequest<AuthedRequest>();
@@ -39,7 +59,7 @@ export class AuthGuard implements CanActivate {
     let incomplete = false;
     if (token) {
       const u = await this.userFromToken(token);
-      if (u) { incomplete = !u.profileComplete; const { profileComplete: _p, ...user } = u; req.user = user; }
+      if (u) { this.seen(u.id); incomplete = !u.profileComplete; const { profileComplete: _p, ...user } = u; req.user = user; }
       else if (!isPublic) throw new UnauthorizedException({ message: 'Your session has expired. Please sign in again.', code: 'session_expired' });
     }
     if (isPublic) return true;
@@ -48,7 +68,11 @@ export class AuthGuard implements CanActivate {
       throw new ForbiddenException({ message: 'Finish setting up your profile first.', code: 'profile_incomplete' });
     }
     const roles = this.reflector.getAllAndOverride<Role[]>(ROLES, targets);
-    if (roles?.length && !roles.includes(req.user.role)) throw new ForbiddenException({ message: 'You do not have permission to do this.', code: 'forbidden' });
+    if (roles?.length && !roles.includes(req.user.role)) {
+      // Permission errors are security events: they are logged.
+      void this.db.q(`INSERT INTO activity_log (actor_id, actor_name, action, summary, ip) VALUES ($1,$2,'permission.denied',$3,$4)`, [req.user.id, req.user.name, `${req.method} ${req.path}`.slice(0, 300), (req.ip ?? '').slice(0, 64)]).catch(() => undefined);
+      throw new ForbiddenException({ message: 'You do not have permission to do this.', code: 'forbidden' });
+    }
     return true;
   }
 }

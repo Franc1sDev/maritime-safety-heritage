@@ -169,6 +169,7 @@ export const config = {
   minAppVersion: process.env.MIN_APP_VERSION ?? '2.0.0',
   /** Local demo and automated tests only: sign in as a sample contributor without Google or Apple. Never on in production. */
   demoSignIn: !isProd && (process.env.DEMO_SIGN_IN ?? 'true') === 'true',
+  newAccountDailyStories: int('NEW_ACCOUNT_DAILY_STORIES', 5),
   reportEscalateHours: int('REPORT_ESCALATE_HOURS', 48),
   removedStoryRetentionDays: int('REMOVED_STORY_RETENTION_DAYS', 365),
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
