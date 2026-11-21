@@ -168,7 +168,8 @@ export const config = {
   /** App versions older than this are asked to update (Section 9.5). */
   minAppVersion: process.env.MIN_APP_VERSION ?? '2.0.0',
   /** Local demo and automated tests only: sign in as a sample contributor without Google or Apple. Never on in production. */
-  demoSignIn: !isProd && (process.env.DEMO_SIGN_IN ?? 'true') === 'true',
+  // A test sign-in without Google or Apple. On by default in development; in production only when DEMO_SIGN_IN=true is set on purpose (test sites).
+  demoSignIn: (process.env.DEMO_SIGN_IN ?? (isProd ? 'false' : 'true')) === 'true',
   newAccountDailyStories: int('NEW_ACCOUNT_DAILY_STORIES', 5),
   reportEscalateHours: int('REPORT_ESCALATE_HOURS', 48),
   removedStoryRetentionDays: int('REMOVED_STORY_RETENTION_DAYS', 365),

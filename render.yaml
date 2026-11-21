@@ -69,3 +69,32 @@ services:
         value: "true"
       - key: CLAMAV_REQUIRED
         value: "false"
+      # --- Master plan settings (test site) ---
+      # A test sign-in ("any name") is offered until the Google and Apple client IDs above are filled in. Set to false before real use.
+      - key: DEMO_SIGN_IN
+        value: "true"
+      # AI review. "rules" is the built-in checker that needs no key. For the full review set AI_PROVIDER to anthropic, openai or gemini and add AI_API_KEY.
+      - key: AI_PROVIDER
+        value: rules
+      - key: AI_API_KEY
+        sync: false
+      # Push notifications (optional): the Firebase service account (apps) and web-push keys (browsers)
+      - key: FCM_SERVICE_ACCOUNT
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      # SMS sign-in codes for admins through Africa's Talking (optional; email codes work without it)
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      # Google Maps in the browser (optional; a built-in map is used without it)
+      - key: GOOGLE_MAPS_BROWSER_KEY
+        sync: false
+      # Majority (two-thirds) or unanimous approval among admins, and days before a request goes to the Super Admin
+      - key: APPROVAL_RULE
+        value: majority
+      - key: APPROVAL_DEADLINE_DAYS
+        value: "7"

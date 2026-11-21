@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 496 of 1190 items ticked, 89 partly done**
+**Progress: 499 of 1190 items ticked, 180 partly done**
 
 How to read it:
 
@@ -361,7 +361,7 @@ The platform will support the following 20 interface languages:
 #### 3.1.6 Cross-Platform Consistency
 
 - [~] UI components and screen layouts must be consistent across the website and the Android and iOS apps, adapting only where a platform requires it (e.g. swipe gestures on phones). — *Left: done on the website; the apps follow in stages 3 and 4*
-- [~] All text comes from one shared translation source, so wording is identical everywhere. — *Left: done on the website; the apps follow in stages 3 and 4*
+- [x] All text comes from one shared translation source, so wording is identical everywhere. — *Note: the apps copy their text from the website (scripts/sync-translations.mjs)*
 
 #### 3.1.7 Global Behaviours
 
@@ -681,120 +681,120 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 #### 3.3.1 App Technology
 
-- [ ] The Android and iOS apps will be built with Flutter from one shared codebase, so features and fixes reach both platforms together.
-- [ ] The apps will use the same API, accounts and design system as the website.
+- [x] The Android and iOS apps will be built with Flutter from one shared codebase, so features and fixes reach both platforms together.
+- [x] The apps will use the same API, accounts and design system as the website.
 
 #### 3.3.2 Mobile Layout
 
-- [ ] The five round icons sit at the top of the screen, with STORIES in the centre; admins also see MY RESP.
-- [ ] Stories are full-screen; swiping up moves to the next story. Engagement icons sit along the side of the story.
-- [ ] Comments, report forms and similar panels open as sheets sliding up from the bottom, with the story dimmed behind.
-- [ ] The admin controls panel opens at half screen and can be dragged or tapped to expand to full screen.
+- [~] The five round icons sit at the top of the screen, with STORIES in the centre; admins also see MY RESP. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Stories are full-screen; swiping up moves to the next story. Engagement icons sit along the side of the story. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Comments, report forms and similar panels open as sheets sliding up from the bottom, with the story dimmed behind. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] The admin controls panel opens at half screen and can be dragged or tapped to expand to full screen. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 
 #### 3.3.3 Native Capabilities
 
-- [ ] Native Google and Apple sign-in.
-- [ ] Push notifications, including priority notifications.
-- [ ] Camera and microphone: record audio, video and photos directly into a story.
-- [ ] Native share sheet for sharing stories to any installed app.
-- [ ] Deep links: a shared story link opens directly in the app if installed, otherwise on the website.
-- [ ] Background uploads that continue while the app is closed, and offline drafts (Section 8).
+- [~] Native Google and Apple sign-in. — *Left: built; needs the Google and Apple client IDs set on the server*
+- [~] Push notifications, including priority notifications. — *Left: notifications, counts and priority items work inside the app; phone push needs a Firebase project and its keys*
+- [~] Camera and microphone: record audio, video and photos directly into a story. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Native share sheet for sharing stories to any installed app. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Deep links: a shared story link opens directly in the app if installed, otherwise on the website. — *Left: the app accepts story, incident, resource and contributor links; the website file that lets Android verify them is added at deployment*
+- [~] Background uploads that continue while the app is closed, and offline drafts (Section 8). — *Left: drafts are saved to the account; uploads run while the app is open, not yet in the background*
 - [ ] Optional fingerprint or face unlock for admin accounts.
 
 #### 3.3.4 App Store Requirements
 
-- [ ] Apple App Store: Sign in with Apple (offered alongside Google); account deletion inside the app; reporting and blocking for user-generated content; a privacy policy and privacy labels.
-- [ ] Google Play: the Data safety form; a current target Android version; user-generated content moderation, reporting and blocking; account deletion inside the app and on the web.
+- [~] Apple App Store: Sign in with Apple (offered alongside Google); account deletion inside the app; reporting and blocking for user-generated content; a privacy policy and privacy labels. — *Left: sign-in with Apple and Google, account deletion, reporting and blocking are in the app; the store forms and labels are filled in when the app is submitted*
+- [~] Google Play: the Data safety form; a current target Android version; user-generated content moderation, reporting and blocking; account deletion inside the app and on the web. — *Left: sign-in with Apple and Google, account deletion, reporting and blocking are in the app; the store forms and labels are filled in when the app is submitted*
 - [ ] Both: store listings, screenshots, app icons and descriptions in English and Kiswahili at launch.
 
 #### 3.3.5 Device Support
 
-- [ ] Android 8.0 or later and iOS 15 or later (Appendix B).
-- [ ] Smooth performance on low-end Android phones with 2 GB of memory; small install size; low battery use.
-- [ ] Phones and tablets, in portrait orientation (tablets may also use landscape).
+- [~] Android 8.0 or later and iOS 15 or later (Appendix B). — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Smooth performance on low-end Android phones with 2 GB of memory; small install size; low battery use. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] Phones and tablets, in portrait orientation (tablets may also use landscape). — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 
 #### 3.3.6 Mobile App and Web App Wireframes
 
-- [ ] The wireframes below show the same screens on phones, for both the installable apps and the website on a phone.
+- [~] The wireframes below show the same screens on phones, for both the installable apps and the website on a phone. — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 
 **Mobile app and web app wireframes – index**
 
-- [ ] **M1**: Sign-in on the app (Google or Apple only), with the link to browse without signing in, signing in, the failure message, and the links for admins | All | 3.2.2, 3.3.3, 4.2
-- [ ] **M2**: First-time profile setup on the app: username and picture, username checks, preferences and acceptance, and the saved message | Contributor | 3.2.2, 2.6
-- [ ] **M3**: Account messages on the app: suspended account, restoring a deleted account, session expired and app update required | All | 3.2.2, 2.6, 9.5
-- [ ] **M4**: Admin registration and sign-in with multi-factor authentication on the app, with the confirmation and error messages | Admin, Super Admin | 4.2
-- [ ] **M5**: Optional fingerprint or face unlock for admin accounts, and push notifications on the phone | Admin, All | 3.3.3, 2.9
-- [ ] **M6**: STORIES on the app: the Trending story full screen with Rules and “+”, side engagement icons, swiping to the next story, and tabs | Contributor, Admin | 3.2.3–3.2.4, 3.3.2
-- [ ] **M7**: Location and Contributors tabs on the app: auto-complete while typing, several matches, and the no-match messages | Contributor, Admin | 3.2.4
-- [ ] **M8**: Sharing on the app: the device’s share menu, Copy Link, “Cite this story”, and Download (ZIP) | Contributor, Admin | 3.2.4, 3.3.3, 3.2.14
-- [ ] **M9**: Favorites, Translate and “Where It Happened” on the app | Contributor, Admin | 3.2.4, 3.1.5
-- [ ] **M10**: Map Explore, Timeline and Collections tabs on the app | Contributor, Admin | 3.2.14
-- [ ] **M11**: Comments sheet on the app: sorting, threads, tagging, attachments, admin replies, and the locked, hidden and held states | Contributor, Admin | 3.2.4, 3.3.2
-- [ ] **M12**: Reporting a story or Contributor on the app, its confirmation and validation message, and the sensitive-story notice | Contributor, Admin | 3.2.4, Appendix C
-- [ ] **M13**: Rules frame, the story-removed notice, the “Ask Why” form and its confirmation, on the app | Contributor | 3.2.4
-- [ ] **M14**: Share-story frame on the app: text and files (with in-app recording), story details, and posting options with consent, usage rights and sensitivity | Contributor | 3.2.4, 3.3.3
-- [ ] **M15**: Share-story messages on the app: face blurring, consent missing, draft saved, file limits, size, type and virus errors | Contributor | 3.2.4, 4.6
-- [ ] **M16**: Sending on the app: background upload notification, offline queueing, Wi-Fi-only waiting, and AI review in progress | Contributor | 3.3.3, 8.3–8.4, 5.2
-- [ ] **M17**: AI review outcomes on the app: GREEN (posted), YELLOW (posted with a warning) and RED (blocked and sent to admins) | Contributor | 3.2.4, 5.2
-- [ ] **M18**: Another Contributor’s profile on the app: Follow, the ⋯ menu (block, mute, report), block confirmation and messages | Contributor, Admin | 3.2.13
-- [ ] **M19**: MY PROFILE on the app: My Stories (engagement, views, edit, delete with confirmation, add) and Change my profile | Contributor | 3.2.5
-- [ ] **M20**: Editing a story and its edit history, and Reminders on the app (list, new reminder, and the reminder when due) | Contributor, Admin | 3.2.5, 3.2.14
-- [ ] **M21**: Settings on the app: appearance, language, data, privacy, notification channels and quiet hours, and blocked and muted users | Contributor (admins see the same settings) | 3.2.5, 3.1.2–3.1.5, 8.2, 2.9
-- [ ] **M22**: Download my data, Delete account and the feedback form on the app | All | 3.2.5, 7.7, 11.9
-- [ ] **M23**: ABOUT & RESOURCES (About) and INBOX on the app: bubbles per sender or issue, a conversation with attachments, read receipts and offline sending, and message requests | All (INBOX: Contributor, Admin) | 3.2.6–3.2.7
-- [ ] **M24**: ANNOUNCEMENTS on the app (list and full description), and system states: offline, back online, loading, low-data placeholder and error | All | 3.2.8, 3.1.7, 8.2, 8.6
-- [ ] **M25**: Dark theme on the app, an empty tab, and the installable web app (PWA) on a phone browser | All | 3.1.2, 3.1.7, 3.2.1
-- [ ] **M26**: Admin on the app: the story with ID and AI flag, the controls panel at half screen and full screen, and the delete-story dialog | Admin | 3.2.9–3.2.10, 3.3.2
-- [ ] **M27**: Admin on the app: lock and hide comments with reasons and their confirmations, and overriding an AI ban with its warning, justification and approvals | Admin | 3.2.10, 2.7
-- [ ] **M28**: Admin reports on the app: the queue with escalation, report details with notes and actions, suspension and proposed deletion | Admin | 3.2.10, 2.8, Appendix C
-- [ ] **M29**: Admin MY RESPONSIBILITIES on the app: pending approvals, the approval decision with justification, and notifications | Admin | 3.2.11, 2.7
-- [ ] **M30**: Admin on the app: new company story, approval of a company story, new collection, and creating or editing an announcement | Admin | 3.2.10, 2.7, 2.9
-- [ ] **M31**: Admin analytics and PDF reports on the app: live charts, report options, generating and ready | Admin, Super Admin | 2.10
-- [ ] **M32**: Admin on the app: replying to “Ask Why”, admin identity in comments, admin MY PROFILE (with MFA) and the audit log | Admin | 3.2.7, 3.2.11, 4.2, 4.8
-- [ ] **M33**: Super Admin on the app: live analytics, REPORTS, MANAGE ADMINS (admins, pending registrations, Super Admins) and adding an admin | Super Admin | 3.2.12, 2.10, 4.2
-- [ ] **M34**: Super Admin on the app: removing an admin, adding a Super Admin, deciding approvals past their deadline (optional rule), MY PROFILE and the last-Super-Admin block | Super Admin | 3.2.12, 2.6–2.7, Appendix B
-- [ ] **M35**: Open access on the app: the visitor view, the sign-in prompt, the Incidents tab and an incident page | Visitor, Contributor, Admin | 3.2.2, 3.2.4, 3.2.14
-- [ ] **M36**: Story types and resources on the app: a historical record, a validated testimony with the Listen player, the learning resources library and a resource opened | Visitor, Contributor, Admin | 3.2.4, 3.2.6, 3.2.14
-- [ ] **M37**: Report a safety concern on the app (form and confirmation), and voice-first sharing: telling a story by voice and checking the transcript | All (safety concern); Contributor (voice-first) | 3.2.6, Appendix C, 3.2.4, 3.1.4
-- [ ] **M38**: Admin on the app: incident records, bulk import results, the safety concerns queue and learning resources, with their confirmations | Admin | 3.2.10, Appendix C, 11.4
-- [ ] **Wireframe M1**: Sign-in on the app (Google or Apple only), with the link to browse without signing in, signing in, the failure message, and the links for admins (All; Sections 3.2.2, 3.3.3, 4.2)
-- [ ] **Wireframe M2**: First-time profile setup on the app: username and picture, username checks, preferences and acceptance, and the saved message (Contributor; Sections 3.2.2, 2.6)
-- [ ] **Wireframe M3**: Account messages on the app: suspended account, restoring a deleted account, session expired and app update required (All; Sections 3.2.2, 2.6, 9.5)
-- [ ] **Wireframe M4**: Admin registration and sign-in with multi-factor authentication on the app, with the confirmation and error messages (Admin, Super Admin; Section 4.2)
-- [ ] **Wireframe M5**: Optional fingerprint or face unlock for admin accounts, and push notifications on the phone (Admin, All; Sections 3.3.3, 2.9)
-- [ ] **Wireframe M6**: STORIES on the app: the Trending story full screen with Rules and “+”, side engagement icons, swiping to the next story, and tabs (Contributor, Admin; Sections 3.2.3–3.2.4, 3.3.2)
-- [ ] **Wireframe M7**: Location and Contributors tabs on the app: auto-complete while typing, several matches, and the no-match messages (Contributor, Admin; Section 3.2.4)
-- [ ] **Wireframe M8**: Sharing on the app: the device’s share menu, Copy Link, “Cite this story”, and Download (ZIP) (Contributor, Admin; Sections 3.2.4, 3.3.3, 3.2.14)
-- [ ] **Wireframe M9**: Favorites, Translate and “Where It Happened” on the app (Contributor, Admin; Sections 3.2.4, 3.1.5)
-- [ ] **Wireframe M10**: Map Explore, Timeline and Collections tabs on the app (Contributor, Admin; Section 3.2.14)
-- [ ] **Wireframe M11**: Comments sheet on the app: sorting, threads, tagging, attachments, admin replies, and the locked, hidden and held states (Contributor, Admin; Sections 3.2.4, 3.3.2)
-- [ ] **Wireframe M12**: Reporting a story or Contributor on the app, its confirmation and validation message, and the sensitive-story notice (Contributor, Admin; Section 3.2.4; Appendix C)
-- [ ] **Wireframe M13**: Rules frame, the story-removed notice, the “Ask Why” form and its confirmation, on the app (Contributor; Section 3.2.4)
-- [ ] **Wireframe M14**: Share-story frame on the app: text and files (with in-app recording), story details, and posting options with consent, usage rights and sensitivity (Contributor; Sections 3.2.4, 3.3.3)
-- [ ] **Wireframe M15**: Share-story messages on the app: face blurring, consent missing, draft saved, file limits, size, type and virus errors (Contributor; Sections 3.2.4, 4.6)
-- [ ] **Wireframe M16**: Sending on the app: background upload notification, offline queueing, Wi-Fi-only waiting, and AI review in progress (Contributor; Sections 3.3.3, 8.3–8.4, 5.2)
-- [ ] **Wireframe M17**: AI review outcomes on the app: GREEN (posted), YELLOW (posted with a warning) and RED (blocked and sent to admins) (Contributor; Sections 3.2.4, 5.2)
-- [ ] **Wireframe M18**: Another Contributor’s profile on the app: Follow, the ⋯ menu (block, mute, report), block confirmation and messages (Contributor, Admin; Section 3.2.13)
-- [ ] **Wireframe M19**: MY PROFILE on the app: My Stories (engagement, views, edit, delete with confirmation, add) and Change my profile (Contributor; Section 3.2.5)
-- [ ] **Wireframe M20**: Editing a story and its edit history, and Reminders on the app (list, new reminder, and the reminder when due) (Contributor, Admin; Sections 3.2.5, 3.2.14)
-- [ ] **Wireframe M21**: Settings on the app: appearance, language, data, privacy, notification channels and quiet hours, and blocked and muted users (Contributor (admins see the same settings); Sections 3.2.5, 3.1.2–3.1.5, 8.2, 2.9)
-- [ ] **Wireframe M22**: Download my data, Delete account and the feedback form on the app (All; Sections 3.2.5, 7.7, 11.9)
-- [ ] **Wireframe M23**: ABOUT & RESOURCES (About) and INBOX on the app: bubbles per sender or issue, a conversation with attachments, read receipts and offline sending, and message requests (All (INBOX: Contributor, Admin); Section 3.2.6–3.2.7)
-- [ ] **Wireframe M24**: ANNOUNCEMENTS on the app (list and full description), and system states: offline, back online, loading, low-data placeholder and error (All; Sections 3.2.8, 3.1.7, 8.2, 8.6)
-- [ ] **Wireframe M25**: Dark theme on the app, an empty tab, and the installable web app (PWA) on a phone browser (All; Sections 3.1.2, 3.1.7, 3.2.1)
-- [ ] **Wireframe M26**: Admin on the app: the story with ID and AI flag, the controls panel at half screen and full screen, and the delete-story dialog (Admin; Sections 3.2.9–3.2.10, 3.3.2)
-- [ ] **Wireframe M27**: Admin on the app: lock and hide comments with reasons and their confirmations, and overriding an AI ban with its warning, justification and approvals (Admin; Sections 3.2.10, 2.7)
-- [ ] **Wireframe M28**: Admin reports on the app: the queue with escalation, report details with notes and actions, suspension and proposed deletion (Admin; Sections 3.2.10, 2.8; Appendix C)
-- [ ] **Wireframe M29**: Admin MY RESPONSIBILITIES on the app: pending approvals, the approval decision with justification, and notifications (Admin; Sections 3.2.11, 2.7)
-- [ ] **Wireframe M30**: Admin on the app: new company story, approval of a company story, new collection, and creating or editing an announcement (Admin; Sections 3.2.10, 2.7, 2.9)
-- [ ] **Wireframe M31**: Admin analytics and PDF reports on the app: live charts, report options, generating and ready (Admin, Super Admin; Section 2.10)
-- [ ] **Wireframe M32**: Admin on the app: replying to “Ask Why”, admin identity in comments, admin MY PROFILE (with MFA) and the audit log (Admin; Sections 3.2.7, 3.2.11, 4.2, 4.8)
-- [ ] **Wireframe M33**: Super Admin on the app: live analytics, REPORTS, MANAGE ADMINS (admins, pending registrations, Super Admins) and adding an admin (Super Admin; Sections 3.2.12, 2.10, 4.2)
-- [ ] **Wireframe M34**: Super Admin on the app: removing an admin, adding a Super Admin, deciding approvals past their deadline (optional rule), MY PROFILE and the last-Super-Admin block (Super Admin; Sections 3.2.12, 2.6–2.7; Appendix B)
-- [ ] **Wireframe M35**: Open access on the app: the visitor view, the sign-in prompt, the Incidents tab and an incident page (Visitor, Contributor, Admin; Sections 3.2.2, 3.2.4, 3.2.14)
-- [ ] **Wireframe M36**: Story types and resources on the app: a historical record, a validated testimony with the Listen player, the learning resources library and a resource opened (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.6, 3.2.14)
-- [ ] **Wireframe M37**: Report a safety concern on the app (form and confirmation), and voice-first sharing: telling a story by voice and checking the transcript (All (safety concern); Contributor (voice-first); Sections 3.2.6, 3.2.4, 3.1.4; Appendix C)
-- [ ] **Wireframe M38**: Admin on the app: incident records, bulk import results, the safety concerns queue and learning resources, with their confirmations (Admin; Sections 3.2.10, 11.4; Appendix C)
+- [~] **M1**: Sign-in on the app (Google or Apple only), with the link to browse without signing in, signing in, the failure message, and the links for admins | All | 3.2.2, 3.3.3, 4.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M2**: First-time profile setup on the app: username and picture, username checks, preferences and acceptance, and the saved message | Contributor | 3.2.2, 2.6 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M3**: Account messages on the app: suspended account, restoring a deleted account, session expired and app update required | All | 3.2.2, 2.6, 9.5 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M4**: Admin registration and sign-in with multi-factor authentication on the app, with the confirmation and error messages | Admin, Super Admin | 4.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M5**: Optional fingerprint or face unlock for admin accounts, and push notifications on the phone | Admin, All | 3.3.3, 2.9 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M6**: STORIES on the app: the Trending story full screen with Rules and “+”, side engagement icons, swiping to the next story, and tabs | Contributor, Admin | 3.2.3–3.2.4, 3.3.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M7**: Location and Contributors tabs on the app: auto-complete while typing, several matches, and the no-match messages | Contributor, Admin | 3.2.4 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M8**: Sharing on the app: the device’s share menu, Copy Link, “Cite this story”, and Download (ZIP) | Contributor, Admin | 3.2.4, 3.3.3, 3.2.14 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M9**: Favorites, Translate and “Where It Happened” on the app | Contributor, Admin | 3.2.4, 3.1.5 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M10**: Map Explore, Timeline and Collections tabs on the app | Contributor, Admin | 3.2.14 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M11**: Comments sheet on the app: sorting, threads, tagging, attachments, admin replies, and the locked, hidden and held states | Contributor, Admin | 3.2.4, 3.3.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M12**: Reporting a story or Contributor on the app, its confirmation and validation message, and the sensitive-story notice | Contributor, Admin | 3.2.4, Appendix C — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M13**: Rules frame, the story-removed notice, the “Ask Why” form and its confirmation, on the app | Contributor | 3.2.4 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M14**: Share-story frame on the app: text and files (with in-app recording), story details, and posting options with consent, usage rights and sensitivity | Contributor | 3.2.4, 3.3.3 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M15**: Share-story messages on the app: face blurring, consent missing, draft saved, file limits, size, type and virus errors | Contributor | 3.2.4, 4.6 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M16**: Sending on the app: background upload notification, offline queueing, Wi-Fi-only waiting, and AI review in progress | Contributor | 3.3.3, 8.3–8.4, 5.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M17**: AI review outcomes on the app: GREEN (posted), YELLOW (posted with a warning) and RED (blocked and sent to admins) | Contributor | 3.2.4, 5.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M18**: Another Contributor’s profile on the app: Follow, the ⋯ menu (block, mute, report), block confirmation and messages | Contributor, Admin | 3.2.13 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M19**: MY PROFILE on the app: My Stories (engagement, views, edit, delete with confirmation, add) and Change my profile | Contributor | 3.2.5 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M20**: Editing a story and its edit history, and Reminders on the app (list, new reminder, and the reminder when due) | Contributor, Admin | 3.2.5, 3.2.14 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M21**: Settings on the app: appearance, language, data, privacy, notification channels and quiet hours, and blocked and muted users | Contributor (admins see the same settings) | 3.2.5, 3.1.2–3.1.5, 8.2, 2.9 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M22**: Download my data, Delete account and the feedback form on the app | All | 3.2.5, 7.7, 11.9 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M23**: ABOUT & RESOURCES (About) and INBOX on the app: bubbles per sender or issue, a conversation with attachments, read receipts and offline sending, and message requests | All (INBOX: Contributor, Admin) | 3.2.6–3.2.7 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M24**: ANNOUNCEMENTS on the app (list and full description), and system states: offline, back online, loading, low-data placeholder and error | All | 3.2.8, 3.1.7, 8.2, 8.6 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M25**: Dark theme on the app, an empty tab, and the installable web app (PWA) on a phone browser | All | 3.1.2, 3.1.7, 3.2.1 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M26**: Admin on the app: the story with ID and AI flag, the controls panel at half screen and full screen, and the delete-story dialog | Admin | 3.2.9–3.2.10, 3.3.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M27**: Admin on the app: lock and hide comments with reasons and their confirmations, and overriding an AI ban with its warning, justification and approvals | Admin | 3.2.10, 2.7 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M28**: Admin reports on the app: the queue with escalation, report details with notes and actions, suspension and proposed deletion | Admin | 3.2.10, 2.8, Appendix C — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M29**: Admin MY RESPONSIBILITIES on the app: pending approvals, the approval decision with justification, and notifications | Admin | 3.2.11, 2.7 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M30**: Admin on the app: new company story, approval of a company story, new collection, and creating or editing an announcement | Admin | 3.2.10, 2.7, 2.9 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M31**: Admin analytics and PDF reports on the app: live charts, report options, generating and ready | Admin, Super Admin | 2.10 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M32**: Admin on the app: replying to “Ask Why”, admin identity in comments, admin MY PROFILE (with MFA) and the audit log | Admin | 3.2.7, 3.2.11, 4.2, 4.8 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M33**: Super Admin on the app: live analytics, REPORTS, MANAGE ADMINS (admins, pending registrations, Super Admins) and adding an admin | Super Admin | 3.2.12, 2.10, 4.2 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M34**: Super Admin on the app: removing an admin, adding a Super Admin, deciding approvals past their deadline (optional rule), MY PROFILE and the last-Super-Admin block | Super Admin | 3.2.12, 2.6–2.7, Appendix B — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M35**: Open access on the app: the visitor view, the sign-in prompt, the Incidents tab and an incident page | Visitor, Contributor, Admin | 3.2.2, 3.2.4, 3.2.14 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M36**: Story types and resources on the app: a historical record, a validated testimony with the Listen player, the learning resources library and a resource opened | Visitor, Contributor, Admin | 3.2.4, 3.2.6, 3.2.14 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M37**: Report a safety concern on the app (form and confirmation), and voice-first sharing: telling a story by voice and checking the transcript | All (safety concern); Contributor (voice-first) | 3.2.6, Appendix C, 3.2.4, 3.1.4 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **M38**: Admin on the app: incident records, bulk import results, the safety concerns queue and learning resources, with their confirmations | Admin | 3.2.10, Appendix C, 11.4 — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M1**: Sign-in on the app (Google or Apple only), with the link to browse without signing in, signing in, the failure message, and the links for admins (All; Sections 3.2.2, 3.3.3, 4.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M2**: First-time profile setup on the app: username and picture, username checks, preferences and acceptance, and the saved message (Contributor; Sections 3.2.2, 2.6) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M3**: Account messages on the app: suspended account, restoring a deleted account, session expired and app update required (All; Sections 3.2.2, 2.6, 9.5) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M4**: Admin registration and sign-in with multi-factor authentication on the app, with the confirmation and error messages (Admin, Super Admin; Section 4.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M5**: Optional fingerprint or face unlock for admin accounts, and push notifications on the phone (Admin, All; Sections 3.3.3, 2.9) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M6**: STORIES on the app: the Trending story full screen with Rules and “+”, side engagement icons, swiping to the next story, and tabs (Contributor, Admin; Sections 3.2.3–3.2.4, 3.3.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M7**: Location and Contributors tabs on the app: auto-complete while typing, several matches, and the no-match messages (Contributor, Admin; Section 3.2.4) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M8**: Sharing on the app: the device’s share menu, Copy Link, “Cite this story”, and Download (ZIP) (Contributor, Admin; Sections 3.2.4, 3.3.3, 3.2.14) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M9**: Favorites, Translate and “Where It Happened” on the app (Contributor, Admin; Sections 3.2.4, 3.1.5) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M10**: Map Explore, Timeline and Collections tabs on the app (Contributor, Admin; Section 3.2.14) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M11**: Comments sheet on the app: sorting, threads, tagging, attachments, admin replies, and the locked, hidden and held states (Contributor, Admin; Sections 3.2.4, 3.3.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M12**: Reporting a story or Contributor on the app, its confirmation and validation message, and the sensitive-story notice (Contributor, Admin; Section 3.2.4; Appendix C) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M13**: Rules frame, the story-removed notice, the “Ask Why” form and its confirmation, on the app (Contributor; Section 3.2.4) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M14**: Share-story frame on the app: text and files (with in-app recording), story details, and posting options with consent, usage rights and sensitivity (Contributor; Sections 3.2.4, 3.3.3) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M15**: Share-story messages on the app: face blurring, consent missing, draft saved, file limits, size, type and virus errors (Contributor; Sections 3.2.4, 4.6) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M16**: Sending on the app: background upload notification, offline queueing, Wi-Fi-only waiting, and AI review in progress (Contributor; Sections 3.3.3, 8.3–8.4, 5.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M17**: AI review outcomes on the app: GREEN (posted), YELLOW (posted with a warning) and RED (blocked and sent to admins) (Contributor; Sections 3.2.4, 5.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M18**: Another Contributor’s profile on the app: Follow, the ⋯ menu (block, mute, report), block confirmation and messages (Contributor, Admin; Section 3.2.13) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M19**: MY PROFILE on the app: My Stories (engagement, views, edit, delete with confirmation, add) and Change my profile (Contributor; Section 3.2.5) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M20**: Editing a story and its edit history, and Reminders on the app (list, new reminder, and the reminder when due) (Contributor, Admin; Sections 3.2.5, 3.2.14) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M21**: Settings on the app: appearance, language, data, privacy, notification channels and quiet hours, and blocked and muted users (Contributor (admins see the same settings); Sections 3.2.5, 3.1.2–3.1.5, 8.2, 2.9) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M22**: Download my data, Delete account and the feedback form on the app (All; Sections 3.2.5, 7.7, 11.9) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M23**: ABOUT & RESOURCES (About) and INBOX on the app: bubbles per sender or issue, a conversation with attachments, read receipts and offline sending, and message requests (All (INBOX: Contributor, Admin); Section 3.2.6–3.2.7) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M24**: ANNOUNCEMENTS on the app (list and full description), and system states: offline, back online, loading, low-data placeholder and error (All; Sections 3.2.8, 3.1.7, 8.2, 8.6) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M25**: Dark theme on the app, an empty tab, and the installable web app (PWA) on a phone browser (All; Sections 3.1.2, 3.1.7, 3.2.1) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M26**: Admin on the app: the story with ID and AI flag, the controls panel at half screen and full screen, and the delete-story dialog (Admin; Sections 3.2.9–3.2.10, 3.3.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M27**: Admin on the app: lock and hide comments with reasons and their confirmations, and overriding an AI ban with its warning, justification and approvals (Admin; Sections 3.2.10, 2.7) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M28**: Admin reports on the app: the queue with escalation, report details with notes and actions, suspension and proposed deletion (Admin; Sections 3.2.10, 2.8; Appendix C) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M29**: Admin MY RESPONSIBILITIES on the app: pending approvals, the approval decision with justification, and notifications (Admin; Sections 3.2.11, 2.7) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M30**: Admin on the app: new company story, approval of a company story, new collection, and creating or editing an announcement (Admin; Sections 3.2.10, 2.7, 2.9) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M31**: Admin analytics and PDF reports on the app: live charts, report options, generating and ready (Admin, Super Admin; Section 2.10) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M32**: Admin on the app: replying to “Ask Why”, admin identity in comments, admin MY PROFILE (with MFA) and the audit log (Admin; Sections 3.2.7, 3.2.11, 4.2, 4.8) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M33**: Super Admin on the app: live analytics, REPORTS, MANAGE ADMINS (admins, pending registrations, Super Admins) and adding an admin (Super Admin; Sections 3.2.12, 2.10, 4.2) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M34**: Super Admin on the app: removing an admin, adding a Super Admin, deciding approvals past their deadline (optional rule), MY PROFILE and the last-Super-Admin block (Super Admin; Sections 3.2.12, 2.6–2.7; Appendix B) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M35**: Open access on the app: the visitor view, the sign-in prompt, the Incidents tab and an incident page (Visitor, Contributor, Admin; Sections 3.2.2, 3.2.4, 3.2.14) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M36**: Story types and resources on the app: a historical record, a validated testimony with the Listen player, the learning resources library and a resource opened (Visitor, Contributor, Admin; Sections 3.2.4, 3.2.6, 3.2.14) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M37**: Report a safety concern on the app (form and confirmation), and voice-first sharing: telling a story by voice and checking the transcript (All (safety concern); Contributor (voice-first); Sections 3.2.6, 3.2.4, 3.1.4; Appendix C) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
+- [~] **Wireframe M38**: Admin on the app: incident records, bulk import results, the safety concerns queue and learning resources, with their confirmations (Admin; Sections 3.2.10, 11.4; Appendix C) — *Left: written and built into an installable app by the automatic build; still to be tried on a real phone*
 
 ### 3.4 Tools and Technologies
 
