@@ -80,6 +80,9 @@ class AboutPage extends StatelessWidget {
           const SizedBox(height: 12),
           Wrap(children: [for (final (k, label) in [('privacy', t('Privacy policy')), ('terms', t('Terms of use')), ('rules', t('Rules and netiquette'))]) TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LegalPage(k))), child: Text(label))]),
           if (s.signedIn && !s.isSuper) OutlinedButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InboxPage(toAdmins: true))), icon: const Icon(Icons.mail_outline), label: Text(t('Message the admins'))),
+
+          const SizedBox(height: 12),
+          Text('© ${DateTime.now().year} Remembering the Waters. ${t('Each story belongs to its storyteller and is shared under the rights shown with it.')}', style: const TextStyle(fontSize: 12)),
         ]),
         const ResourceList(),
         const SingleChildScrollView(padding: EdgeInsets.all(18), child: SafetyConcernForm()),

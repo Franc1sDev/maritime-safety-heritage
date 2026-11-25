@@ -1130,6 +1130,7 @@ const sw: Record<string, string> = {
   'Spam and impersonation': 'Barua taka na kujifanya mtu mwingine',
   'Graphic or inappropriate content': 'Maudhui ya kutisha au yasiyofaa',
   'Not recorded': 'Haijarekodiwa',
+  'Each story belongs to its storyteller and is shared under the rights shown with it.': 'Kila hadithi ni mali ya msimulizi wake na inashirikiwa kwa haki zilizoonyeshwa pamoja nayo.',
   'Paused': 'Imesitishwa kwa muda',
   'Pause': 'Sitisha',
   'Resume': 'Endelea',

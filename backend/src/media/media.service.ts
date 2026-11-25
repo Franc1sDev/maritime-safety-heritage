@@ -26,6 +26,22 @@ export const sha256File = (path: string) => new Promise<string>((res, rej) => {
 });
 const safeName = (name: string) => (Buffer.from(name, 'latin1').toString('utf8').replace(/[^\p{L}\p{N}._ -]/gu, '_').slice(0, 200) || 'file');
 
+/** The archive's credit as an image laid over the corner of a photo: white text with a soft shadow, readable on any picture. */
+export function watermarkSvg(width: number, height: number, label: string): Buffer {
+  // DejaVu Sans Bold is about 0.68 em per character on average; the size shrinks so the whole credit fits narrow photos.
+  const em = 0.68;
+  let size = Math.max(10, Math.min(34, Math.round(Math.min(width, height) * 0.035)));
+  size = Math.max(8, Math.min(size, Math.floor((width * 0.9) / (label.length * em + 1.6))));
+  const pad = Math.round(size * 0.8);
+  const textWidth = Math.ceil(label.length * size * em);
+  const w = Math.min(width, textWidth + pad * 2), h = Math.min(height, size + pad * 2);
+  const safe = label.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]!);
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+  <text x="${w - pad}" y="${h - pad}" text-anchor="end" font-family="DejaVu Sans, Arial, sans-serif" font-size="${size}" font-weight="600"
+        fill="#ffffff" fill-opacity="0.78" stroke="#000000" stroke-opacity="0.5" stroke-width="${Math.max(1, size / 14).toFixed(1)}" paint-order="stroke">${safe}</text>
+</svg>`);
+}
+
 /**
  * Media pipeline (Sections 2.11, 4.6, 6.3 and 7.2): every upload is type-checked from its contents, virus-scanned,
  * checksummed and stored encrypted. The original is kept untouched for preservation and is never served to the public;
@@ -138,7 +154,15 @@ export class MediaService implements OnModuleInit {
         for (const [name, width] of Object.entries(sizes)) {
           const out = join(dir, `${name}.webp`);
           // rotate() applies the camera orientation; sharp then drops all EXIF, GPS and device metadata by default.
-          const info = await sharp(src, { limitInputPixels: 80_000_000 }).rotate().resize({ width, height: width, fit: 'inside', withoutEnlargement: true }).webp({ quality: name === 'full' ? 88 : 78 }).toFile(out);
+          const resized = sharp(src, { limitInputPixels: 80_000_000 }).rotate().resize({ width, height: width, fit: 'inside', withoutEnlargement: true });
+          // The larger copies carry a small credit in the corner, so a copied photo still names the archive.
+          const mark = config.media.watermark && m.purpose !== 'avatar' && name !== 'thumb';
+          const info = mark
+            ? await (async () => {
+                const { data, info: size } = await resized.toBuffer({ resolveWithObject: true });
+                return sharp(data).composite([{ input: watermarkSvg(size.width, size.height, config.media.watermarkText), gravity: 'southeast' }]).webp({ quality: name === 'full' ? 88 : 78 }).toFile(out);
+              })()
+            : await resized.webp({ quality: name === 'full' ? 88 : 78 }).toFile(out);
           const stored = await this.put(out, `${base}/${name}.webp`, 'image/webp');
           variants[name] = { ...stored, mime: 'image/webp', size: info.size, width: info.width, height: info.height };
         }

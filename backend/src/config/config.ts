@@ -69,6 +69,9 @@ export const config = {
     /** Key for encrypting stored files. Keep it safe and backed up: without it, encrypted files cannot be read. */
     encryptionKey: secret('MEDIA_ENCRYPTION_KEY'),
     encryptAtRest: (process.env.MEDIA_ENCRYPT_AT_REST ?? 'true') === 'true',
+    /** A small credit (“Remembering the Waters”) in the corner of the larger photo copies people see (Section 4.11). Originals are never marked. */
+    watermark: (process.env.MEDIA_WATERMARK ?? 'true') === 'true',
+    watermarkText: process.env.MEDIA_WATERMARK_TEXT ?? 'Remembering the Waters',
   },
   /** ClamAV virus scanning of every upload. Set CLAMAV_HOST to turn it on. */
   clamav: {

@@ -13,6 +13,7 @@ import { decryptField, encryptField, maskId, pseudonym } from '../src/common/fie
 import { hasMessage, text } from '../src/common/messages';
 import { parseCsv, toDate, yes } from '../src/common/spreadsheet';
 import { detect } from '../src/media/file-type';
+import { watermarkSvg } from '../src/media/media.service';
 import { usernameProblem } from '../src/users/profile';
 
 describe('AI flag thresholds (Section 5.2)', () => {
@@ -162,5 +163,21 @@ describe('Paging and messages', () => {
     expect(text('not_emergency', 'fr')).toBe('This is not an emergency service.');
     expect(hasMessage('translation_unavailable')).toBe(true);
     expect(text('no_such_code')).toBe('no_such_code');
+  });
+});
+
+describe('Photo credit (Section 4.11)', () => {
+  const box = (svg: Buffer) => svg.toString().match(/width="(\d+)" height="(\d+)"/)!.slice(1).map(Number);
+  it('always fits inside the photo, however small', () => {
+    for (const [w, h] of [[2400, 1600], [960, 640], [300, 500], [160, 120], [40, 30]]) {
+      const [bw, bh] = box(watermarkSvg(w, h, 'Remembering the Waters'));
+      expect(bw).toBeLessThanOrEqual(w);
+      expect(bh).toBeLessThanOrEqual(h);
+    }
+  });
+  it('writes the label safely, so a changed setting cannot break the picture', () => {
+    const svg = watermarkSvg(960, 640, 'A & B <script>"x"</script>').toString();
+    expect(svg).toContain('A &amp; B &lt;script&gt;&quot;x&quot;&lt;/script&gt;');
+    expect(svg).not.toContain('<script>');
   });
 });

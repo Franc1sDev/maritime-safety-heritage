@@ -157,7 +157,7 @@ export default function App() {
       <footer className="foot">
         <p><label>{t('Language')}: <select className="lang" value={i18n.language} onChange={(e) => void save({ language: e.target.value }, true)}>{(config?.languages ?? [{ code: 'en', name: 'English', launch: true }]).filter((l) => l.launch).map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}</select></label></p>
         <p>{t('Remembering the Waters is run by the project team with the support of its partner organisations.')} <Link to="/about">{t('About and acknowledgements')}</Link> · <Link to="/privacy">{t('Privacy policy')}</Link> · <Link to="/terms">{t('Terms of use')}</Link> · <Link to="/rules">{t('Rules')}</Link></p>
-        <p className="small">© {new Date().getFullYear()} Remembering the Waters{config?.emergencyNumbers?.length ? ` · ${t('In an emergency on the water call {numbers}', { numbers: config.emergencyNumbers.join(' / ') })}` : ''}</p>
+        <p className="small">© {new Date().getFullYear()} Remembering the Waters. {t('Each story belongs to its storyteller and is shared under the rights shown with it.')} <Link to="/terms">{t('Copyright and takedown')}</Link>{config?.emergencyNumbers?.length ? ` · ${t('In an emergency on the water call {numbers}', { numbers: config.emergencyNumbers.join(' / ') })}` : ''}</p>
       </footer>
 
       <Guide ready={ready && !shown && !showFloat && !welcome} />
