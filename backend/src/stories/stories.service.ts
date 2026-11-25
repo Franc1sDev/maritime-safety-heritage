@@ -55,7 +55,7 @@ export class StoriesService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    this.jobs.handle('story.review', async ({ id, edit, waits }) => { await this.review(id, !!edit, Number(waits ?? 0)); });
+    this.jobs.handle('story.review', async ({ id, edit, waits, queuedAt }) => { await this.review(id, !!edit, Number(waits ?? 0), Number(queuedAt) || 0); });
     this.jobs.handle('story.zip', async ({ id, userId }) => { await this.buildZip(id, userId); });
     this.jobs.handle('story.transcribe', async ({ mediaId }) => { await this.transcribe(mediaId); });
     this.jobs.every('stories.trending', 5 * 60_000, () => this.recalculateTrending());
@@ -296,7 +296,7 @@ export class StoriesService implements OnModuleInit {
     if (s.status !== 'published') return fail(409, 'already_exists');
     if (dto.mediaIds) await this.attach(id, user, dto.mediaIds, false);
     await this.db.q(`UPDATE stories SET pending_edit = $2, updated_at = now() WHERE id = $1`, [id, JSON.stringify(f)]);
-    await this.jobs.add('story.review', { id, edit: true });
+    await this.jobs.add('story.review', { id, edit: true, queuedAt: Date.now() });
     return { ...(await this.get(id, user)), message: text('edit_under_review', meta.lang) };
   }
 
@@ -305,7 +305,7 @@ export class StoriesService implements OnModuleInit {
     const s = await this.checkComplete(id, user.id);
     if (!['draft', 'reviewing'].includes(s.status)) return fail(409, 'already_exists');
     await this.db.q(`UPDATE stories SET status = 'reviewing', updated_at = now() WHERE id = $1`, [id]);
-    await this.jobs.add('story.review', { id });
+    await this.jobs.add('story.review', { id, queuedAt: Date.now() });
     await this.track.event('story.submitted', this.track.actor(user), { storyId: id });
     return { ...(await this.get(id, user)), message: text('review_in_progress', meta.lang) };
   }
@@ -347,13 +347,13 @@ export class StoriesService implements OnModuleInit {
     return { kind: 'story' as const, text: textParts.filter(Boolean).join('\n\n'), language: s.language, images, context: `Story type: ${TYPE_LABEL[s.type]}. Place: ${s.placeName || 'not given'}.` };
   }
 
-  private async review(id: string, edit: boolean, waits: number) {
+  private async review(id: string, edit: boolean, waits: number, queuedAt = 0) {
     const s = await this.db.one(`SELECT s.*, u.language AS author_language FROM stories s LEFT JOIN users u ON u.id = s.author_id WHERE s.id = $1`, [id]);
     if (!s || (edit ? !s.pendingEdit : s.status !== 'reviewing')) return;
     let input = await this.reviewInput(s, edit ? s.pendingEdit : undefined);
     if (!input) {
       // Video or audio is still being converted: look again shortly. After about two and a half minutes the text is reviewed on its own, so the 3-minute limit holds.
-      if (waits < 50) { await this.jobs.add('story.review', { id, edit, waits: waits + 1 }, { delayMs: config.env === 'test' ? 250 : 3000 }); return; }
+      if (waits < 50) { await this.jobs.add('story.review', { id, edit, waits: waits + 1, queuedAt }, { delayMs: config.env === 'test' ? 250 : 3000 }); return; }
       input = await this.reviewInput(s, edit ? s.pendingEdit : undefined, true);
     }
     const lang = s.authorLanguage ?? 'en';
@@ -372,6 +372,13 @@ export class StoriesService implements OnModuleInit {
     await this.db.q(`INSERT INTO moderation_decisions (target_type, target_id, ai_flag, ai_score, ai_explanation, model, guidance_version) VALUES ('story',$1,$2,$3,$4,$5,$6)`,
       [id, result.flag, result.score, JSON.stringify({ summary: result.summary, guidelines: result.guidelines }), result.model, result.guidanceVersion]);
     await this.track.bump([`flag.${result.flag.toLowerCase()}`]);
+    if (queuedAt) {
+      // How long the AI review took from SEND to its result: the target is within 3 minutes (Section 5.2).
+      const seconds = Math.max(0, Math.round((Date.now() - queuedAt) / 1000));
+      await this.track.bump(['ai.reviews_timed']);
+      await this.track.bump(['ai.review_seconds'], seconds);
+      if (seconds <= 180) await this.track.bump(['ai.reviews_within_3min']);
+    }
     const explanation = JSON.stringify({ summary: result.summary, guidelines: result.guidelines.filter((g) => g.score > 20) });
 
     if (edit) {

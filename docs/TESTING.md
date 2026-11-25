@@ -8,8 +8,8 @@ The automatic build on GitHub (`.github/workflows/ci.yml`) runs all of these on 
 
 | Suite | What it checks | Where | Size |
 |---|---|---|---|
-| **Server tests** | Every main journey through the API against a real database: sign-in for Contributors and admins, lockout, token reuse, roles and permissions, stories and the AI review, comments, messages and requests, reports, moderation, approvals, uploads, signed links, encryption, exports, analytics. Plus unit tests of the rules: AI flag levels, the two-thirds approval majority, reserved usernames, authenticator codes, field encryption, file-type detection, spreadsheet reading, dates, numbers and paging | `backend/test` | 67 tests |
-| **Website tests** | The main screens render and behave: tabs, the story form, sign-in, the hints, settings | `web/src/__tests__` | 15 tests |
+| **Server tests** | Every main journey through the API against a real database: sign-in for Contributors and admins, lockout, token reuse, roles and permissions, stories and the AI review, comments, messages and requests, reports, moderation, approvals, uploads, signed links, encryption, exports, analytics. Plus unit tests of the rules: AI flag levels, the two-thirds approval majority, reserved usernames, authenticator codes, field encryption, file-type detection, spreadsheet reading, dates, numbers and paging | `backend/test` | 81 tests |
+| **Website tests** | The main screens render and behave: tabs, the story form, sign-in, the hints, settings | `web/src/__tests__` | 17 tests |
 | **App tests** | The app's network layer (retries without duplicates, offline reading, actions queued offline, uploads in pieces with pause, resume and cancel) and its text helpers (dates, counts, names, translations). The screens themselves are checked on real devices (below) | `mobile-app/test` | 19 tests |
 | **App build** | The Android app (APK and AAB) and the iOS app compile | GitHub Actions | — |
 | **Browser tests** | Real browser journeys: visitor, Contributor (sign up, welcome, react, comment, favourite, share a story and see it go live, profile, messages), languages, admin (sign in with a code, every admin page, approving a request), Super Admin, slow 3G, offline | `web/e2e/journeys.cjs` | 19 tests |
@@ -18,6 +18,7 @@ The automatic build on GitHub (`.github/workflows/ci.yml`) runs all of these on 
 | **API reference** | [API.md](API.md) still matches the server | `scripts/api-reference.py` | — |
 | **Lighthouse** | A simulated mid-range phone on a slow connection: performance 80 or more; accessibility, best practices and SEO 95 or more | `tests/perf/lighthouse.cjs` | — |
 | **Load test** | 200 simulated people browsing, reacting, commenting, posting and messaging for 30 seconds. 95% of requests must be under 300 ms, with no server errors | `tests/load/node-load.mjs` | — |
+| **AI evaluation set** | 38 labelled samples in English, Kiswahili and Dholuo: no legitimate story may be blocked, and harmful English and Kiswahili samples must reach an admin. `npm run ai:eval` runs it against a real provider to compare them | `tests/ai-eval` | 38 samples |
 | **Code scanning** | CodeQL security analysis; weekly and on every change to `main` | `.github/workflows/codeql.yml` | — |
 | **Web vulnerability scan** | OWASP ZAP baseline (passive) scan of the running site; any high-risk finding fails the build. The report is kept with each build | `.github/workflows/ci.yml` | — |
 | **Known vulnerabilities** | `npm audit` of the server's and website's packages; any high or critical one fails the build | `.github/workflows/ci.yml` | — |
@@ -29,10 +30,10 @@ To run them yourself, see each folder's README and the commands at the top of ea
 
 | Target | From | How it is measured |
 |---|---|---|
-| First story appears within 2 s on 4G and 5 s on 3G | Section 8.10 | Browser test on simulated 3G; Lighthouse |
-| 95% of API requests under 300 ms | Section 8.10 | Load test; monitoring in production |
+| First story appears within 2 s on 4G and 5 s on 3G | Section 8.10 | Browser test on simulated 3G; Lighthouse; visitors' page speed (LCP) in SUPER ADMIN › System › Performance |
+| 95% of API requests under 300 ms | Section 8.10 | Load test; SUPER ADMIN › System › Performance in production, with an alert to the Super Admins above 300 ms |
 | Uptime 99.5% or more each month | Section 7.1 | Uptime monitor in production |
-| AI review finishes within 3 minutes | Section 5.2 | Server tests; Analytics in production |
+| AI review finishes within 3 minutes | Section 5.2 | Server tests; **AI reviews within 3 minutes** in Analytics in production |
 | WCAG 2.1 AA | Section 3.5 | Automated checks, plus the manual checks below |
 | Restore within 4 hours; database loss at most 15 minutes | Section 7.4 | Quarterly restore test ([DISASTER-RECOVERY.md](DISASTER-RECOVERY.md)) |
 

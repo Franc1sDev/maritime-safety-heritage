@@ -1,9 +1,12 @@
 import { Injectable, Logger, OnApplicationShutdown, OnApplicationBootstrap } from '@nestjs/common';
 import { config } from '../config/config';
 import { Db } from './db';
+import { perf } from './perf';
 
 export type JobHandler = (payload: any, ctx: { progress: (pct: number) => Promise<void>; attempt: number }) => Promise<void>;
 interface AddOptions { delayMs?: number; attempts?: number }
+/** Work nobody is waiting for at the screen. While the server is busy it waits, and other jobs run one at a time (Section 9.4). */
+export const HEAVY_JOBS = ['user.export', 'archive.export', 'analytics.report', 'import.run', 'story.zip', 'story.transcribe'];
 
 /**
  * Background jobs with retries (Section 2.11). Slow work never runs inside a user's request.
@@ -48,7 +51,7 @@ export class Jobs implements OnApplicationBootstrap, OnApplicationShutdown {
     }
     if (config.jobsWorker && config.env !== 'test') {
       for (const r of this.recurring) {
-        r.timer = setInterval(() => void r.fn().catch((e) => this.log.warn(`${r.name}: ${e.message}`)), r.everyMs);
+        r.timer = setInterval(() => { if (!perf.busy) void r.fn().catch((e) => this.log.warn(`${r.name}: ${e.message}`)); }, r.everyMs);
         r.timer.unref();
       }
     }
@@ -103,14 +106,15 @@ export class Jobs implements OnApplicationBootstrap, OnApplicationShutdown {
   }
 
   private async tick() {
-    if (this.stopped || this.running >= 3) return;
+    if (this.stopped || this.running >= (perf.busy ? 1 : 3)) return;
     this.running++;
     try {
       for (;;) {
         if (this.stopped) break;
         const job = await this.db.one(
           `UPDATE jobs SET status = 'working', attempts = attempts + 1 WHERE id = (
-             SELECT id FROM jobs WHERE status = 'queued' AND run_at <= now() ORDER BY run_at, id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`);
+             SELECT id FROM jobs WHERE status = 'queued' AND run_at <= now() AND (NOT $1 OR name <> ALL($2::text[]))
+             ORDER BY run_at, id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`, [perf.busy, HEAVY_JOBS]);
         if (!job) break;
         const fn = this.handlers.get(job.name);
         try {

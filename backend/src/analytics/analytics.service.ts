@@ -90,10 +90,15 @@ export class AnalyticsService implements OnModuleInit {
         (SELECT count(*)::int FROM moderation_decisions WHERE target_type = 'story' AND ai_flag = 'RED' AND admin_action = '' AND created_at BETWEEN $1 AND $2) AS red_items,
         (SELECT count(*)::int FROM moderation_decisions a WHERE a.target_type = 'story' AND a.ai_flag = 'RED' AND a.admin_action = '' AND a.created_at BETWEEN $1 AND $2
             AND EXISTS (SELECT 1 FROM moderation_decisions b WHERE b.target_type = 'story' AND b.target_id = a.target_id AND b.admin_action <> '' AND b.created_at <= a.created_at + interval '24 hours')) AS red_within_24h,
-        (SELECT count(*)::int FROM moderation_decisions WHERE admin_action = 'override' AND approved) AS overrides`, a))!;
+        (SELECT count(*)::int FROM moderation_decisions WHERE admin_action = 'override' AND approved) AS overrides,
+        (SELECT coalesce(sum(value) FILTER (WHERE metric = 'ai.reviews_timed'), 0)::int FROM analytics_daily WHERE day BETWEEN $1::timestamptz::date AND $2::timestamptz::date) AS ai_reviews_timed,
+        (SELECT coalesce(sum(value) FILTER (WHERE metric = 'ai.review_seconds'), 0)::int FROM analytics_daily WHERE day BETWEEN $1::timestamptz::date AND $2::timestamptz::date) AS ai_review_seconds,
+        (SELECT coalesce(sum(value) FILTER (WHERE metric = 'ai.reviews_within_3min'), 0)::int FROM analytics_daily WHERE day BETWEEN $1::timestamptz::date AND $2::timestamptz::date) AS ai_reviews_within_3min`, a))!;
     return {
       ...s, nonEnglishPercent: s.publishedStories ? Math.round((s.nonEnglish / s.publishedStories) * 100) : 0,
       redWithin24hPercent: s.redItems ? Math.round((s.redWithin24h / s.redItems) * 100) : 100,
+      aiReviewAverageSeconds: s.aiReviewsTimed ? Math.round(s.aiReviewSeconds / s.aiReviewsTimed) : null,
+      aiReviewWithin3MinPercent: s.aiReviewsTimed ? Math.round((s.aiReviewsWithin3min / s.aiReviewsTimed) * 100) : 100,
       aiOverrideRatePercent: s.redItems ? Math.round((s.overrides / Math.max(1, s.redItems)) * 100) : 0,
       safetyPlaces: await this.db.q(`SELECT place_name, count(*)::int AS n FROM safety_concerns WHERE place_name <> '' AND created_at BETWEEN $1 AND $2 GROUP BY place_name ORDER BY n DESC LIMIT 8`, a),
       flagRatesByLanguage: await this.db.q(`SELECT language, count(*)::int AS stories, count(*) FILTER (WHERE ai_flag = 'RED')::int AS red, count(*) FILTER (WHERE ai_flag = 'YELLOW')::int AS yellow FROM stories WHERE ai_flag IS NOT NULL GROUP BY language ORDER BY stories DESC LIMIT 20`),
@@ -154,7 +159,7 @@ export class AnalyticsService implements OnModuleInit {
       pdf.text(narrative, { gap: 10 });
       pdf.stats([{ label: 'Stories posted in the period', value: String(s.storiesInPeriod) }, { label: 'Published stories (total)', value: String(s.publishedStories) }, { label: 'Registered contributors', value: String(s.contributors) }, { label: 'Monthly active users', value: String(s.monthlyActiveUsers) },
         { label: 'Testimonies archived', value: String(s.testimonies) }, { label: 'Historical records', value: String(s.historicalRecords) }, { label: 'Incident records mapped', value: `${s.incidentsMapped} of ${s.incidents}` }, { label: 'Counties with stories', value: String(s.counties) },
-        { label: 'Not in English', value: `${s.nonEnglishPercent}%` }, { label: 'Audio and video stories', value: String(s.audioVideo) }, { label: 'RED reviewed within 24 h', value: `${s.redWithin24hPercent}%` }, { label: 'Resource views / downloads', value: `${s.resourceViews} / ${s.resourceDownloads}` }]);
+        { label: 'Not in English', value: `${s.nonEnglishPercent}%` }, { label: 'Audio and video stories', value: String(s.audioVideo) }, { label: 'RED reviewed within 24 h', value: `${s.redWithin24hPercent}%` }, { label: 'AI reviews within 3 minutes', value: `${s.aiReviewWithin3MinPercent}%` }, { label: 'Resource views / downloads', value: `${s.resourceViews} / ${s.resourceDownloads}` }]);
       pdf.heading('Charts');
       for (const c of charts) pdf.chart(`${c.title} (per ${c.period})`, c.labels.map((l) => (c.period === 'year' ? l.slice(0, 4) : c.period === 'month' ? l.slice(0, 7) : l.slice(5))), c.series.map((x) => ({ name: x.name, color: x.color.slice(1), values: x.values })));
       if (s.safetyPlaces.length) { pdf.heading('Safety concerns by place'); pdf.table(['Place', 'Concerns'], s.safetyPlaces.map((p: Row) => [p.placeName, String(p.n)])); }

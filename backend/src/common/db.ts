@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+import { perf } from './perf';
 
 const camel = (k: string) => k.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 export type Row = Record<string, any>;
@@ -18,9 +19,14 @@ export interface Sql {
   q<T = Row>(sql: string, params?: unknown[]): Promise<T[]>;
   one<T = Row>(sql: string, params?: unknown[]): Promise<T | null>;
 }
+/** Runs one query and times it; slow ones are logged (Section 9.4). */
+const timed = async (runner: { query: (s: string, p?: unknown[]) => Promise<unknown> }, sql: string, params: unknown[]) => {
+  const t = performance.now();
+  try { return await runner.query(sql, params); } finally { perf.query(sql, performance.now() - t); }
+};
 const wrap = (runner: { query: (s: string, p?: unknown[]) => Promise<unknown> }): Sql => ({
-  q: async <T>(sql: string, params: unknown[] = []) => convert(await runner.query(sql, params)) as T[],
-  one: async <T>(sql: string, params: unknown[] = []) => (convert(await runner.query(sql, params))[0] as T) ?? null,
+  q: async <T>(sql: string, params: unknown[] = []) => convert(await timed(runner, sql, params)) as T[],
+  one: async <T>(sql: string, params: unknown[] = []) => (convert(await timed(runner, sql, params))[0] as T) ?? null,
 });
 
 /** Plain SQL with named-column results in camelCase. Every query is parameterised. */

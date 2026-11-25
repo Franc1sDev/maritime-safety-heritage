@@ -771,6 +771,9 @@ describe('analytics, PDF reports and the audit log', () => {
   it('reports the project measures and live chart series', async () => {
     await jobs.runRecurring('analytics.daily');
     const sum = await request(http).get(`${api}/admin/analytics/summary`).set(bearer(boss.token)).expect(200);
+    // Stories sent earlier in the tests were reviewed by AI: the review time is measured against the 3-minute target.
+    expect(sum.body.aiReviewAverageSeconds).not.toBeNull();
+    expect(sum.body.aiReviewWithin3MinPercent).toBe(100);
     expect(sum.body.publishedStories).toBeGreaterThan(10); expect(sum.body.testimonies).toBeGreaterThan(0); expect(sum.body.incidentsMapped).toBeGreaterThan(0);
     expect(sum.body.countyList).toEqual(expect.arrayContaining(['Mombasa', 'Siaya'])); expect(sum.body.safetyConcerns).toBe(2); expect(sum.body.monthlyActiveUsers).toBeGreaterThan(0);
     const flags = await request(http).get(`${api}/admin/analytics/series?chart=flags&period=week`).set(bearer(grace.token)).expect(200);
@@ -827,5 +830,20 @@ describe('analytics, PDF reports and the audit log', () => {
     expect(old.body).toMatchObject({ code: 'app_update_required', message: 'A new version of the app is available. Please update to continue.' });
     await request(http).get(`${api}/config`).set('X-App-Version', '2.0.0').expect(200);
     expect((await request(http).get(`${api}/super/jobs`).set(bearer(boss.token)).expect(200)).body.failed).toBe(0);
+  });
+  it('monitors performance: request times for Super Admins, page speed from browsers, metrics only with a token (Section 9.4)', async () => {
+    const r = (await request(http).post(`${api}/rum`).send({ items: [{ metric: 'LCP', value: 1800, page: 'story', connection: '4g' }, { metric: 'CLS', value: 0.02, page: 'story' }] }).expect(202)).body;
+    expect(r).toEqual({ received: 2 });
+    await request(http).post(`${api}/rum`).send({ items: [{ metric: 'XSS', value: 1 }] }).expect(400);
+    await request(http).post(`${api}/rum`).send({ items: [{ metric: 'LCP', value: 10, page: '/story/<b>' }] }).expect(400);
+    await request(http).get(`${api}/super/performance`).set(bearer(grace.token)).expect(403);
+    const p = (await request(http).get(`${api}/super/performance`).set(bearer(boss.token)).expect(200)).body;
+    expect(p.last5.requests).toBeGreaterThan(10);
+    expect(p.last5.p95).toBeGreaterThan(0);
+    expect(p.targets.p95Ms).toBe(300);
+    expect(p.webVitals.find((v: any) => v.metric === 'LCP')).toMatchObject({ samples: 1, p75: 1800, target: 2500 });
+    expect(p.webVitals.find((v: any) => v.metric === 'CLS').p75).toBe(0.02);
+    expect(typeof p.statements.available).toBe('boolean');
+    await request(http).get(`${api}/metrics`).expect(404);
   });
 });

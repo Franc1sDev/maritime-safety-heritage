@@ -22,6 +22,9 @@ startTransition(() => root.render(
   </React.StrictMode>,
 ));
 
+// Page speed as visitors experience it (Section 9.4), sent once as the page is left.
+if (import.meta.env.PROD) void import('./lib/vitals').then((v) => v.startVitals());
+
 // The web app: installable, with an offline shell. A new version is offered, not forced.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   void import('workbox-window').then(({ Workbox }) => {

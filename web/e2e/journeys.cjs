@@ -225,11 +225,18 @@ test('accessibility: the admin pages pass the automated checks', async () => {
   await ctx.close(); return problems;
 }, { needsLog: true, needsAxe: true });
 test('Super Admin: sign in, and every Super Admin page opens', async () => {
+  // A visitor reads a story and leaves: the browser reports how fast the page was (real-user monitoring).
+  const visitor = await open();
+  await visitor.page.goto(`${BASE}/`); await seen(visitor.page, '.story, article'); await visitor.page.waitForTimeout(2500);
+  await visitor.page.close({ runBeforeUnload: true }); await visitor.ctx.close();
   const { ctx, page, problems } = await open();
   await adminSignIn(page, 'admin@demo.ke');
   for (const t of ['analytics', 'reports', 'admins', 'approvals', 'audit', 'system']) {
     await page.goto(`${BASE}/super/${t}`); await seen(page, '.panel h2, .panel h1, .panel h3'); await page.waitForTimeout(500);
   }
+  await seen(page, '#perf-h');
+  const lcp = await page.locator('section[aria-labelledby="perf-h"] tr', { hasText: 'LCP' }).locator('td').last().innerText();
+  expect(Number(lcp) >= 1, `the visitor's page speed reached the Performance panel (LCP visits measured: ${lcp})`);
   await ctx.close(); return problems;
 }, { needsLog: true });
 

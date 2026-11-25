@@ -13,6 +13,7 @@ import { DEFAULT_LIMIT } from './common/rate-limits';
 import { config } from './config/config';
 import { dataSourceOptions } from './database/data-source';
 import { HealthController } from './health/health.controller';
+import { PerfModule } from './health/perf.module';
 import { InboxModule } from './inbox/inbox.module';
 import { MediaModule } from './media/media.module';
 import { ModerationModule } from './moderation/moderation.module';
@@ -29,7 +30,7 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forRootAsync({ useFactory: () => dataSourceOptions() }),
     ThrottlerModule.forRoot([{ ...DEFAULT_LIMIT, limit: DEFAULT_LIMIT.limit * config.rateLimitScale }]),
     CoreModule, MediaModule, AiModule, ApprovalsModule, InboxModule,
-    AuthModule, UsersModule, StoriesModule, ModerationModule, ArchiveModule, AnalyticsModule, TeamModule,
+    AuthModule, UsersModule, StoriesModule, ModerationModule, ArchiveModule, AnalyticsModule, TeamModule, PerfModule,
   ],
   controllers: [HealthController],
   providers: [

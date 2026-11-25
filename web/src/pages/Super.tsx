@@ -93,6 +93,38 @@ function System() {
       <p className="dim small">{t('Media processing, AI review, notifications, exports and reports run in the background.')} ({j.driver})</p>
       <div className="statgrid"><div className="stat"><b>{j.waiting}</b><span>{t('Waiting')}</span></div><div className="stat"><b>{j.active}</b><span>{t('Working')}</span></div><div className="stat"><b>{j.completed}</b><span>{t('Completed')}</span></div><div className="stat"><b>{j.failed}</b><span>{t('Failed')}</span></div></div>
       {j.recentFailures?.length > 0 && <><h3>{t('Recent failures')}</h3><ul className="list small">{j.recentFailures.map((f: any, i: number) => <li key={i}><b>{f.name}</b> · {f.error ?? f.lastError} <span className="meta">{f.failedAt ? ago(f.failedAt, t) : ''}</span></li>)}</ul></>}
+      <Performance />
     </div>
+  );
+}
+
+/** Response times, errors, server load, slow queries and real-user page speed (Section 9.4). */
+function Performance() {
+  const { t } = useTranslation();
+  const q = useQuery({ queryKey: ['performance'], queryFn: () => get<any>('/super/performance'), refetchInterval: 15_000 });
+  if (!q.data) return <Skeleton lines={3} />;
+  const p = q.data;
+  const ok = (v: number | null, target: number) => (v === null ? '' : v <= target ? 'good' : 'bad');
+  const fmt = (m: string, v: number | null) => (v === null ? '—' : m === 'CLS' ? v.toFixed(2) : `${Math.round(v)} ms`);
+  return (
+    <section aria-labelledby="perf-h">
+      <h2 id="perf-h">{t('Performance')}</h2>
+      <p className="dim small">{t('The last 5 minutes on this server. The target is 95% of responses within 300 ms.')}{p.busy && <> <b className="bad">{t('The server is busy: live analytics are updated every 10 seconds and exports wait.')}</b></>}</p>
+      <div className="statgrid">
+        <div className="stat"><b className={ok(p.last5.p95, p.targets.p95Ms)}>{p.last5.p95} ms</b><span>{t('95% of responses within')}</span></div>
+        <div className="stat"><b>{p.last5.p50} ms</b><span>{t('Typical response')}</span></div>
+        <div className="stat"><b>{p.last5.perMinute}</b><span>{t('Requests per minute')}</span></div>
+        <div className="stat"><b className={p.last5.errorRate > p.targets.alertErrorPct ? 'bad' : ''}>{p.last5.errorRate}%</b><span>{t('Server errors')}</span></div>
+        <div className="stat"><b className={p.eventLoopLagMs.p99 > p.eventLoopLagMs.busyAbove ? 'bad' : ''}>{p.eventLoopLagMs.p99} ms</b><span>{t('Server load (delay)')}</span></div>
+        <div className="stat"><b>{p.memoryMb.rss} MB</b><span>{t('Memory')}</span></div>
+      </div>
+      <h3>{t('Page speed for visitors (last 7 days)')}</h3>
+      <p className="dim small">{t('Measured in visitors’ own browsers; 75% of visits were at least this fast.')}</p>
+      <table className="table small"><thead><tr><th scope="col">{t('Measure')}</th><th scope="col">{t('Result')}</th><th scope="col">{t('Target')}</th><th scope="col">{t('Visits measured')}</th></tr></thead>
+        <tbody>{p.webVitals.map((v: any) => <tr key={v.metric}><th scope="row">{v.metric}</th><td className={ok(v.p75, v.target)}>{fmt(v.metric, v.p75)}</td><td>{fmt(v.metric, v.target)}</td><td>{v.samples}</td></tr>)}</tbody></table>
+      {p.slowRoutes.length > 0 && <><h3>{t('Slow requests (over 1 second)')}</h3><ul className="list small">{p.slowRoutes.map((r: any) => <li key={r.what}><code>{r.what}</code> · {r.ms} ms · ×{r.count}</li>)}</ul></>}
+      {p.slowQueries.length > 0 && <><h3>{t('Slow database queries')}</h3><ul className="list small">{p.slowQueries.map((r: any) => <li key={r.what}><code>{r.what}</code> · {r.ms} ms · ×{r.count}</li>)}</ul></>}
+      {p.statements.available && p.statements.rows.length > 0 && <><h3>{t('Slowest queries on average')}</h3><ul className="list small">{p.statements.rows.map((r: any, i: number) => <li key={i}><code>{r.query}</code> · {r.meanMs} ms · ×{r.calls}</li>)}</ul></>}
+    </section>
   );
 }

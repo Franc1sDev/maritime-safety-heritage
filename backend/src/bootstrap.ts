@@ -10,6 +10,7 @@ import { config } from './config/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { ServerOptions } from 'socket.io';
 import { registerAppFallback, registerPublicPages } from './public/seo';
+import { perf } from './common/perf';
 
 /** Security and request handling shared by the server and the automated tests. */
 export function configureApp(app: INestApplication) {
@@ -46,6 +47,14 @@ export function configureApp(app: INestApplication) {
   // and the map, full screen for video. Everything else (payments, USB, sensors…) is switched off for every page.
   app.use((_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
     res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self), fullscreen=(self), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=()');
+    next();
+  });
+  // Response times and errors of every API request, by route pattern, for performance monitoring (Section 9.4).
+  app.use((req: { originalUrl?: string; url: string; route?: { path?: string }; baseUrl?: string }, res: { statusCode: number; on: (e: string, f: () => void) => void }, next: () => void) => {
+    const url = req.originalUrl ?? req.url;
+    if (!url.startsWith('/api/')) return next();
+    const t = performance.now();
+    res.on('finish', () => perf.request(req.route?.path ? `${req.baseUrl ?? ''}${req.route.path}` : 'unmatched', res.statusCode, performance.now() - t));
     next();
   });
   app.enableCors({

@@ -15,7 +15,7 @@ The recommended choice is already built for each. Confirm it, or say what to cha
 | Video limits | 5 minutes and 200 MB | `MAX_VIDEO_MINUTES`, `MAX_VIDEO_MB` |
 | Sharing targets | The phone's share menu in the app; WhatsApp, Facebook, X, Gmail and Copy Link on the website | Code |
 | Who adds Super Admins | An existing Super Admin | — |
-| AI provider | Not chosen. The built-in rule-based check runs meanwhile | Compare providers on sample stories in English, Kiswahili and Dholuo, then set `AI_PROVIDER` and `AI_API_KEY` |
+| AI provider | Not chosen. The built-in rule-based check runs meanwhile | Compare providers on the evaluation set in English, Kiswahili and Dholuo (`npm run ai:eval`, [tests/ai-eval](../tests/ai-eval/README.md)), then set `AI_PROVIDER` and `AI_API_KEY` |
 | Schedule | The 18-month Milestones and Deliverables | — |
 | Emergency numbers on the safety form | 999 and 112 | Confirm with partners |
 | Minimum age for Contributors | 18 | `MINIMUM_AGE` |

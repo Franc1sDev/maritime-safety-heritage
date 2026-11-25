@@ -26,11 +26,17 @@ How the archive meets the security commitments in the project pitch, and what th
 - An account locks for 15 minutes after 5 wrong passwords. Password reset links are single-use, expire in 30 minutes and are rate-limited.
 - People can close their own account. Their personal details are erased and their name is removed from the audit log.
 
+### Performance data
+
+- Visitors' browsers report page speed to `POST /api/v1/rum`: only the measure, its value, the kind of page and the connection type. No address, account, IP or device identifier is stored; rows are deleted after 90 days.
+- `/api/v1/metrics` is closed (404) unless `METRICS_TOKEN` is set, and then answers only to that token, compared in constant time.
+- Slow queries are logged by their first words, never with their values.
+
 ### Protecting the original
 
 - One official domain, verified in Google Search Console; `www` and other names redirect to it.
 - Canonical links, a sitemap and structured data tell search engines which site is the original.
-- Photos carry a visible credit with the item identifier. The website blocks the right-click menu and dragging on media, and video download controls are hidden.
+- The web copies of photographs carry a visible credit, “Remembering the Waters” (`MEDIA_WATERMARK_TEXT`); the originals are kept unchanged. Each item’s citation gives its identifier and permanent link. The website blocks the right-click menu and dragging on media, and video download controls are hidden.
 - Rate limits on sign-in, search, uploads and the public catalogue make bulk copying slow. Every access to items is counted, and staff actions are logged.
 - Every page carries a copyright notice and links to the terms of use. Takedown steps are in [ADMIN-GUIDE.md](ADMIN-GUIDE.md).
 

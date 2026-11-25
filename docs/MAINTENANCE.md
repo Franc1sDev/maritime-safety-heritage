@@ -30,12 +30,13 @@ The roles, the approval rules and the audit log give the structure for long-term
 | **Every year** | App updates to meet new Android and iOS requirements; rebuild and resubmit | Maintainer | [STORE-RELEASE.md](STORE-RELEASE.md), [IOS-RELEASE.md](IOS-RELEASE.md) |
 | **Every year** | Renewals: domain, hosting, SSL certificate (if paid), Apple Developer Program, other subscriptions | Project owner | Table below |
 | **When someone joins or leaves** | Invite or remove their admin account the same day | Super Admin | MANAGE ADMINS |
+| **When a query shows as slow** | Find out why with `EXPLAIN (ANALYZE, BUFFERS) <the query>` in `docker compose exec db psql -U maritime maritime_heritage`; add an index or rewrite it in a migration; check the Performance panel again | Maintainer | SUPER ADMIN › System › Performance |
 | **At once** | Security patches for a serious vulnerability; any critical or high defect | Maintainer | [INCIDENT-RESPONSE.md](INCIDENT-RESPONSE.md) |
 
 ### Quarterly review checklist
 
 - [ ] **Availability:** was the month-by-month uptime 99.5% or higher? (uptime monitor)
-- [ ] **Speed:** are 95% of API responses under 300 ms, and does the first story appear within 2 seconds on 4G and 5 seconds on 3G? (monitoring; `tests/perf`, `tests/load`)
+- [ ] **Speed:** are 95% of API responses under 300 ms, and does the first story appear within 2 seconds on 4G and 5 seconds on 3G? (SUPER ADMIN › System › Performance; `tests/perf`, `tests/load`)
 - [ ] **AI quality:** were all RED items reviewed within 24 hours? Is the override rate steady? Is any language flagged more than the others? (Analytics › AI quality)
 - [ ] **Moderation:** were the response times met? Are approvals going overdue?
 - [ ] **Security:** audit log reviewed; dependency and code-scanning alerts cleared; secrets still only in the password manager; leavers removed.

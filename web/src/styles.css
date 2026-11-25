@@ -228,3 +228,4 @@ code { background: var(--surface-2); padding: .1em .35em; border-radius: 6px; fo
 
 .pinned { white-space: nowrap; max-width: 13rem; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; } .pinned svg { vertical-align: -2px; margin-inline-end: .3em; }
 .floaters p.small { text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.stat b.good, .table td.good { color: var(--green); } .stat b.bad, .table td.bad, b.bad { color: var(--red); }

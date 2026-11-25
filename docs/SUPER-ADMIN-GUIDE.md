@@ -53,6 +53,7 @@ Use the **AI quality** figures at the quarterly review:
 | Figure | What to look for |
 |---|---|
 | **RED items reviewed within 24 h** | Should be all of them |
+| **AI reviews within 3 minutes** and **Average AI review time** | From SEND to the result. Should be all of them, usually within seconds |
 | **AI override rate** and **Wrongly blocked (overridden)** | A rising rate means the AI is blocking too much |
 | **Admins agreed with RED flags** | A falling share means the same |
 | **AI flags by language** | No language should be flagged much more than the others |
@@ -74,6 +75,16 @@ Look through it every week for failed sign-ins and lockouts, and whenever someth
 
 - A few failures are normal (for example an email address that does not exist).
 - Many jobs waiting for a long time, or the same failure repeating under **Recent failures**, means something is wrong: tell the technical contact.
+
+**Performance** shows how quickly the archive answers, over the last 5 minutes:
+
+| Figure | What to look for |
+|---|---|
+| **95% of responses within** | The target is 300 ms. You are notified when it stays above that |
+| **Server errors** | Normally 0%. You are notified above 5% |
+| **Server load (delay)** | Above 200 ms the server is **busy**: it updates live analytics every 10 seconds and holds exports and reports until it is quieter, so that reading and sharing stay quick |
+| **Page speed for visitors** | Measured in visitors' own browsers over 7 days. LCP is how long the main content takes to appear (target 2.5 s); INP how quickly the page responds to a tap (200 ms); CLS how much the page jumps while loading (0.1) |
+| **Slow requests** and **Slow database queries** | Pass them to the technical contact |
 
 ## Your regular duties
 

@@ -178,6 +178,12 @@ export const config = {
   removedStoryRetentionDays: int('REMOVED_STORY_RETENTION_DAYS', 365),
   /** Multiplies every rate limit. Keep 1 in production; automated tests raise it. */
   rateLimitScale: Math.max(1, int('RATE_LIMIT_SCALE', 1)),
+  /** Performance monitoring (Section 9.4): alert the Super Admins when the API's p95 goes over this many ms. */
+  perfAlertP95Ms: int('PERF_ALERT_P95_MS', 300),
+  /** ...or when this share (%) of responses are server errors. */
+  perfAlertErrorPct: int('PERF_ALERT_ERROR_PCT', 5),
+  /** A token that opens /api/v1/metrics (Prometheus format) to an outside monitoring service. Unset: closed. */
+  metricsToken: process.env.METRICS_TOKEN ?? '',
   /** Folder with the website, served from the same address as the API. Empty string turns it off. */
   webDir: process.env.WEB_DIR ?? require('path').resolve(__dirname, '../../../web/dist'),
   /** Number of reverse proxies in front of the API ("true" = 1). Needed for correct visitor addresses in logs and rate limits. */

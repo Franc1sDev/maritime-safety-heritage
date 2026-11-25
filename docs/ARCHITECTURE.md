@@ -110,6 +110,14 @@ Timed tasks also run:
 | Hour | Erasing accounts and stories whose waiting time has passed |
 | 6 hours | Checking stored media files against their checksums; the automatic monthly report (once a month) |
 | 12 hours | A warning when media storage is nearly full |
+| 5 minutes | Performance check: the Super Admins are told when responses are slow or failing |
+| Day | Page-speed measurements older than 90 days are deleted |
+
+### Performance monitoring and busy mode
+
+Every API request's time and status, and every database query's time, are measured in memory over a rolling 5 minutes (`common/perf.ts`), with no database writes on the request path. Queries slower than `SLOW_QUERY_MS` (500 ms) are logged without their values. The website reports page speed from visitors' own browsers (LCP, CLS, INP, FCP, TTFB) once per visit to `POST /api/v1/rum`, with only the kind of page and the connection type. When `pg_stat_statements` is preloaded (`deploy/docker-compose.yml`), the slowest statements are listed too. All of it shows in **SUPER ADMIN › System › Performance**, and as Prometheus text at `/api/v1/metrics` when `METRICS_TOKEN` is set.
+
+When the server is **busy** (event-loop delay over `BUSY_LAG_MS`, 200 ms, or 95% of the last minute's responses over 1.5 s), it sheds optional work so that reading and sharing stay quick: live analytics broadcasts are held and sent once every 10 seconds (the totals stay exact), exports, imports, PDF reports, downloads as ZIP and transcription wait, other jobs run one at a time, and timed tasks skip a turn. With `REDIS_URL`, separate worker containers take the heavy work instead.
 
 ## Security in the design
 

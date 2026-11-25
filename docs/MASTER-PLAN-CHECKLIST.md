@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 702 of 1190 items ticked, 229 partly done**
+**Progress: 747 of 1190 items ticked, 266 partly done**
 
 How to read it:
 
@@ -45,21 +45,21 @@ To develop a secure, modern, easy-to-use and open-access social platform, availa
 
 #### 1.2.2 Specific Objectives
 
-- [ ] To build an open-access archive and story-sharing platform that brings together community stories and testimonies, historical records, photographs and mapped incident records, where anyone can browse and learn, and where contributors can post stories with text, images, audio, video and documents and engage through reactions, comments, sharing, favourites and direct messages.
-- [ ] To protect storytellers, users and the integrity of the archive through recorded consent, AI-assisted content review, human moderation with clear accountability, strong cyber security and compliance with the Kenya Data Protection Act, 2019.
-- [ ] To make the archive accessible, useful and durable: usable on low-end phones and weak internet connections, available in 20 languages including Kiswahili and Dholuo, searchable by place, time, incident and theme, home to the project’s policy briefs and learning materials, and safely backed up and governed for long-term continuity.
+- [x] To build an open-access archive and story-sharing platform that brings together community stories and testimonies, historical records, photographs and mapped incident records, where anyone can browse and learn, and where contributors can post stories with text, images, audio, video and documents and engage through reactions, comments, sharing, favourites and direct messages. — *Note: stories, testimonies, historical records, photographs and mapped incidents, open to visitors without an account*
+- [x] To protect storytellers, users and the integrity of the archive through recorded consent, AI-assisted content review, human moderation with clear accountability, strong cyber security and compliance with the Kenya Data Protection Act, 2019. — *Note: recorded consent, AI review, human moderation with the audit log and approvals, reporting and safety concerns*
+- [~] To make the archive accessible, useful and durable: usable on low-end phones and weak internet connections, available in 20 languages including Kiswahili and Dholuo, searchable by place, time, incident and theme, home to the project’s policy briefs and learning materials, and safely backed up and governed for long-term continuity. — *Left: low-data mode, offline reading and WCAG checks are built; English and Kiswahili are complete, the other 18 languages need translators*
 
 ### 1.3 Project Deliverables
 
 - [x] **1. Backend (API and services)**: The secure server application, database, media storage, background processing, AI services, notifications and administration logic (Section 2). — *Note: 171 API endpoints, 44 automated end-to-end tests; production services are switched on in stage 5*
-- [ ] **2. Website and web app**: The full platform in any modern browser on computers and phones, installable as a web app (Section 3.2).
-- [ ] **3. Android app**: An installable app published on Google Play (Section 3.3).
-- [ ] **4. iOS app**: An installable app published on the Apple App Store (Section 3.3).
-- [ ] **5. Admin and Super Admin tools**: Administrative controls, moderation, reports queue, live analytics and PDF reports (Sections 3.2.9–3.2.12).
-- [ ] **6. Incident records and national mapping**: A catalogue of documented water-transport incidents, shown on a map and linked to the stories, testimonies and records about each incident (Sections 2.3 and 3.2.14).
-- [ ] **7. Bulk import and cataloguing tools**: Tools for the project team to upload the collected oral histories, photographs, records and reports with their metadata, consent and rights (Section 3.2.10).
-- [ ] **8. Learning resources area**: A library for policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions (Section 3.2.6).
-- [ ] **9. AI services**: Content review, transcription, translation and report narratives (Section 5).
+- [x] **2. Website and web app**: The full platform in any modern browser on computers and phones, installable as a web app (Section 3.2). — *Note: the full platform on the website, installable with an offline shell and push notifications*
+- [~] **3. Android app**: An installable app published on Google Play (Section 3.3). — *Left: built and tested in every automatic build; publishing on Google Play needs the Play Console account*
+- [~] **4. iOS app**: An installable app published on the Apple App Store (Section 3.3). — *Left: built (unsigned) in every automatic build; publishing needs the Apple Developer account and signing*
+- [x] **5. Admin and Super Admin tools**: Administrative controls, moderation, reports queue, live analytics and PDF reports (Sections 3.2.9–3.2.12). — *Note: administrative controls, moderation, reports queue, live analytics and PDF reports*
+- [x] **6. Incident records and national mapping**: A catalogue of documented water-transport incidents, shown on a map and linked to the stories, testimonies and records about each incident (Sections 2.3 and 3.2.14). — *Note: incident catalogue with its map and linked items*
+- [x] **7. Bulk import and cataloguing tools**: Tools for the project team to upload the collected oral histories, photographs, records and reports with their metadata, consent and rights (Section 3.2.10). — *Note: spreadsheet import with checking, approval and the metadata template*
+- [x] **8. Learning resources area**: A library for policy briefs, learning summaries, educational materials, the contributor handbook and online exhibitions (Section 3.2.6). — *Note: policy briefs, learning summaries, materials, the handbook and exhibitions*
+- [x] **9. AI services**: Content review, transcription, translation and report narratives (Section 5). — *Note: review, transcription, translation and report narratives through one gateway*
 - [~] **10. Hosting and deployment**: Test hosting, production hosting, domain, SSL, CI/CD, monitoring and backups (Sections 7 and 9). — *Left: test hosting, CI/CD and the encrypted backups are built and tested; production hosting, domain, SSL and monitoring come with the paid server*
 - [x] **11. Documentation**: User guide, contributor handbook, admin guide, technical documentation, API reference, deployment and security guides, and handover notes. — *Note: docs/: user guide, handbook, admin manual, Super Admin guide, architecture, API reference, deployment, security, backups and recovery, incident response, testing, maintenance, go-live and handover; the handbook gets screenshots of the live platform at go-live*
 - [~] **12. Training and handover**: Orientation for partners, researchers and community representatives, training sessions for admins and Super Admins, and a handover of accounts, credentials and source code. — *Left: the training sessions and the handover steps are written (docs/HANDOVER.md); the sessions themselves are held before go-live*
@@ -67,30 +67,30 @@ To develop a secure, modern, easy-to-use and open-access social platform, availa
 
 ### 1.4 User Platforms
 
-- [ ] **Website**: Any modern browser (Chrome, Edge, Firefox, Safari) on computers, tablets and phones. Full contributor, admin and Super Admin functionality.
-- [ ] **Web app (PWA)**: The same website installed to a phone or computer home screen, with an app icon, push notifications and partial offline use, without going through an app store.
-- [ ] **Android app**: Native installable app from Google Play, built from the same Flutter code as the iOS app. Supports low-end Android phones.
-- [ ] **iOS app**: Native installable app from the Apple App Store, for iPhone and iPad.
+- [~] **Website**: Any modern browser (Chrome, Edge, Firefox, Safari) on computers, tablets and phones. Full contributor, admin and Super Admin functionality. — *Left: Contributor, admin and Super Admin areas are all on the website and tested in Chromium; Edge, Firefox and Safari still to be tried by hand (docs/GO-LIVE.md)*
+- [x] **Web app (PWA)**: The same website installed to a phone or computer home screen, with an app icon, push notifications and partial offline use, without going through an app store. — *Note: Workbox service worker, app icon, web push and an offline shell*
+- [~] **Android app**: Native installable app from Google Play, built from the same Flutter code as the iOS app. Supports low-end Android phones. — *Left: built from the shared Flutter code for Android 8.0 and later; not yet on Google Play or tried on a low-end phone*
+- [~] **iOS app**: Native installable app from the Apple App Store, for iPhone and iPad. — *Left: built for iPhone and iPad from the same code; not yet on the App Store*
 
 All platforms will use the same backend and the same accounts, and must look and behave consistently (Section 3.1.6).
 
 ### 1.5 User Roles
 
-- [ ] **Visitor**: Anyone using the archive without signing in. Browses, searches, reads, listens to, shares and cites published content and learning resources, and can report a safety concern. Cannot post, react, comment, message or save favourites.
-- [ ] **Contributor**: A standard user. Signs in with Google or Apple. Views, shares and engages with stories, sends messages, reports content, and manages their profile and reminders.
-- [ ] **Admin**: A project team moderator. Signs in with a registered admin account and multi-factor authentication. Has everything a Contributor has, plus the administrative controls panel: moderation, reports, company stories, incident records, bulk import, learning resources, analytics and PDF reports.
-- [ ] **Super Admin**: A senior member of the project team. Does not moderate stories. Sees live analytics, generates PDF reports, adds and removes admins, and manages Super Admins. There must always be at least one Super Admin.
+- [x] **Visitor**: Anyone using the archive without signing in. Browses, searches, reads, listens to, shares and cites published content and learning resources, and can report a safety concern. Cannot post, react, comment, message or save favourites. — *Note: enforced by the server for every route and checked by the access test in every automatic build*
+- [x] **Contributor**: A standard user. Signs in with Google or Apple. Views, shares and engages with stories, sends messages, reports content, and manages their profile and reminders. — *Note: enforced by the server for every route and checked by the access test in every automatic build*
+- [x] **Admin**: A project team moderator. Signs in with a registered admin account and multi-factor authentication. Has everything a Contributor has, plus the administrative controls panel: moderation, reports, company stories, incident records, bulk import, learning resources, analytics and PDF reports. — *Note: enforced by the server for every route and checked by the access test in every automatic build*
+- [x] **Super Admin**: A senior member of the project team. Does not moderate stories. Sees live analytics, generates PDF reports, adds and removes admins, and manages Super Admins. There must always be at least one Super Admin. — *Note: enforced by the server for every route and checked by the access test in every automatic build*
 
 ### 1.6 Beneficiaries and Regions
 
 The platform is designed first for the people and places the project names as its beneficiaries:
 
-- [ ] **Coastal communities**: Communities along the Indian Ocean coast, especially Mombasa County and surrounding areas; ferry users and workers at crossings such as the Likoni Channel; coastal fishing communities.
-- [ ] **Lake Victoria communities**: Fisherfolk, boat operators, traders and families in Kisumu, Homa Bay, Migori, Busia and Siaya counties.
-- [ ] **People affected by incidents**: Survivors of water-transport incidents and families affected by past disasters.
-- [ ] **Under-represented voices**: Women in fishing communities, youth and informal transport workers.
-- [ ] **Institutions**: Maritime and inland-water safety regulators, heritage institutions, universities and community organisations.
-- [ ] **Wider audience**: Researchers, safety practitioners and policymakers in other countries, particularly in Africa and other regions that rely on ferries and small vessels.
+- [x] **Coastal communities**: Communities along the Indian Ocean coast, especially Mombasa County and surrounding areas; ferry users and workers at crossings such as the Likoni Channel; coastal fishing communities. — *Note: the counties, crossings and water bodies are in the preset places list (Appendix A)*
+- [x] **Lake Victoria communities**: Fisherfolk, boat operators, traders and families in Kisumu, Homa Bay, Migori, Busia and Siaya counties. — *Note: the counties, crossings and water bodies are in the preset places list (Appendix A)*
+- [x] **People affected by incidents**: Survivors of water-transport incidents and families affected by past disasters. — *Note: served by anonymous and “as told by” posting, the incident records, citations and exports, and the multilingual design*
+- [x] **Under-represented voices**: Women in fishing communities, youth and informal transport workers. — *Note: served by anonymous and “as told by” posting, the incident records, citations and exports, and the multilingual design*
+- [x] **Institutions**: Maritime and inland-water safety regulators, heritage institutions, universities and community organisations. — *Note: served by anonymous and “as told by” posting, the incident records, citations and exports, and the multilingual design*
+- [x] **Wider audience**: Researchers, safety practitioners and policymakers in other countries, particularly in Africa and other regions that rely on ferries and small vessels. — *Note: served by anonymous and “as told by” posting, the incident records, citations and exports, and the multilingual design*
 
 Design consequences: inland waters receive the same weight as the coast in the places list, map, categories and sample content; the interface is available in Kiswahili and Dholuo as well as English (Section 3.1.5); and the platform works on low-end phones and weak connections (Section 8).
 
@@ -98,30 +98,30 @@ Design consequences: inland waters receive the same weight as the coast in the p
 
 The project has five activities. The platform is Activity 3, and it also supports the other four:
 
-- [ ] **1. Researching and documenting water-transport safety heritage**: Incident records and the national incident map; historical records with source and reference; bulk import of collected materials (Sections 2.3, 3.2.10 and 3.2.14).
-- [ ] **2. Co-creating community histories of risk and resilience**: Story sharing in the storyteller’s own language; “as told by” and anonymous posting with recorded consent; validation by storytellers before publication; audio and video oral histories with transcripts (Sections 3.2.4 and 11.4).
-- [ ] **3. Developing an open-access digital archive**: The whole platform: website, web app, Android and iOS apps, open to visitors without an account (Sections 2 to 9).
-- [ ] **4. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3).
-- [ ] **5. Translating heritage into policy and public learning**: The learning resources area for policy briefs, learning summaries, educational materials and online exhibitions; collections; analytics for reporting (Sections 3.2.6, 3.2.14 and 11.9).
+- [x] **1. Researching and documenting water-transport safety heritage**: Incident records and the national incident map; historical records with source and reference; bulk import of collected materials (Sections 2.3, 3.2.10 and 3.2.14). — *Note: incident records and map, historical records with source, bulk import*
+- [x] **2. Co-creating community histories of risk and resilience**: Story sharing in the storyteller’s own language; “as told by” and anonymous posting with recorded consent; validation by storytellers before publication; audio and video oral histories with transcripts (Sections 3.2.4 and 11.4). — *Note: own-language posting, “as told by” and anonymous posting, consent, validation and transcripts*
+- [~] **3. Developing an open-access digital archive**: The whole platform: website, web app, Android and iOS apps, open to visitors without an account (Sections 2 to 9). — *Left: website and web app open to visitors; the apps are built but not yet in the stores*
+- [~] **4. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3). — *Left: the handbook draft and the on-screen hints are built; training sessions are planned in docs/HANDOVER.md*
+- [x] **5. Translating heritage into policy and public learning**: The learning resources area for policy briefs, learning summaries, educational materials and online exhibitions; collections; analytics for reporting (Sections 3.2.6, 3.2.14 and 11.9). — *Note: learning resources, exhibitions, collections and analytics for reporting*
 
 ### 1.8 Development Approach
 
-- [ ] Schedule: development takes place within the project’s milestone “Digital archive development”. Within that window the order and length of the work are flexible, provided the platform is delivered on time. All dates are kept in one place, the schedule and Gantt chart in Appendix D.
-- [ ] Stages: discovery and design; build; content and testing; go-live and handover.
-- [ ] Phased delivery: features are grouped into three delivery phases (Section 11.1), each ending with a working release that can be tested and reviewed.
-- [ ] Build order: backend first, then the website and web app, then the Android and iOS apps, so each layer is tested before the next is built on it.
-- [ ] Version control: all code will be kept in a private GitHub repository, with every change committed, pushed and tested automatically before it is deployed.
-- [ ] Test hosting first: during development the platform runs on free test hosting; production hosting, the domain and SSL are set up before content import and go-live (Section 9).
-- [ ] Testing with users: testing and refinement use input from partners and selected users (Section 10).
-- [ ] Stage review: each stage ends with a demo on staging, checked against this plan, before the next stage begins.
+- [~] Schedule: development takes place within the project’s milestone “Digital archive development”. Within that window the order and length of the work are flexible, provided the platform is delivered on time. All dates are kept in one place, the schedule and Gantt chart in Appendix D. — *Left: followed in the build so far; the content, user testing and go-live stages need the project team*
+- [~] Stages: discovery and design; build; content and testing; go-live and handover. — *Left: followed in the build so far; the content, user testing and go-live stages need the project team*
+- [~] Phased delivery: features are grouped into three delivery phases (Section 11.1), each ending with a working release that can be tested and reviewed. — *Left: followed in the build so far; the content, user testing and go-live stages need the project team*
+- [x] Build order: backend first, then the website and web app, then the Android and iOS apps, so each layer is tested before the next is built on it. — *Note: backend, then website and web app, then the Android and iOS apps*
+- [~] Version control: all code will be kept in a private GitHub repository, with every change committed, pushed and tested automatically before it is deployed. — *Left: every change is committed, pushed and tested automatically on GitHub; the repository is still public and must be made private by its owner*
+- [x] Test hosting first: during development the platform runs on free test hosting; production hosting, the domain and SSL are set up before content import and go-live (Section 9). — *Note: free test hosting on Render; production hosting comes before content import (docs/GO-LIVE.md)*
+- [~] Testing with users: testing and refinement use input from partners and selected users (Section 10). — *Left: followed in the build so far; the content, user testing and go-live stages need the project team*
+- [~] Stage review: each stage ends with a demo on staging, checked against this plan, before the next stage begins. — *Left: followed in the build so far; the content, user testing and go-live stages need the project team*
 
 ### 1.9 Structure of this Plan
 
 The plan is arranged as follows, ending with references and appendices:
 
-- [ ] Sections 1 to 10: what will be built and how, with the tools to be used at the end of each technical section. These sections give no dates.
-- [ ] Section 11: the delivery phases and the deliverables that surround the platform (prototype, handbook, content import, documentation, maintenance).
-- [ ] Appendices: preset lists and standard texts (A), open technical decisions (B), moderation rules to implement (C), the project schedule and Gantt chart (D), alignment with the two source documents (E), the technical risk register (F), and the project cost and running costs (G).
+- [x] Sections 1 to 10: what will be built and how, with the tools to be used at the end of each technical section. These sections give no dates. — *Note: describes the plan itself; this checklist follows the same structure*
+- [x] Section 11: the delivery phases and the deliverables that surround the platform (prototype, handbook, content import, documentation, maintenance). — *Note: describes the plan itself; this checklist follows the same structure*
+- [x] Appendices: preset lists and standard texts (A), open technical decisions (B), moderation rules to implement (C), the project schedule and Gantt chart (D), alignment with the two source documents (E), the technical risk register (F), and the project cost and running costs (G). — *Note: describes the plan itself; this checklist follows the same structure*
 
 ## SECTION 2: BACKEND
 
@@ -286,8 +286,8 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 - [x] **API documentation**: OpenAPI (Swagger UI) | Shared, always-current API reference
 - [~] **Code quality**: ESLint, Prettier, TypeScript strict mode | Consistent, safer code — *Left: TypeScript strict mode is on; ESLint and Prettier are not set up yet*
 - [x] **Testing**: Jest, Supertest | Unit and end-to-end API tests
-- [ ] **Editor and source control**: Visual Studio Code, Git, GitHub (private repository) | Development and version history
-- [ ] **Local environment**: Docker Desktop, embedded PostgreSQL for demos | The same setup on every computer
+- [~] **Editor and source control**: Visual Studio Code, Git, GitHub (private repository) | Development and version history — *Left: Git and GitHub; the repository is to be made private by its owner*
+- [x] **Local environment**: Docker Desktop, embedded PostgreSQL for demos | The same setup on every computer — *Note: Docker Compose for the full stack, embedded PostgreSQL for demos and tests*
 
 ## SECTION 3: FRONT END
 
@@ -705,7 +705,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [~] Apple App Store: Sign in with Apple (offered alongside Google); account deletion inside the app; reporting and blocking for user-generated content; a privacy policy and privacy labels. — *Left: sign-in with Apple and Google, account deletion, reporting and blocking are in the app; the store forms and labels are filled in when the app is submitted*
 - [~] Google Play: the Data safety form; a current target Android version; user-generated content moderation, reporting and blocking; account deletion inside the app and on the web. — *Left: sign-in with Apple and Google, account deletion, reporting and blocking are in the app; the store forms and labels are filled in when the app is submitted*
-- [ ] Both: store listings, screenshots, app icons and descriptions in English and Kiswahili at launch.
+- [~] Both: store listings, screenshots, app icons and descriptions in English and Kiswahili at launch. — *Left: name, descriptions and keywords in English and Kiswahili are in docs/STORE-RELEASE.md, with the app icons; the Kiswahili needs a native speaker’s reading, and the screenshots need the release builds on real devices*
 
 #### 3.3.5 Device Support
 
@@ -800,17 +800,17 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [ ] **UI design**: Figma | Final visual designs, prototypes and the design system
 - [ ] **Design tokens**: Style Dictionary | One source of colours, type and spacing for web and apps
-- [ ] **Website framework**: React, TypeScript, Vite | The website and web app
-- [ ] **Web animation**: Framer Motion, Lottie | Animated icons, transitions and celebrations
-- [ ] **Web state and data**: TanStack Query | Caching, optimistic updates, offline-friendly data fetching
-- [ ] **PWA**: Workbox (service worker) | Installable web app, offline cache, push
-- [ ] **Mobile apps**: Flutter, Dart | Android and iOS apps from one codebase
-- [ ] **Mobile packages**: google_sign_in, sign_in_with_apple, firebase_messaging, video_player, record, camera, drift (offline store) | Native sign-in, push, media, recording, offline data
-- [ ] **Maps**: Google Maps Platform (Maps JavaScript API, Google Maps SDK for Flutter) | “Where It Happened” and Map Explore
-- [ ] **Charts**: Apache ECharts (web), fl_chart (apps) | Live analytics charts
-- [ ] **Translations**: i18next (web), Flutter intl (apps), Weblate or Crowdin | Interface languages and translation management
+- [x] **Website framework**: React, TypeScript, Vite | The website and web app — *Note: in use*
+- [~] **Web animation**: Framer Motion, Lottie | Animated icons, transitions and celebrations — *Left: Framer Motion; animated icons are CSS and SVG, without Lottie*
+- [x] **Web state and data**: TanStack Query | Caching, optimistic updates, offline-friendly data fetching — *Note: in use*
+- [x] **PWA**: Workbox (service worker) | Installable web app, offline cache, push — *Note: in use*
+- [x] **Mobile apps**: Flutter, Dart | Android and iOS apps from one codebase — *Note: in use*
+- [~] **Mobile packages**: google_sign_in, sign_in_with_apple, firebase_messaging, video_player, record, camera, drift (offline store) | Native sign-in, push, media, recording, offline data — *Left: google_sign_in, sign_in_with_apple, video_player, record and image_picker are used; push through Firebase, the camera plugin and the drift offline store are not (offline data is kept with the app’s own cache)*
+- [~] **Maps**: Google Maps Platform (Maps JavaScript API, Google Maps SDK for Flutter) | “Where It Happened” and Map Explore — *Left: Google Maps on the website when a key is set, with a built-in map otherwise; the apps use OpenStreetMap tiles*
+- [~] **Charts**: Apache ECharts (web), fl_chart (apps) | Live analytics charts — *Left: Apache ECharts on the website; the apps draw their charts without fl_chart*
+- [~] **Translations**: i18next (web), Flutter intl (apps), Weblate or Crowdin | Interface languages and translation management — *Left: i18next on the website and shared translation files in the apps; Weblate or Crowdin to be set up with the translators*
 - [ ] **Fonts and icons**: Noto font family, a shared icon set | All 20 languages’ scripts; consistent icons
-- [ ] **Accessibility checks**: axe DevTools, Lighthouse, TalkBack, VoiceOver | WCAG 2.2 AA checks
+- [~] **Accessibility checks**: axe DevTools, Lighthouse, TalkBack, VoiceOver | WCAG 2.2 AA checks — *Left: axe and Lighthouse in every automatic build; TalkBack and VoiceOver need real devices*
 
 ## SECTION 4: CYBER SECURITY AND DATA SECURITY
 
@@ -904,7 +904,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [x] Contributors keep the copyright in their stories, and grant the platform permission to store, display and preserve them. — *Note: stated in the terms of use*
 - [x] Contributors choose whether others may reuse their story, e.g. All rights reserved or a Creative Commons licence (Section 3.2.4).
-- [~] Each story shows its rights and credits; media can be watermarked. — *Left: rights and credits are stored and returned with every story; watermarking is not built*
+- [x] Each story shows its rights and credits; media can be watermarked. — *Note: rights and credits are shown with every story; the web copies of photographs carry a visible credit (MEDIA_WATERMARK), originals unchanged*
 
 ##### Consent
 
@@ -933,8 +933,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 ##### Protecting the Original Archive
 
 - [~] One official domain, verified in Google Search Console, with canonical tags marking the original. — *Left: canonical tags are on every public page; the domain and Search Console are set up at go-live*
-- [~] Media watermarked and credited; bulk downloading and scraping rate-limited. — *Left: credits and rate limits are in place; watermarking is not built*
-- [ ] Monitoring for copies, with takedown requests for duplicates; a copyright and licence notice on every page.
+- [x] Media watermarked and credited; bulk downloading and scraping rate-limited. — *Note: visible photo credit on web copies, credits with every item, rate limits on downloads and the catalogue*
+- [~] Monitoring for copies, with takedown requests for duplicates; a copyright and licence notice on every page. — *Left: a copyright and licence notice with a link to the takedown terms is on every page of the website and in the app; watching the web for copies (for example Google Alerts on story titles) is for the team to set up*
 - [ ] No public website can be made impossible to copy; the aim is to make copying hard, easy to detect and quick to remove.
 
 ### 4.12 Tools and Technologies
@@ -962,7 +962,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Organisation**: Suggest a category, tags and location for a story, which the contributor confirms.
 - [x] **Spam detection**: Spot repeated, automated or scam content.
 - [x] **Incident matching**: Suggest the incident record a story or historical record may belong to, for the contributor or admin to confirm.
-- [ ] **Read aloud**: Turn story text into speech for the Listen button.
+- [~] **Read aloud**: Turn story text into speech for the Listen button. — *Left: the Listen button reads story text with the device’s speech voices; no cloud voice yet*
 
 ### 5.2 AI Content Review
 
@@ -989,7 +989,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] Report narratives: the AI writes the trend explanation for PDF reports from the actual figures only; the figures in the text are checked against the data before the report is produced. — *Left: built behind the AI gateway; needs an AI provider key to switch on and test with real content*
 - [~] Suggestions: suggested category, tags, alt text and place, always confirmed by the user. — *Left: category, tags and language are suggested now; alt text and place need the AI provider*
 - [x] Incident matching: when a story names a place, date or vessel that matches an incident record, the link is suggested and must be confirmed by a person.
-- [ ] Read aloud: the Listen button uses the device’s own speech voices where one exists for the language, and a cloud voice otherwise. Where no suitable voice exists for a language, the storyteller’s original audio recording is offered instead.
+- [~] Read aloud: the Listen button uses the device’s own speech voices where one exists for the language, and a cloud voice otherwise. Where no suitable voice exists for a language, the storyteller’s original audio recording is offered instead. — *Left: the Listen button uses the device’s speech voices on the website and in the apps; no cloud voice yet*
 - [x] Bulk import checks: imported items pass the same AI review as other stories before the batch is approved.
 
 ### 5.5 Implementation Architecture
@@ -1013,7 +1013,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [ ] **Agreement with admin decisions on RED items**: At least 90% after the first three months
 - [ ] **Wrongly blocked stories (overridden by admins)**: Below 5% of RED items
-- [ ] **Review time**: Text under 10 seconds; all items under 3 minutes
+- [~] **Review time**: Text under 10 seconds; all items under 3 minutes — *Left: measured for every story from SEND to the AI result and shown in Analytics (AI reviews within 3 minutes, average time) and the PDF reports; the built-in check takes milliseconds; the chosen provider’s time per item is measured by npm run ai:eval*
 - [ ] **Transcription accuracy**: Reviewed on sample stories in English and Kiswahili each quarter
 
 ### 5.8 Tools and Technologies
@@ -1023,8 +1023,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [~] **Image moderation**: The chosen model’s image input, or a dedicated moderation service | Checking images and video frames — *Left: connectors are built; the provider and its key are still to be chosen*
 - [~] **Transcription**: A speech-to-text service, e.g. OpenAI Whisper or Google Speech-to-Text | Transcripts and captions — *Left: connectors are built; the provider and its key are still to be chosen*
 - [~] **Translation**: A machine translation service, e.g. Google Cloud Translation or DeepL, or the language model | Interface and content translation — *Left: connectors are built; the provider and its key are still to be chosen*
-- [ ] **Text to speech**: The device’s built-in speech voices; a cloud text-to-speech service where a language needs it | The Listen button
-- [ ] **Evaluation**: A test set of sample stories with agreed admin decisions | Measuring AI accuracy before and after changes
+- [~] **Text to speech**: The device’s built-in speech voices; a cloud text-to-speech service where a language needs it | The Listen button — *Left: device voices on web and apps; a cloud voice is not set up*
+- [~] **Evaluation**: A test set of sample stories with agreed admin decisions | Measuring AI accuracy before and after changes — *Left: 38 labelled samples in English, Kiswahili and Dholuo (tests/ai-eval) with a scoring script and an automatic regression test; the admins still need to agree the labels, and a native speaker to check the Dholuo*
 
 ## SECTION 6: SYSTEM OPTIMIZATION FOR FAST RESPONSE AND LOAD HANDLING
 
@@ -1056,7 +1056,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 6.4 Backend and Database Performance
 
-- [~] Indexes on all frequently searched and sorted fields; slow queries are monitored and fixed. — *Left: indexes are in place; slow-query monitoring is set up in stage 5*
+- [x] Indexes on all frequently searched and sorted fields; slow queries are monitored and fixed. — *Note: indexes are in place; every query is timed and slow ones are logged and listed in SUPER ADMIN › System › Performance, with pg_stat_statements; none over 500 ms in the load tests*
 - [~] Cursor pagination everywhere, so large lists stay fast. — *Left: feeds, messages and the audit log use cursors; comments and the shorter lists are capped instead*
 - [x] Caching in Redis for the trending feed, counts, sessions and frequently read data.
 - [x] The trending ranking and analytics totals are calculated in the background, not when a user opens a page.
@@ -1068,8 +1068,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] Stateless API servers: more copies can be added behind the proxy during busy periods.
 - [x] Background workers scale separately from the API, so heavy media processing never slows browsing.
 - [x] WebSocket connections are shared across servers through Redis.
-- [ ] A database read replica can be added when read traffic grows.
-- [ ] Graceful degradation: under extreme load, non-essential features (e.g. live chart updates) slow down first, while browsing and posting keep working.
+- [~] A database read replica can be added when read traffic grows. — *Left: documented in docs/ARCHITECTURE.md (Growing); reads would need a small change to use it*
+- [x] Graceful degradation: under extreme load, non-essential features (e.g. live chart updates) slow down first, while browsing and posting keep working. — *Note: when the event loop lags or responses slow down, live analytics are sent every 10 seconds, exports, imports, reports and transcription wait, and other jobs run one at a time; unit tested*
 - [x] Rate limits protect the platform from abuse and accidental overload.
 
 ### 6.6 Load and Performance Testing
@@ -1080,17 +1080,17 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 6.7 Performance Monitoring
 
-- [ ] Application performance monitoring tracks response times, errors and slow queries in production.
-- [ ] Real-user monitoring measures load times on users’ actual devices and networks.
-- [ ] Alerts are sent when targets are breached.
+- [x] Application performance monitoring tracks response times, errors and slow queries in production. — *Note: response times, errors and slow queries per route, in SUPER ADMIN › System › Performance and as Prometheus metrics; running on the test site, and on the production server once it is set up*
+- [x] Real-user monitoring measures load times on users’ actual devices and networks. — *Note: the website reports LCP, CLS, INP, FCP and TTFB from visitors’ browsers, by kind of page and connection type, with no personal data; p75 over 7 days in the Performance panel*
+- [x] Alerts are sent when targets are breached. — *Note: the Super Admins are notified when 95% of responses take over 300 ms or more than 5% are errors (at most hourly); uptime alerts come from the outside uptime monitor*
 
 ### 6.8 Tools and Technologies
 
 - [~] **Load testing**: k6 | Simulating many users before each release — *Left: Lighthouse and a load test in the automatic build; k6 script ready; WebPageTest not used*
 - [~] **Web performance**: Lighthouse, WebPageTest | Load-time measurement and improvement — *Left: Lighthouse and a load test in the automatic build; k6 script ready; WebPageTest not used*
 - [ ] **App performance**: Flutter DevTools, Firebase Performance Monitoring | Smooth scrolling and app start times
-- [ ] **Monitoring**: Sentry (errors and performance), Prometheus and Grafana (server metrics) | Production performance and alerts
-- [ ] **Database**: pg_stat_statements, EXPLAIN ANALYZE | Finding and fixing slow queries
+- [~] **Monitoring**: Sentry (errors and performance), Prometheus and Grafana (server metrics) | Production performance and alerts — *Left: built-in monitoring with a Prometheus endpoint (METRICS_TOKEN) ready for Grafana; Sentry and Grafana need accounts*
+- [x] **Database**: pg_stat_statements, EXPLAIN ANALYZE | Finding and fixing slow queries — *Note: pg_stat_statements preloaded in deploy/docker-compose.yml, shown in the Performance panel; EXPLAIN ANALYZE for fixing, described in docs/MAINTENANCE.md*
 - [ ] **CDN and caching**: Cloudflare CDN, Redis | Fast delivery and caching
 
 ## SECTION 7: DATA STORAGE AND BACKUP
@@ -1148,8 +1148,8 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 7.8 Tools and Technologies
 
-- [ ] **Database**: PostgreSQL with PostGIS | Structured data
-- [ ] **Object storage**: Cloudflare R2, Backblaze B2, AWS S3 or similar (with an archive tier for originals) | Media files
+- [~] **Database**: PostgreSQL with PostGIS | Structured data — *Left: PostgreSQL 17; PostGIS is turned on where the server has it, and places use latitude and longitude otherwise*
+- [~] **Object storage**: Cloudflare R2, Backblaze B2, AWS S3 or similar (with an archive tier for originals) | Media files — *Left: any S3-compatible storage through MEDIA_STORAGE=s3; the archive tier needs the provider’s lifecycle rule*
 - [ ] **Database backups**: WAL-G or pgBackRest | Continuous backup and point-in-time recovery
 - [~] **File backups**: restic or rclone (encrypted) | Media backups to a second provider — *Left: rclone off-site copy built into the backup script; needs the second provider account*
 - [x] **Integrity**: SHA-256 checksums | Detecting damaged files
@@ -1269,7 +1269,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 ### 9.8 After Launch
 
-- [ ] Monitoring of errors, uptime and performance, with alerts to the support team.
+- [~] Monitoring of errors, uptime and performance, with alerts to the support team. — *Left: error and performance alerts to the Super Admins are built; the uptime monitor needs the production address and an account*
 - [ ] Regular updates: security patches promptly; feature releases on a planned schedule.
 - [ ] A public status page linked to “Scheduled maintenance” announcements.
 - [~] Quarterly reviews of performance, AI quality, security and costs. — *Left: the review checklist is in docs/MAINTENANCE.md*
@@ -1304,7 +1304,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 - [x] **Network tests**: Slow, unstable and offline conditions (Section 8) | Each release — *Note: in web/e2e, tests/load and tests/perf, run on every change*
 - [x] **Performance and load tests**: Targets in Section 6.1 | Each release — *Note: in web/e2e, tests/load and tests/perf, run on every change*
 - [~] **Security tests**: Automated scans every change; penetration test before launch (Section 4.10) | Continuous; before launch — *Left: CodeQL, dependency checks and the access test on every change; penetration test before launch*
-- [ ] **AI evaluation**: AI review accuracy on a fixed set of sample stories (Section 5.7) | Before launch; after any AI change
+- [~] **AI evaluation**: AI review accuracy on a fixed set of sample stories (Section 5.7) | Before launch; after any AI change — *Left: the fixed set and npm run ai:eval are built and run in every automatic build with the built-in check; to be run with the chosen provider before launch*
 - [ ] **User acceptance testing**: Partners and selected users check the platform against this plan | Before launch
 
 ### 10.3 Test Devices
@@ -1584,7 +1584,7 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ### Appendix C: Moderation Rules to Implement
 
-- [ ] The rules below define what the AI review (Section 5.2), the moderation queues (Section 2.8) and the admin tools (Section 3.2.10) must enforce.
+- [x] The rules below define what the AI review (Section 5.2), the moderation queues (Section 2.8) and the admin tools (Section 3.2.10) must enforce. — *Note: introduction; the rules themselves are ticked one by one below*
 
 ##### C.1 Purpose and Principles
 
@@ -1704,20 +1704,20 @@ The project will produce an archive sustainability plan and a long-term continui
 
 ### Appendix F: Technical Risk Register
 
-- [ ] **T1**: The scope does not fit the development window (Appendix D) | High | High | Phased delivery with Phase 1 first (Section 11.1); feature flags; weekly tracking against the stages
+- [~] **T1**: The scope does not fit the development window (Appendix D) | High | High | Phased delivery with Phase 1 first (Section 11.1); feature flags; weekly tracking against the stages — *Left: the build’s part is done (phased delivery, store rules, cloud iOS build, human translation paths); the rest happens at release*
 - [x] **T2**: Collected content arrives late or in inconsistent formats | Medium | High | Metadata template and recording guidance issued before collection; bulk import accepts batches as they arrive and reports errors row by row — *Note: the mitigation is in place*
 - [x] **T3**: Technical problems in platform development | Medium | High | Phased testing and regular feedback from users; automated tests and quality gates (Section 10); staging before production — *Note: the mitigation is in place*
-- [ ] **T4**: AI wrongly blocks or allows content, especially in Kiswahili, Dholuo and local languages | Medium | Medium | Human review of RED items; evaluation set in the main languages; monthly recalibration; provider can be changed through the AI gateway (Section 5)
+- [~] **T4**: AI wrongly blocks or allows content, especially in Kiswahili, Dholuo and local languages | Medium | Medium | Human review of RED items; evaluation set in the main languages; monthly recalibration; provider can be changed through the AI gateway (Section 5) — *Left: human review of RED items, the evaluation set in English, Kiswahili and Dholuo, recalibration and a changeable provider are built; the provider comparison is still to run*
 - [~] **T5**: Security breach or data leak | Low | High | Controls in Section 4; penetration test before go-live; incident response plan — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
 - [x] **T6**: Sensitive testimony published without valid consent or validation | Low | High | Consent record and validation flag enforced by the backend before publication (Section 2.6); withdrawal supported — *Note: the mitigation is in place*
-- [ ] **T7**: Running costs for AI, storage or hosting grow faster than the budget | Medium | Medium | Spending limits and alerts, caching, free tiers, archive storage tier (Appendix G)
-- [ ] **T8**: Free test hosting limits or expiry interrupt testing | High | Low | No real data on test hosting; move to production hosting before content import (Section 9)
-- [ ] **T9**: App store rejection or delay | Medium | Medium | Store rules built in from the start (Section 3.3.4); early test submissions; the web app is available regardless
-- [ ] **T10**: iOS builds without a Mac | Medium | Medium | Cloud build service (Section 9.9); early TestFlight build
+- [~] **T7**: Running costs for AI, storage or hosting grow faster than the budget | Medium | Medium | Spending limits and alerts, caching, free tiers, archive storage tier (Appendix G) — *Left: AI daily limit, caching of AI results and translations, free tiers; spending alerts on the provider accounts still to set*
+- [x] **T8**: Free test hosting limits or expiry interrupt testing | High | Low | No real data on test hosting; move to production hosting before content import (Section 9) — *Note: only sample data on the test site; production comes before content import*
+- [~] **T9**: App store rejection or delay | Medium | Medium | Store rules built in from the start (Section 3.3.4); early test submissions; the web app is available regardless — *Left: the build’s part is done (phased delivery, store rules, cloud iOS build, human translation paths); the rest happens at release*
+- [~] **T10**: iOS builds without a Mac | Medium | Medium | Cloud build service (Section 9.9); early TestFlight build — *Left: the build’s part is done (phased delivery, store rules, cloud iOS build, human translation paths); the rest happens at release*
 - [~] **T11**: Weak connectivity and low-end phones in the beneficiary regions | High | Medium | Low-data mode, offline drafts, resumable uploads, adaptive media (Section 8); tests on real low-end devices — *Left: low-data mode, offline reading and drafts, resumable uploads and adaptive media are built; tests on real low-end phones remain*
-- [ ] **T12**: Machine translation, transcription or speech voices are poor or missing for Dholuo and other languages | High | Medium | Human translation for English, Kiswahili and Dholuo interface text; transcripts editable; original recordings always available
+- [~] **T12**: Machine translation, transcription or speech voices are poor or missing for Dholuo and other languages | High | Medium | Human translation for English, Kiswahili and Dholuo interface text; transcripts editable; original recordings always available — *Left: the build’s part is done (phased delivery, store rules, cloud iOS build, human translation paths); the rest happens at release*
 - [x] **T13**: Orientation on uploading and using the archive is needed before the platform exists | High | Low | Clickable prototype and draft handbook; final handbook at go-live (Section 11.3) — *Note: the mitigation is in place*
-- [ ] **T14**: A third-party service changes its terms, price or availability (maps, AI, sign-in, push) | Medium | Medium | Each service sits behind its own module; alternatives named in the tools tables
+- [x] **T14**: A third-party service changes its terms, price or availability (maps, AI, sign-in, push) | Medium | Medium | Each service sits behind its own module; alternatives named in the tools tables — *Note: each outside service sits behind one module and one setting (docs/MAINTENANCE.md, No lock-in)*
 - [~] **T15**: Data loss | Low | High | 3-2-1 backups, point-in-time recovery, quarterly restore tests (Section 7) — *Left: controls, the incident response plan, encrypted backups and a restore drill are in place; the penetration test and production backups remain*
 - [x] **T16**: Dependence on a single developer | Medium | High | Documentation, clean code, automated tests and the handover package (Section 11.7) — *Note: full documentation, 100+ automated tests and the handover package*
 - [x] **T17**: A safety concern is treated by its sender as an emergency call | Low | High | Clear notice and emergency numbers on the form; acknowledgement target (Appendix C) — *Note: the mitigation is in place*
@@ -1765,7 +1765,7 @@ All work and services in this plan are delivered within the KES 550,000 budget. 
 
 - [ ] Services such as AI review, transcription, translation, maps and SMS codes will use free tiers where available, and otherwise be paid from the external costs (B) and contingency, with spending limits.
 - [ ] Monthly spending limits and alerts on the AI, maps and storage accounts.
-- [ ] Use of free tiers and free test hosting during development.
-- [ ] Caching of AI results, translations and maps, so each is paid for once.
+- [x] Use of free tiers and free test hosting during development. — *Note: free Render hosting, free CI, free tiers of each service*
+- [x] Caching of AI results, translations and maps, so each is paid for once. — *Note: AI results and translations are stored once; map tiles are cached by the browser and the app*
 - [ ] Lifecycle rules that move original media files to low-cost archive storage automatically.
 - [~] A quarterly cost review (Section 9.8). — *Left: in the quarterly review checklist, docs/MAINTENANCE.md*

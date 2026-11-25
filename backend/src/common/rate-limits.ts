@@ -17,3 +17,5 @@ export const MessageLimit = () => t(40, MIN);
 export const ReportLimit = () => t(15, HOUR);
 /** Forms open to visitors (safety concerns, feedback). */
 export const PublicFormLimit = () => t(5, HOUR);
+/** Page-speed reports from the website: one small batch per page visited. */
+export const RumLimit = () => t(120, HOUR);

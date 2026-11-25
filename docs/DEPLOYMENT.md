@@ -149,6 +149,7 @@ The `clamav` container scans every upload before it is stored, and updates its v
 ## Uptime and security monitoring
 
 - **Uptime:** add a free monitor (UptimeRobot, Better Stack or Cloudflare Health Checks) for `https://<your domain>/api/v1/health` every 5 minutes, alerting the team by email or SMS. The check fails if the API or the database is down.
+- **Performance:** **SUPER ADMIN › System › Performance** shows response times, errors, server load, slow queries and visitors' page speed. The Super Admins are notified when 95% of responses take longer than `PERF_ALERT_P95_MS` (300 ms) or more than `PERF_ALERT_ERROR_PCT` (5%) are server errors. For an outside monitor (Grafana Cloud, Better Stack), set a long random `METRICS_TOKEN` and scrape `/api/v1/metrics` with it as a bearer token.
 - **Storage:** set `STORAGE_ALERT_GB` and `ALERT_EMAILS`. The team is emailed when media passes 80% of that level.
 - **Security updates:** run `apt upgrade` monthly on the server, and rebuild monthly to pick up patched base images:
 

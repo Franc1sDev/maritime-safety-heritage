@@ -12,7 +12,7 @@ Every route of the **Remembering the Waters** API. This page is generated from t
 - **Live updates:** a Socket.IO connection on the same address carries notifications, message and analytics updates.
 - **Interactive version:** `/api/docs` on a development or test server (it is off in production unless `API_DOCS=true`).
 
-172 routes in 11 groups.
+175 routes in 11 groups.
 
 **Who may call** — *Anyone*: no sign-in needed. *Signed in*: any signed-in person. *Admin*, *Super Admin*: that role only.
 
@@ -90,6 +90,9 @@ Every route of the **Remembering the Waters** API. This page is generated from t
 | Method | Path | What it does | Who may call |
 |---|---|---|---|
 | GET | `/health` | Is the API up and can it reach the database? | Anyone |
+| GET | `/metrics` | Prometheus metrics for an outside monitor. Needs METRICS_TOKEN as a bearer token; closed when it is not set | Anyone |
+| POST | `/rum` | Page-speed measurements from the website (no personal data) | Anyone |
+| GET | `/super/performance` | Response times, errors, server load, slow queries and real-user page speed | Super Admin |
 
 ## INBOX
 
