@@ -85,7 +85,7 @@ jobs:
           sys.exit(f'{len(high)} high-risk findings' if high else 0)
           "
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: { name: zap-report, path: zap/, if-no-files-found: ignore }
       - if: failure()
         run: tail -n 80 server.log
@@ -108,7 +108,7 @@ jobs:
         run: flutter build apk --release --dart-define=API_URL=${{ vars.API_URL || '' }}
       - name: Build the Google Play bundle
         run: flutter build appbundle --release --dart-define=API_URL=${{ vars.API_URL || '' }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: maritime-heritage-android
           retention-days: 14
