@@ -510,7 +510,7 @@ class _MediaTileState extends State<MediaTile> {
     return Tooltip(message: label, child: Material(color: on ? Colors.white : Colors.black54,
       shape: RoundedRectangleBorder(side: const BorderSide(color: Colors.white, width: 2), borderRadius: BorderRadius.circular(8)),
       child: InkWell(onTap: hasCaptions ? _toggleCc : null, borderRadius: BorderRadius.circular(8), child: Semantics(button: true, toggled: on, label: label,
-        child: SizedBox(width: 48, height: 40, child: Center(child: ExcludeSemantics(child: Text('CC', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: on ? Colors.black : Colors.white, decoration: hasCaptions ? TextDecoration.none : TextDecoration.lineThrough))))))));
+        child: SizedBox(width: 48, height: 40, child: Center(child: ExcludeSemantics(child: Text('CC', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: on ? Colors.black : Colors.white, decoration: hasCaptions ? TextDecoration.none : TextDecoration.lineThrough)))))))));
   }
 
   Widget _captionBox(String text) => text.isEmpty ? const SizedBox.shrink() : Container(
