@@ -100,6 +100,7 @@ HSTS, secure cookies and automatic upgrade to HTTPS are on in production.
 
 - **Server disk** (`STORAGE_DRIVER=local`): simplest. Files sit in the `media` Docker volume and are included in the daily backup.
 - **Cloud object storage** (`STORAGE_DRIVER=s3`): grows with the archive, with no disk to fill. It works with Cloudflare R2 (no download fees), AWS S3, Backblaze B2, DigitalOcean Spaces and Google Cloud Storage (S3-compatible endpoint). Create a **private** bucket and an access key limited to that bucket, then set the `S3_*` values.
+- **Moving from the database to object storage:** set `STORAGE_DRIVER=s3` with the `S3_*` settings and restart. New files go to the object storage at once. Files still in the database stay readable and are moved across in the background, 200 at a time every 10 minutes; each is checked by size before the database copy is removed. The server log says how many are left (`Moved … left`).
   - Turn on the provider's server-side encryption as well. Files are already encrypted by the archive before they leave the server.
   - Add a **lifecycle rule** that moves objects older than, say, 180 days to the cheaper archive tier: S3 Glacier Deep Archive, GCS Archive, Azure Archive or R2 Infrequent Access. Masters are rarely opened; web copies stay in the normal tier.
   - Keep a second copy with another provider, using `BACKUP_RCLONE_REMOTE`.

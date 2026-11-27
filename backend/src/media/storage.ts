@@ -104,6 +104,50 @@ export class DatabaseStorage implements Storage {
   async remove(key: string) { await this.ds.query(`DELETE FROM media_objects WHERE storage_key = $1`, [key]); }
 }
 
+const missing = (e: unknown) => {
+  const err = e as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+  return err?.$metadata?.httpStatusCode === 404 || err?.name === 'NotFound' || err?.name === 'NoSuchKey' || err?.message === 'Stored file not found';
+};
+
+/**
+ * Used while an archive moves from one store to another (for example from the database to Cloudflare R2): new
+ * files go to the new store, and a file not yet moved is still read from the old one, so nothing is unavailable
+ * during the move. `moveAll` copies each remaining file, checks its size, and only then removes the old copy.
+ */
+export class MovingStorage implements Storage {
+  constructor(private readonly target: Storage, private readonly old: Storage) {}
+  putFile(key: string, localPath: string, mimeType: string) { return this.target.putFile(key, localPath, mimeType); }
+  async size(key: string) { try { return await this.target.size(key); } catch (e) { if (!missing(e)) throw e; return this.old.size(key); } }
+  async read(key: string, range?: { start: number; end: number }) {
+    try { return await this.target.read(key, range); } catch (e) { if (!missing(e)) throw e; return this.old.read(key, range); }
+  }
+  async remove(key: string) { await this.target.remove(key); await this.old.remove(key); }
+
+  /** Moves up to `limit` of the given files. Returns how many moved and how many failed (left where they were). */
+  async moveAll(keys: string[], tmpDir: string, limit = 200) {
+    let moved = 0, failed = 0;
+    for (const key of keys.slice(0, limit)) {
+      const tmp = resolve(tmpDir, `move-${process.pid}-${moved + failed}.part`);
+      try {
+        const { stream, size } = await this.old.read(key);
+        await pipeline(stream, createWriteStream(tmp, { mode: 0o600 }));
+        let there = -1;
+        try { there = await this.target.size(key); } catch (e) { if (!missing(e)) throw e; }
+        if (there !== size) await this.target.putFile(key, tmp, 'application/octet-stream');
+        if ((await this.target.size(key)) !== size) throw new Error('size differs after copying');
+        await this.old.remove(key);
+        moved++;
+      } catch (e) {
+        failed++;
+        // eslint-disable-next-line no-console
+        console.warn(`Could not move ${key}: ${(e as Error).message}`);
+      } finally { await fs.rm(tmp, { force: true }); }
+    }
+    return { moved, failed };
+  }
+}
+
 export const STORAGE = Symbol('STORAGE');
 export const createStorage = (ds: DataSource): Storage =>
-  config.storage.driver === 's3' ? new S3Storage() : config.storage.driver === 'database' ? new DatabaseStorage(ds) : new LocalStorage();
+  // With S3, files still in the database from an earlier setup stay readable and are moved across in the background.
+  config.storage.driver === 's3' ? new MovingStorage(new S3Storage(), new DatabaseStorage(ds)) : config.storage.driver === 'database' ? new DatabaseStorage(ds) : new LocalStorage();

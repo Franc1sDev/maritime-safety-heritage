@@ -13,7 +13,7 @@ import { fail } from '../common/messages';
 import { config } from '../config/config';
 import { decryptStream, encryptFile, IV_BYTES, readAll, storedRange } from './encryption';
 import { detectFile, MediaKind } from './file-type';
-import { Storage, STORAGE } from './storage';
+import { MovingStorage, Storage, STORAGE } from './storage';
 import { scanFile } from './virus-scan';
 
 const run = promisify(execFile);
@@ -57,6 +57,10 @@ export class MediaService implements OnModuleInit {
     this.jobs.handle('media.process', async ({ id }) => { await this.process(id); });
     this.jobs.every('media.integrity', 6 * 3600_000, () => this.checkIntegrity());
     this.jobs.every('media.storage_alert', 12 * 3600_000, () => this.storageAlert());
+    if (this.storage instanceof MovingStorage) {
+      void this.moveOldFiles().catch((e) => this.log.warn(`Moving files: ${e.message}`));
+      this.jobs.every('media.move', 10 * 60_000, () => this.moveOldFiles());
+    }
   }
 
   private async hasFfmpeg() {
@@ -277,6 +281,17 @@ export class MediaService implements OnModuleInit {
     for (const k of keys) await this.storage.remove(k).catch((e) => this.log.error(`Could not delete ${k}: ${e.message}`));
   }
   /** Storage growth is watched, with an email alert before the limit is reached (Section 7.2). */
+  /** Moves files still kept in the database to the object storage, a batch at a time, until none are left. */
+  async moveOldFiles() {
+    if (!(this.storage instanceof MovingStorage)) return { moved: 0, failed: 0, left: 0 };
+    const rows = await this.db.q<{ storageKey: string }>(`SELECT storage_key FROM media_objects ORDER BY storage_key LIMIT 200`);
+    if (!rows.length) return { moved: 0, failed: 0, left: 0 };
+    const r = await this.storage.moveAll(rows.map((x) => x.storageKey), tmpdir());
+    const left = Number((await this.db.one<{ n: number }>(`SELECT count(*)::int AS n FROM media_objects`))?.n ?? 0);
+    this.log.log(`Moved ${r.moved} file(s) from the database to object storage; ${r.failed} failed; ${left} left`);
+    return { ...r, left };
+  }
+
   async storageAlert() {
     if (!config.alerts.storageGb || !config.alerts.emails.length) return;
     const u = await this.usage();
