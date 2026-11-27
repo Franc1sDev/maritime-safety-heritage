@@ -19,7 +19,7 @@ The automatic build on GitHub (`.github/workflows/ci.yml`) runs all of these on 
 | **Lighthouse** | A simulated mid-range phone on a slow connection: performance 80 or more; accessibility, best practices and SEO 95 or more | `tests/perf/lighthouse.cjs` | — |
 | **Load test** | 200 simulated people browsing, reacting, commenting, posting and messaging for 30 seconds. 95% of requests must be under 300 ms, with no server errors | `tests/load/node-load.mjs` | — |
 | **AI evaluation set** | 38 labelled samples in English, Kiswahili and Dholuo: no legitimate story may be blocked, and harmful English and Kiswahili samples must reach an admin. `npm run ai:eval` runs it against a real provider to compare them | `tests/ai-eval` | 38 samples |
-| **Code scanning** | CodeQL security analysis ran weekly and on every change while the repository was public (last clean run 25 November 2026). It is off on the private repository, where it needs GitHub Advanced Security | — | — |
+| **Code scanning** | CodeQL security analysis; weekly and on every change to `main` | `.github/workflows/codeql.yml` | — |
 | **Web vulnerability scan** | OWASP ZAP baseline (passive) scan of the running site; any high-risk finding fails the build. The report is kept with each build | `.github/workflows/ci.yml` | — |
 | **Known vulnerabilities** | `npm audit` of the server's and website's packages; any high or critical one fails the build | `.github/workflows/ci.yml` | — |
 | **Dependency updates** | Dependabot proposes updates weekly; each passes the same tests before it is merged | `.github/dependabot.yml` | — |
