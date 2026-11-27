@@ -100,7 +100,7 @@ From [TESTING.md](TESTING.md).
 - ☐ About page: the project, partners and funder, with their correct names and logos
 - ☐ The first testimonies and historical records imported from the collection, consent and validation complete
 - ☐ The first collection or online exhibition, ready to approve
-- ☐ The handbook completed with screenshots and published in **Learning resources**
+- ☐ The handbook published in **Learning resources** (it is complete, with screenshots: `docs/HANDBOOK.md` and `docs/Handbook - Remembering the Waters.pdf`)
 - ☐ A launch announcement written
 
 ## 9. The apps in the stores

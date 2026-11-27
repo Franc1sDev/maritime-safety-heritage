@@ -6,7 +6,7 @@ For the project's partners, researchers and community representatives who collec
 2. [How to upload materials](#part-2-how-to-upload-materials): one story at a time, or many at once.
 3. [Navigation and use of the digital archive](#part-3-navigation-and-use-of-the-digital-archive).
 
-**This is the draft used for orientation.** At go-live it is completed with screenshots of the live platform and published in **ABOUT & RESOURCES › Learning resources**.
+The screenshots show the website on the test site, with sample stories (27 November 2026). The app looks the same on a phone. At go-live an admin publishes this handbook in **ABOUT & RESOURCES › Learning resources**.
 
 > **In an emergency on the water, call 999 or 112.** The archive is not an emergency service.
 
@@ -85,12 +85,19 @@ There are two ways. A Contributor adds one story at a time. The project team (ad
 ### One story at a time
 
 1. **Sign in** with Google or Apple. The first time, choose a username and picture.
+
+   ![The sign-in page](handbook-images/sign-in.jpg)
+
 2. Select the **+** on the STORIES page (**Share my story**).
 3. Choose **Whose story is this?**: your own, or **as told by another person**. For another person's story, confirm that they have agreed.
 4. Type the story, or **tell it by voice or add files**. You can record audio or video on the spot.
 5. Fill in **Story details**: category and tags, language, when and where it happened, the vessel, and the linked incident.
 6. Under **Options**, choose how to post (by name or anonymously), the usage rights, whether to allow downloads, and whether to mark the story as distressing.
 7. **SEND**. Or **Save draft** and finish later from **MY PROFILE › Drafts**.
+
+![The Share my story form: title, story, voice or files, with Save draft and SEND](handbook-images/share.jpg)
+
+*The **Share my story** form.*
 
 The story is checked automatically, usually within seconds and at most 3 minutes, and you are told the result. If the connection drops, large files continue from where they stopped, and an unfinished story is kept on your device.
 
@@ -104,6 +111,10 @@ Admins use **ADMINISTRATIVE CONTROLS › Import**.
 4. Correct and upload again until every row is ready.
 5. Submit the batch for approval. When the other admins approve it, the items are created.
 
+![ADMINISTRATIVE CONTROLS, Import: download the template, upload the files, upload the spreadsheet](handbook-images/import.jpg)
+
+*The **Import** page for admins.*
+
 A testimony is accepted only with its storyteller, its type of consent, and confirmation that it was validated with the storyteller. A historical record needs its source.
 
 If you are not an admin, send your files and your filled spreadsheet to the project team in the way they have agreed with you.
@@ -113,10 +124,26 @@ If you are not an admin, send your files and your filled spreadsheet to the proj
 The full guide is the [User guide](USER-GUIDE.md). In short:
 
 - The archive opens on **STORIES**, one story at a time. Scroll, swipe or use the arrow keys for the next one.
+
+  ![The STORIES page with one story open, the “Stories by” tabs above it and the actions beside it](handbook-images/stories.jpg)
+
 - Browse with the **“Stories by” tabs**: Trending, Following, Location, Contributors, Favorites, Incidents, Map, Timeline and Collections. Or use **Search the archive**.
+
+  ![The Map tab, with filters and incident records](handbook-images/map.jpg)
+
+  ![The Incidents tab, with the list of incident records](handbook-images/incidents.jpg)
+
+  ![Search results for “ferry”, with related incidents and places](handbook-images/search.jpg)
+
 - On a story you can read it in full, listen to it, read the transcript, see where it happened, react, comment, save it to Favorites, share its link, copy a citation and, where allowed, download it.
 - **ABOUT & RESOURCES** holds the rules, the learning resources (policy briefs, learning summaries and exhibitions), the form to **report a safety concern**, and the feedback form.
+
+  ![ABOUT & RESOURCES](handbook-images/about.jpg)
+
 - Change the language, text size, theme and low-data mode in **MY PROFILE › Settings**.
+
+  ![MY PROFILE, with Settings, Drafts, Download my data and Delete account](handbook-images/profile.jpg)
+
 - No account is needed to read. An account is needed to share a story, react, comment, save Favorites or send messages.
 
 ### Using the archive in research and teaching

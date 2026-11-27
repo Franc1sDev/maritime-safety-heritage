@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 747 of 1190 items ticked, 266 partly done**
+**Progress: 747 of 1190 items ticked, 267 partly done**
 
 How to read it:
 
@@ -101,7 +101,7 @@ The project has five activities. The platform is Activity 3, and it also support
 - [x] **1. Researching and documenting water-transport safety heritage**: Incident records and the national incident map; historical records with source and reference; bulk import of collected materials (Sections 2.3, 3.2.10 and 3.2.14). — *Note: incident records and map, historical records with source, bulk import*
 - [x] **2. Co-creating community histories of risk and resilience**: Story sharing in the storyteller’s own language; “as told by” and anonymous posting with recorded consent; validation by storytellers before publication; audio and video oral histories with transcripts (Sections 3.2.4 and 11.4). — *Note: own-language posting, “as told by” and anonymous posting, consent, validation and transcripts*
 - [~] **3. Developing an open-access digital archive**: The whole platform: website, web app, Android and iOS apps, open to visitors without an account (Sections 2 to 9). — *Left: website and web app open to visitors; the apps are built but not yet in the stores*
-- [~] **4. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3). — *Left: the handbook draft and the on-screen hints are built; training sessions are planned in docs/HANDOVER.md*
+- [~] **4. Building capacity in heritage and safety documentation**: A clickable prototype and contributor handbook for partner orientation; guided on-screen hints; training for admins and community champions (Section 11.3). — *Left: the handbook with screenshots (also as a PDF) and the on-screen hints are built; the training sessions are planned in docs/HANDOVER.md and need the team*
 - [x] **5. Translating heritage into policy and public learning**: The learning resources area for policy briefs, learning summaries, educational materials and online exhibitions; collections; analytics for reporting (Sections 3.2.6, 3.2.14 and 11.9). — *Note: learning resources, exhibitions, collections and analytics for reporting*
 
 ### 1.8 Development Approach
@@ -1360,7 +1360,7 @@ One side of the admin’s screen is dedicated to administrative controls, which 
 
 - [ ] The project runs a basic archive documentation and digital platform orientation for partners, researchers and community representatives, covering how to upload materials, how to document stories and how to use the archive.
 - [ ] Because this orientation comes before the platform is built, it will use the clickable prototype, which shows how the finished website and app will look and behave, together with a draft handbook.
-- [~] The handbook (“how to upload materials” and “navigation and use of the digital archive”) is finalised at go-live with screenshots of the real platform and published in the learning resources area. — *Left: draft written (docs/HANDBOOK.md); screenshots and publication in Learning resources at go-live*
+- [~] The handbook (“how to upload materials” and “navigation and use of the digital archive”) is finalised at go-live with screenshots of the real platform and published in the learning resources area. — *Left: completed with screenshots of the platform (docs/HANDBOOK.md and the PDF “Handbook - Remembering the Waters.pdf”); an admin still publishes it in Learning resources on the production archive at go-live*
 
 ### 11.4 Metadata Template, Cataloguing, Validation and Import
 
@@ -1692,7 +1692,7 @@ The project will produce an archive sustainability plan and a long-term continui
 - [ ] **User-friendly navigation, clear language and multimedia content for specialists and the public**: Application Questions, “How will you ensure that results and learning are shared…?”, pp. 10–11; Milestones and Deliverables, milestone “Digital archive development”, p. 3 | Sections 3.1 and 3.2
 - [ ] **Policy briefs, learning summaries and educational materials shared in accessible formats**: Application Questions, “Activities”, item 5, p. 4; Application Questions, “How will you ensure that results and learning are shared…?”, pp. 10–11; Milestones and Deliverables, milestone “Dissemination and Knowledge Sharing”, pp. 3–4 | Sections 3.2.6 and 11.6
 - [ ] **Public exhibitions of stories, photographs and archival materials**: Milestones and Deliverables, milestone “Dissemination and Knowledge Sharing”, pp. 3–4 | Sections 3.2.6, 3.2.14 and 11.6
-- [ ] **Orientation and handbook: how to upload materials and use the archive**: Milestones and Deliverables, milestone “Partner Training Implementation”, p. 1; Application Questions, “Activities”, item 4, p. 4 | Section 11.3
+- [~] **Orientation and handbook: how to upload materials and use the archive**: Milestones and Deliverables, milestone “Partner Training Implementation”, p. 1; Application Questions, “Activities”, item 4, p. 4 | Section 11.3 — *Left: the handbook is written with screenshots and a PDF; the orientation sessions themselves need the team and partners*
 - [ ] **Content organised with clear documentation standards and metadata; searchable; preserved for long-term use**: Milestones and Deliverables, milestone “Digital archive development”, p. 3 | Sections 2.3, 7.2 and 7.6
 - [ ] **Collected materials catalogued and uploaded**: Milestones and Deliverables, milestone “Digital archive development”, p. 3; Milestones and Deliverables, milestone “Data Collection”, pp. 2–3 | Sections 3.2.10 and 11.4
 - [ ] **User guidance and basic access support**: Milestones and Deliverables, milestone “Digital archive development”, p. 3 | Sections 11.5 and 11.8
