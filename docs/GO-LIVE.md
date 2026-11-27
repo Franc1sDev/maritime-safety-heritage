@@ -6,7 +6,7 @@ Everything that must be true before **Remembering the Waters** opens to the publ
 
 ## 1. Decisions the project must take (master plan, Appendix B)
 
-The recommended choice is already built for each. Confirm it, or say what to change.
+**Confirmed by the project owner on 27 November 2026:** every choice in the table below stands as built. The AI provider is still to be chosen from the comparison.
 
 | Decision | Built now | Change by |
 |---|---|---|
