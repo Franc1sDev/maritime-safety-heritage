@@ -231,7 +231,10 @@ class Uploads extends ChangeNotifier {
 
 // ---------- The signed-in session, settings and counts ----------
 class AppState extends ChangeNotifier {
-  static const defaultServer = String.fromEnvironment('API_URL', defaultValue: 'https://maritime-heritage.onrender.com');
+  // A build may pass an empty API_URL (the automatic build does when none is set): that must not leave the app
+  // without an address.
+  static const _builtServer = String.fromEnvironment('API_URL');
+  static const defaultServer = _builtServer == '' ? 'https://maritime-heritage.onrender.com' : _builtServer;
   late SharedPreferences prefs;
   late Api api;
   late final Uploads uploads = Uploads(this);
@@ -325,7 +328,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> start() async {
     prefs = await SharedPreferences.getInstance();
-    api = Api(prefs.getString('server') ?? defaultServer)..onSignedOut = _signedOut;
+    final saved = (prefs.getString('server') ?? '').trim();
+    api = Api(saved.startsWith('http') ? saved : defaultServer)..onSignedOut = _signedOut;
     await setLanguage(prefs.getString('lang') ?? 'en', save: false);
     api..onReach = _reach..onTiming = _timing;
     try { final dir = Directory('${(await getTemporaryDirectory()).path}/answers'); await dir.create(recursive: true); api.cacheDir = dir.path; unawaited(api.clearCache(all: false)); } catch (_) {/* no offline reading on this device */}
