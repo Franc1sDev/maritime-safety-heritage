@@ -82,8 +82,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/i18n/sw.json
-    - assets/i18n/luo.json
+    - assets/i18n/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -86,6 +86,10 @@ export class StoriesController {
   cite(@Param('id') id: string, @CurrentUser() me?: AuthUser) { return this.stories.cite(id, me); }
   @Public() @Get('stories/:id/translate') @ApiOperation({ summary: 'Machine translation into the reader’s language, cached' })
   translate(@Param('id') id: string, @Query('to') to: string, @CurrentUser() me?: AuthUser) { return this.stories.translate(id, (LANGUAGES as readonly string[]).includes(to) ? to : 'en', me); }
+  @Public() @Get('stories/:id/media/:mediaId/captions') @ApiOperation({ summary: 'Captions for a recording, in the reader’s language where translation is available' })
+  captions(@Param('id') id: string, @Param('mediaId', ParseUUIDPipe) mediaId: string, @Query('to') to: string, @CurrentUser() me?: AuthUser) {
+    return this.stories.captions(id, mediaId, (LANGUAGES as readonly string[]).includes(to) ? to : 'en', me);
+  }
   @Public() @Post('stories/:id/download') @HttpCode(202) @ApiOperation({ summary: 'Prepare a ZIP of the story’s content (where the contributor allows downloads)' })
   download(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() me: AuthUser | undefined, @Meta() meta: RequestMeta) { return this.stories.requestZip(id, me, meta); }
   @ApiBearerAuth() @Put('media/:id/transcript') @ApiOperation({ summary: 'Correct the transcript of an audio or video file' })

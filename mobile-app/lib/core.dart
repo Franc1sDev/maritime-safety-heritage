@@ -38,7 +38,11 @@ ThemeData appTheme({required bool dark, required bool highContrast}) {
 class I18n {
   static Map<String, dynamic> _map = {};
   static String code = 'en';
-  static const launch = {'en': 'English', 'sw': 'Kiswahili', 'luo': 'Dholuo'};
+  /// The languages the interface is translated into, each under its own name. The files are in assets/i18n.
+  static const launch = {
+    'en': 'English', 'sw': 'Kiswahili', 'fr': 'Français', 'es': 'Español', 'pt': 'Português', 'ar': 'العربية', 'zh': '中文', 'ja': '日本語', 'ru': 'Русский',
+    'tr': 'Türkçe', 'id': 'Bahasa Indonesia', 'hi': 'हिन्दी', 'vi': 'Tiếng Việt', 'el': 'Ελληνικά', 'bn': 'বাংলা', 'fil': 'Filipino', 'gu': 'ગુજરાતી',
+  };
   static Future<void> load(String c) async {
     code = launch.containsKey(c) ? c : 'en';
     _map = {};

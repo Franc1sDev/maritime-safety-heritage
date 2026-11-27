@@ -1,4 +1,5 @@
 import { HttpException } from '@nestjs/common';
+import { SERVER_LOCALES } from './locales';
 
 /**
  * Standard texts from Appendix A of the Development Master Plan, in the launch languages.
@@ -6,7 +7,13 @@ import { HttpException } from '@nestjs/common';
  * translation is loaded (Section 3.1.5). The website and apps carry the full interface translations.
  */
 export const LANGUAGES = ['en', 'sw', 'luo', 'ar', 'fr', 'pt', 'es', 'so', 'mg', 'gu', 'hi', 'bn', 'id', 'fil', 'vi', 'zh', 'ja', 'el', 'tr', 'ru'] as const;
-export const LAUNCH_LANGUAGES = ['en', 'sw', 'luo'];
+/** The languages the interface is fully translated into, and so offered in the language menu. Dholuo, Somali and Malagasy follow when a native speaker has translated them. */
+export const LAUNCH_LANGUAGES = ['en', 'sw', 'fr', 'es', 'pt', 'ar', 'zh', 'ja', 'ru', 'tr', 'id', 'hi', 'vi', 'el', 'bn', 'fil', 'gu'];
+/** Each language under its own name, for the language menu. */
+export const NATIVE_NAMES: Record<string, string> = {
+  en: 'English', sw: 'Kiswahili', luo: 'Dholuo', ar: 'العربية', fr: 'Français', pt: 'Português', es: 'Español', so: 'Soomaali', mg: 'Malagasy',
+  gu: 'ગુજરાતી', hi: 'हिन्दी', bn: 'বাংলা', id: 'Bahasa Indonesia', fil: 'Filipino', vi: 'Tiếng Việt', zh: '中文', ja: '日本語', el: 'Ελληνικά', tr: 'Türkçe', ru: 'Русский',
+};
 export const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English', sw: 'Kiswahili', luo: 'Dholuo', ar: 'Arabic', fr: 'French', pt: 'Portuguese', es: 'Spanish', so: 'Somali', mg: 'Malagasy',
   gu: 'Gujarati', hi: 'Hindi', bn: 'Bengali', id: 'Indonesian', fil: 'Filipino', vi: 'Vietnamese', zh: 'Chinese', ja: 'Japanese', el: 'Greek', tr: 'Turkish', ru: 'Russian',
@@ -153,9 +160,19 @@ const M: Record<string, Text> = {
   not_emergency: { en: 'This is not an emergency service.', sw: 'Hii si huduma ya dharura.' },
 };
 
+/** The reader's language from a request header such as "fil", "pt-BR" or "fr-FR,fr;q=0.9": a supported code, or English. */
+export const readerLanguage = (raw: unknown): string => {
+  const code = String(raw ?? '').split(/[,;]/)[0].trim().toLowerCase().split(/[-_]/)[0];
+  return (LANGUAGES as readonly string[]).includes(code) ? code : 'en';
+};
+
+/** One of the server's own texts in the reader's language: Kiswahili is written beside the English, the other languages are in locales.ts. */
+export const localise = (entry: { en: string; sw?: string }, lang = 'en'): string =>
+  (entry as Record<string, string>)[lang] ?? SERVER_LOCALES[lang]?.[entry.en] ?? entry.en;
+
 export function text(code: string, lang = 'en', vars: Record<string, unknown> = {}): string {
   const entry = M[code];
-  const raw = entry ? ((entry as Record<string, string>)[lang] ?? entry.en) : code;
+  const raw = entry ? localise(entry, lang) : code;
   return raw.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
 }
 export const hasMessage = (code: string) => code in M;
@@ -169,4 +186,4 @@ export class AppError extends HttpException {
 export const fail = (status: number, code: string, vars: Record<string, unknown> = {}, details?: unknown): never => { throw new AppError(status, code, vars, details); };
 /** Date in a notice, e.g. 12 December 2026. */
 export const longDate = (d: Date | string, lang = 'en') =>
-  new Date(d).toLocaleDateString(lang === 'sw' ? 'sw-KE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Nairobi' });
+  new Date(d).toLocaleDateString(lang === 'sw' ? 'sw-KE' : lang === 'en' || !LAUNCH_LANGUAGES.includes(lang) ? 'en-GB' : lang, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Nairobi' });

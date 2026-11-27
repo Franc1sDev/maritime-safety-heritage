@@ -1,5 +1,6 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
 import type { Request } from 'express';
+import { readerLanguage } from './messages';
 
 export type Role = 'contributor' | 'admin' | 'super_admin';
 export const isAdmin = (role?: string) => role === 'admin';
@@ -37,6 +38,6 @@ export const Meta = createParamDecorator((_: unknown, ctx: ExecutionContext): Re
   const req = ctx.switchToHttp().getRequest<AuthedRequest>();
   const ip = (req.ip ?? '').slice(0, 64);
   const userAgent = String(req.headers['user-agent'] ?? '').slice(0, 300);
-  const lang = req.user?.language || String(req.headers['x-language'] ?? req.headers['accept-language'] ?? 'en').slice(0, 2).toLowerCase();
+  const lang = req.user?.language || readerLanguage(req.headers['x-language'] ?? req.headers['accept-language']);
   return { ip, userAgent, lang, visitor: `${ip}|${userAgent.slice(0, 80)}` };
 });

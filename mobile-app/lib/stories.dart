@@ -401,7 +401,7 @@ class _StoryViewState extends State<StoryView> {
             if (text.isNotEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Text(long ? '${text.substring(0, 600)}…' : text, style: const TextStyle(fontSize: 15.5, height: 1.5))),
             if (long) Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: () => setState(() => expanded = true), child: Text(t('Read the whole story')))),
             if (correction != null) Note('${t('Safety note from the admins')}: ${correction['note']}', color: C.yellow, child: str(correction['link']).isEmpty ? null : Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: () => launchUrl(Uri.parse(str(correction['link'])), mode: LaunchMode.externalApplication), child: Text(t('Official guidance'))))),
-            for (var i = 0; i < media.length; i++) MediaTile(media[i], active: widget.active && i == 0),
+            for (var i = 0; i < media.length; i++) MediaTile(media[i], active: widget.active && i == 0, storyId: str(s['id'])),
             Padding(padding: const EdgeInsets.only(top: 8), child: Text([if (str(s['category']).isNotEmpty) t(str(s['category'])), s['vessel'], ...(s['tags'] as List? ?? const []).map((x) => '#$x')].where((e) => str(e).isNotEmpty).join(' · '), style: const TextStyle(fontSize: 12.5))),
             Text('${s['code']} · ${t('Rights')}: ${s['rights']}', style: const TextStyle(fontSize: 12)),
             if (s['sensitive'] == true && str(app.config['supportInfo']).isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Note(str(app.config['supportInfo']))),
@@ -455,7 +455,9 @@ class _StoryViewState extends State<StoryView> {
 class MediaTile extends StatefulWidget {
   final J m;
   final bool active;
-  const MediaTile(this.m, {super.key, this.active = false});
+  /// The story the file belongs to, so captions can be fetched in the reader's language.
+  final String? storyId;
+  const MediaTile(this.m, {super.key, this.active = false, this.storyId});
   @override
   State<MediaTile> createState() => _MediaTileState();
 }
@@ -463,6 +465,57 @@ class MediaTile extends StatefulWidget {
 class _MediaTileState extends State<MediaTile> {
   VideoPlayerController? c;
   bool load = false, failed = false;
+  // Captions: shown on the recording itself, with a button there to turn them on and off at any time.
+  bool cc = true;
+  List<J> cues = const [];
+  bool get hasCaptions => str(widget.m['transcript']).isNotEmpty || asList(widget.m['segments']).isNotEmpty;
+  int _len(J cue) => str(cue['text']).isEmpty ? 1 : str(cue['text']).length;
+
+  /// The captions in the reader's language where the archive can translate them, otherwise as recorded.
+  Future<void> _loadCaptions() async {
+    final app = AppScope.read(context);
+    cc = app.prefs.getString('captions') != 'off';
+    cues = asList(widget.m['segments']);
+    if (!hasCaptions || widget.storyId == null || widget.storyId!.isEmpty) return;
+    try {
+      final r = asMap(await app.api.get('/stories/${widget.storyId}/media/${widget.m['id']}/captions?to=${I18n.code}'));
+      final got = asList(r['cues']);
+      if (got.isNotEmpty && mounted) setState(() => cues = got);
+    } catch (_) {/* the recording's own captions, or none */}
+  }
+
+  void _toggleCc() {
+    final app = AppScope.read(context);
+    setState(() => cc = !cc);
+    app.prefs.setString('captions', cc ? 'on' : 'off');
+  }
+
+  /// The caption for the moment being played. Lines without times are spread over the recording by their length.
+  String _caption(VideoPlayerController v) {
+    if (!cc || cues.isEmpty) return '';
+    final pos = v.value.position.inMilliseconds / 1000.0, total = v.value.duration.inMilliseconds / 1000.0;
+    if (cues.every((cue) => cue['start'] is num && cue['end'] is num)) {
+      for (final cue in cues) { if (pos >= (cue['start'] as num) && pos <= (cue['end'] as num)) return str(cue['text']); }
+      return '';
+    }
+    final all = cues.fold<int>(0, (n, cue) => n + _len(cue));
+    var at = 0.0;
+    for (final cue in cues) { final len = _len(cue) / all * total; if (pos >= at && pos <= at + len) return str(cue['text']); at += len; }
+    return '';
+  }
+
+  Widget _ccButton() {
+    final on = cc && hasCaptions;
+    final label = !hasCaptions ? t('No captions for this recording yet') : cc ? t('Turn captions off') : t('Turn captions on');
+    return Tooltip(message: label, child: Material(color: on ? Colors.white : Colors.black54,
+      shape: RoundedRectangleBorder(side: const BorderSide(color: Colors.white, width: 2), borderRadius: BorderRadius.circular(8)),
+      child: InkWell(onTap: hasCaptions ? _toggleCc : null, borderRadius: BorderRadius.circular(8), child: Semantics(button: true, toggled: on, label: label,
+        child: SizedBox(width: 48, height: 40, child: Center(child: ExcludeSemantics(child: Text('CC', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: on ? Colors.black : Colors.white, decoration: hasCaptions ? TextDecoration.none : TextDecoration.lineThrough))))))));
+  }
+
+  Widget _captionBox(String text) => text.isEmpty ? const SizedBox.shrink() : Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black.withValues(alpha: .8), borderRadius: BorderRadius.circular(6)),
+      child: Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.35)));
   J get urls => asMap(widget.m['urls']);
   String get kind => str(widget.m['kind']);
   /// The approximate size of what would load, shown before it loads (low-data mode).
@@ -485,6 +538,7 @@ class _MediaTileState extends State<MediaTile> {
     if (u == null || c != null) return;
     final ctl = VideoPlayerController.networkUrl(Uri.parse(api.abs(str(u))));
     c = ctl;
+    _loadCaptions().ignore();
     try { await ctl.initialize(); if (muted) await ctl.setVolume(0); await ctl.play(); ctl.addListener(() { if (mounted) setState(() {}); }); if (mounted) setState(() {}); }
     catch (_) { if (mounted) setState(() => failed = true); }
   }
@@ -508,7 +562,16 @@ class _MediaTileState extends State<MediaTile> {
       else if (v == null || !v.value.isInitialized) { body = _placeholder(kind == 'video' ? Icons.play_circle : Icons.graphic_eq, v == null ? '${kind == 'video' ? t('Tap to load the video') : t('Tap to load the audio')}${_size('web')}' : '…'); }
       else {
         body = Column(children: [
-          if (kind == 'video') ClipRRect(borderRadius: BorderRadius.circular(12), child: AspectRatio(aspectRatio: v.value.aspectRatio == 0 ? 16 / 9 : v.value.aspectRatio, child: VideoPlayer(v))),
+          if (kind == 'video') ClipRRect(borderRadius: BorderRadius.circular(12), child: AspectRatio(aspectRatio: v.value.aspectRatio == 0 ? 16 / 9 : v.value.aspectRatio, child: Stack(fit: StackFit.expand, children: [
+            VideoPlayer(v),
+            PositionedDirectional(top: 8, end: 8, child: _ccButton()),
+            Positioned(left: 8, right: 8, bottom: 8, child: Center(child: _captionBox(_caption(v)))),
+          ]))),
+          if (kind == 'audio') Container(height: 124, decoration: BoxDecoration(color: const Color(0xFF0B1B2E), borderRadius: BorderRadius.circular(12)), child: Stack(children: [
+            const Center(child: Icon(Icons.graphic_eq, size: 34, color: Color(0xFF9FC3EE))),
+            PositionedDirectional(top: 8, end: 8, child: _ccButton()),
+            Positioned(left: 8, right: 8, bottom: 8, child: Center(child: _captionBox(_caption(v)))),
+          ])),
           Row(children: [
             IconButton(icon: Icon(v.value.isPlaying ? Icons.pause_circle : Icons.play_circle, size: 34, color: cs.primary), tooltip: v.value.isPlaying ? t('Stop') : t('Listen'), onPressed: () => v.value.isPlaying ? v.pause() : v.play()),
             Expanded(child: VideoProgressIndicator(v, allowScrubbing: true, colors: VideoProgressColors(playedColor: cs.primary))),

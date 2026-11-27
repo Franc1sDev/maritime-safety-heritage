@@ -2,7 +2,7 @@
 
 Every requirement in **Maritime Heritage Project - Development Master Plan.docx** (version 1.2, 20 November 2026), section by section, top to bottom. Items are ticked as they are built and checked.
 
-**Progress: 747 of 1190 items ticked, 267 partly done**
+**Progress: 747 of 1190 items ticked, 282 partly done**
 
 How to read it:
 
@@ -47,7 +47,7 @@ To develop a secure, modern, easy-to-use and open-access social platform, availa
 
 - [x] To build an open-access archive and story-sharing platform that brings together community stories and testimonies, historical records, photographs and mapped incident records, where anyone can browse and learn, and where contributors can post stories with text, images, audio, video and documents and engage through reactions, comments, sharing, favourites and direct messages. — *Note: stories, testimonies, historical records, photographs and mapped incidents, open to visitors without an account*
 - [x] To protect storytellers, users and the integrity of the archive through recorded consent, AI-assisted content review, human moderation with clear accountability, strong cyber security and compliance with the Kenya Data Protection Act, 2019. — *Note: recorded consent, AI review, human moderation with the audit log and approvals, reporting and safety concerns*
-- [~] To make the archive accessible, useful and durable: usable on low-end phones and weak internet connections, available in 20 languages including Kiswahili and Dholuo, searchable by place, time, incident and theme, home to the project’s policy briefs and learning materials, and safely backed up and governed for long-term continuity. — *Left: low-data mode, offline reading and WCAG checks are built; English and Kiswahili are complete, the other 18 languages need translators*
+- [~] To make the archive accessible, useful and durable: usable on low-end phones and weak internet connections, available in 20 languages including Kiswahili and Dholuo, searchable by place, time, incident and theme, home to the project’s policy briefs and learning materials, and safely backed up and governed for long-term continuity. — *Left: low-data mode, offline reading and WCAG checks are built; 17 of the 20 languages are in the interface (15 of them machine-translated, unreviewed); Dholuo, Somali and Malagasy need native speakers*
 
 ### 1.3 Project Deliverables
 
@@ -318,7 +318,7 @@ Several actions require more than one admin to agree: overriding an AI ban, publ
 
 - [~] The website and apps must meet WCAG 2.2 level AA. — *Left: the website is built to the standard (labels, keyboard, focus, contrast, text size); a formal audit is part of testing*
 - [x] Screen-reader labels on all round icons, tabs and engagement icons; full keyboard navigation on the website; visible focus states.
-- [~] Captions for videos (generated from transcripts), and alt text for images: contributors are prompted to add it, and AI suggests a description. — *Left: captions come from the transcript; the prompt for alt text when adding a photo is not yet on the share form*
+- [~] Captions for videos (generated from transcripts), and alt text for images: contributors are prompted to add it, and AI suggests a description. — *Left: captions show on the video or audio itself with a CC button to turn them on and off, in the reader’s language where the translation service is set up; they come from the transcript, so they need transcription (an AI provider key) or a typed transcript; the prompt for alt text when adding a photo is not yet on the share form*
 - [x] Adjustable text size without breaking layouts, and colour contrast that passes in both themes.
 - [x] Listening and speaking: a Listen button reads a story aloud, and contributors can tell a story by voice first, with typing optional, so that people who prefer speaking to reading and writing are included (delivery phase in Section 11.1).
 
@@ -331,23 +331,23 @@ The platform will support the following 20 interface languages:
 - [x] **1**: English | Worldwide | The working language of international shipping; IMO Standard Marine Communication Phrases are in English. Default language.
 - [x] **2**: Kiswahili | Kenya, Tanzania, northern Mozambique, Comoros | The platform's home coast. Swahili culture itself grew out of Indian Ocean seafaring and trade.
 - [~] **3**: Dholuo (Luo) | Lake Victoria: Kisumu, Homa Bay, Migori and Siaya counties; also the Ugandan and Tanzanian shores | The main language of Kenya’s Lake Victoria fishing and boat-transport communities, who are among the project’s primary beneficiaries. Translated with community reviewers. — *Left: Dholuo is selectable and falls back to English until a Dholuo translator supplies the text*
-- [ ] **4**: Arabic | Red Sea, Arabian Gulf, Oman, Mediterranean, Horn of Africa | Centuries of dhow trade link Oman, Yemen and the Gulf to Lamu, Mombasa and Zanzibar. Needs right-to-left layout.
-- [ ] **5**: French | Madagascar, Comoros, Seychelles, Mauritius, Réunion, Djibouti, West and Central Africa, Pacific, Caribbean | Covers most of the western Indian Ocean islands and the Atlantic coast of Africa.
-- [ ] **6**: Portuguese | Mozambique, Angola, Cape Verde, Guinea-Bissau, São Tomé, Brazil, Portugal | Long coastlines across three continents; the Portuguese era is part of Mombasa’s own maritime history (Fort Jesus).
-- [ ] **7**: Spanish | Pacific and Caribbean coasts of Latin America, Spain, Equatorial Guinea | The largest number of coastal speakers in the Americas.
+- [~] **4**: Arabic | Red Sea, Arabian Gulf, Oman, Mediterranean, Horn of Africa | Centuries of dhow trade link Oman, Yemen and the Gulf to Lamu, Mombasa and Zanzibar. Needs right-to-left layout. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **5**: French | Madagascar, Comoros, Seychelles, Mauritius, Réunion, Djibouti, West and Central Africa, Pacific, Caribbean | Covers most of the western Indian Ocean islands and the Atlantic coast of Africa. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **6**: Portuguese | Mozambique, Angola, Cape Verde, Guinea-Bissau, São Tomé, Brazil, Portugal | Long coastlines across three continents; the Portuguese era is part of Mombasa’s own maritime history (Fort Jesus). — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **7**: Spanish | Pacific and Caribbean coasts of Latin America, Spain, Equatorial Guinea | The largest number of coastal speakers in the Americas. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
 - [ ] **8**: Somali | Somalia, Djibouti, north-eastern Kenya | Somalia has mainland Africa's longest coastline; strong fishing and seafaring communities close to Kenya.
 - [ ] **9**: Malagasy | Madagascar | A large island nation in Kenya’s own ocean, with many fishing and coastal communities.
-- [ ] **10**: Gujarati | Gujarat and Kutch coast (India); communities in Mombasa and across East Africa | Kutch is a historic dhow-building centre, and Gujarati traders and communities have long been part of the Kenyan coast.
-- [ ] **11**: Hindi | Coastal states of India | Reaches India’s very large coastal population and seafarer workforce.
-- [ ] **12**: Bengali | Bangladesh and West Bengal (Bay of Bengal) | Delta, cyclone and river-mouth communities with rich safety and disaster stories; major ship-breaking yards.
-- [ ] **13**: Indonesian (Malay) | Indonesia, Malaysia, Brunei, Singapore, Strait of Malacca | Indonesia is the world’s largest archipelagic state; Indonesian and Malay are largely mutually understandable.
-- [ ] **14**: Filipino (Tagalog) | Philippines | An island nation and one of the world’s largest sources of merchant seafarers.
-- [ ] **15**: Vietnamese | Vietnam | A very long coastline with large fishing communities in the South China Sea.
-- [ ] **16**: Chinese (Simplified) | China’s coast, Taiwan, Singapore, Chinese communities worldwide | A leading shipbuilding and port nation; the 15th-century Chinese fleets reached Malindi on the Kenyan coast.
-- [ ] **17**: Japanese | Japan | An island nation with deep fishing traditions and tsunami and typhoon safety heritage.
-- [ ] **18**: Greek | Greece, Cyprus, Aegean islands | One of the world’s largest ship-owning nations, with thousands of island communities.
-- [ ] **19**: Turkish | Black Sea, Aegean and Mediterranean coasts, Bosphorus | A country bordered by sea on three sides and a key shipping crossroads.
-- [ ] **20**: Russian | Black Sea, Baltic, Arctic and Pacific coasts; other Russian-speaking countries | Covers the world’s longest national coastline and a large international seafarer workforce.
+- [~] **10**: Gujarati | Gujarat and Kutch coast (India); communities in Mombasa and across East Africa | Kutch is a historic dhow-building centre, and Gujarati traders and communities have long been part of the Kenyan coast. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **11**: Hindi | Coastal states of India | Reaches India’s very large coastal population and seafarer workforce. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **12**: Bengali | Bangladesh and West Bengal (Bay of Bengal) | Delta, cyclone and river-mouth communities with rich safety and disaster stories; major ship-breaking yards. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **13**: Indonesian (Malay) | Indonesia, Malaysia, Brunei, Singapore, Strait of Malacca | Indonesia is the world’s largest archipelagic state; Indonesian and Malay are largely mutually understandable. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **14**: Filipino (Tagalog) | Philippines | An island nation and one of the world’s largest sources of merchant seafarers. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **15**: Vietnamese | Vietnam | A very long coastline with large fishing communities in the South China Sea. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **16**: Chinese (Simplified) | China’s coast, Taiwan, Singapore, Chinese communities worldwide | A leading shipbuilding and port nation; the 15th-century Chinese fleets reached Malindi on the Kenyan coast. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **17**: Japanese | Japan | An island nation with deep fishing traditions and tsunami and typhoon safety heritage. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **18**: Greek | Greece, Cyprus, Aegean islands | One of the world’s largest ship-owning nations, with thousands of island communities. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **19**: Turkish | Black Sea, Aegean and Mediterranean coasts, Bosphorus | A country bordered by sea on three sides and a key shipping crossroads. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
+- [~] **20**: Russian | Black Sea, Baltic, Arctic and Pacific coasts; other Russian-speaking countries | Covers the world’s longest national coastline and a large international seafarer workforce. — *Left: the whole interface is translated (website, apps and the server’s own texts) and offered in the language menu; machine-translated and not yet reviewed by a native speaker*
 
 ##### Language requirements
 
@@ -356,7 +356,7 @@ The platform will support the following 20 interface languages:
 - [x] Translate button: stories, comments and transcripts show a “Translate” button that translates into the reader’s language on demand, marked as machine-translated, with a link back to the original. — *Note: on stories, transcripts and each comment, on the website and in the app; the translation itself needs an AI key on the server*
 - [~] Right-to-left layout: Arabic switches the whole layout to right-to-left, including the icon row, story frame and comment threads. — *Left: the layout switches direction for Arabic; it will be checked when Arabic text is added in Phase 2*
 - [~] Fonts: fonts must cover every supported script (Latin, Arabic, Devanagari, Gujarati, Bengali, Chinese, Japanese, Greek and Cyrillic), for example the Noto font family. — *Left: Noto Sans is used; the other scripts load when those languages are added*
-- [~] Translation quality: English, Kiswahili and Dholuo are translated and reviewed by people for launch, Dholuo with reviewers from the Lake Victoria communities because machine translation for it is limited. The other 17 start as machine translation and are reviewed by native speakers in later phases. — *Left: Kiswahili is written and needs review by a native speaker; Dholuo needs a translator*
+- [~] Translation quality: English, Kiswahili and Dholuo are translated and reviewed by people for launch, Dholuo with reviewers from the Lake Victoria communities because machine translation for it is limited. The other 17 start as machine translation and are reviewed by native speakers in later phases. — *Left: English and Kiswahili are complete; 15 more languages are machine-translated and unreviewed; Dholuo, Somali and Malagasy wait for native speakers and fall back to English*
 
 #### 3.1.6 Cross-Platform Consistency
 

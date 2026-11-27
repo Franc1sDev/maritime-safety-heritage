@@ -229,3 +229,22 @@ code { background: var(--surface-2); padding: .1em .35em; border-radius: 6px; fo
 .pinned { white-space: nowrap; max-width: 13rem; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; } .pinned svg { vertical-align: -2px; margin-inline-end: .3em; }
 .floaters p.small { text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .stat b.good, .table td.good { color: var(--green); } .stat b.bad, .table td.bad, b.bad { color: var(--red); }
+
+/* Captions on the recording itself, with the on/off button always within reach (Section 3.1.5). */
+.media .cc { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 2; min-width: 44px; min-height: 36px; padding: 0 .5rem; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,.7); color: #fff; font-weight: 800; font-size: .85rem; letter-spacing: .04em; cursor: pointer; }
+.media .cc.on { background: #fff; color: #000; }
+.media .cc:disabled { opacity: .55; cursor: not-allowed; text-decoration: line-through; }
+.media .cc:focus-visible { outline: 3px solid var(--focus, #ffbf47); outline-offset: 2px; }
+.media .captions { position: absolute; bottom: 52px; inset-inline: 8px; text-align: center; pointer-events: none; }
+.media .captions span { background: rgba(0,0,0,.8); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 1.02rem; line-height: 1.5; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.media .audio-screen { position: relative; display: grid; place-items: center; min-height: 132px; margin-bottom: .5rem; border-radius: 10px; background: #0b1b2e; color: #9fc3ee; }
+.media .audio-screen .captions { bottom: 12px; }
+/* On phones the language choice stays at the top of the screen, in its own slim band above the round icons, for visitors and signed-in people alike. */
+@media (max-width: 860px) {
+  .top { padding-top: 44px; }
+  .top-end .lang { display: block; position: fixed; top: 5px; inset-inline-end: 8px; z-index: 41; max-width: 11rem; min-height: 34px; }
+  .stage.split .stories-wrap { inset: 134px 0 0 0; }
+  .stage.split.wide .panel { min-height: calc(100vh - 134px); }
+}
+/* Nothing may widen the page sideways: in right-to-left languages that would shift the whole screen. */
+html { overflow-x: clip; }

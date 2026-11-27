@@ -217,7 +217,7 @@ function SettingsPart() {
         <div className="grid2">
           <label className="field"><span>{t('Theme')}</span><select value={me!.theme} onChange={(e) => set({ theme: e.target.value })}><option value="auto">{t('Auto (follow my device)')}</option><option value="light">{t('Light')}</option><option value="dark">{t('Dark')}</option></select></label>
           <label className="field"><span>{t('Text size')}</span><select value={s.textSize} onChange={(e) => set({ textSize: e.target.value as Settings['textSize'] })}><option value="small">{t('Small')}</option><option value="medium">{t('Medium')}</option><option value="large">{t('Large')}</option><option value="xlarge">{t('Extra large')}</option></select></label>
-          <label className="field"><span>{t('Language')}</span><select value={i18n.language} onChange={(e) => set({ language: e.target.value })}>{config?.languages.filter((l) => l.launch).map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}</select></label>
+          <label className="field"><span>{t('Language')}</span><select value={i18n.language} onChange={(e) => set({ language: e.target.value })}>{config?.languages.filter((l) => l.launch).map((l) => <option key={l.code} value={l.code}>{l.nativeName ?? l.name}</option>)}</select></label>
         </div>
         <label className="check"><input type="checkbox" checked={s.highContrast} onChange={(e) => set({ highContrast: e.target.checked })} /><span>{t('High contrast')}</span></label>
         <label className="check"><input type="checkbox" checked={s.reducedMotion} onChange={(e) => set({ reducedMotion: e.target.checked })} /><span>{t('Reduce motion (fewer animations)')}</span></label>

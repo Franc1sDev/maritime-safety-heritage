@@ -110,6 +110,25 @@ describe('open access for visitors', () => {
     expect(en.body.limits).toMatchObject({ images: 20, documents: 4 });
     const sw = await request(http).get(`${api}/config`).set('X-Language', 'sw').expect(200);
     expect(sw.body.reportReasons[0].label).toMatch(/Maudhui/);
+    // The language menu offers the 17 translated languages, each under its own name; the server's own texts follow.
+    const offered = en.body.languages.filter((l: any) => l.launch);
+    expect(offered.map((l: any) => l.code)).toEqual(expect.arrayContaining(['en', 'sw', 'fr', 'ar', 'zh', 'hi']));
+    expect(offered).toHaveLength(17);
+    expect(en.body.languages.find((l: any) => l.code === 'fr')).toMatchObject({ nativeName: 'Français', launch: true });
+    expect(en.body.languages.find((l: any) => l.code === 'luo').launch).toBe(false);
+    for (const code of ['fr', 'ar', 'zh', 'hi', 'gu']) {
+      const other = await request(http).get(`${api}/config`).set('X-Language', code).expect(200);
+      expect(other.body.rules).toHaveLength(5);
+      expect(other.body.rules[0]).not.toBe(en.body.rules[0]);
+      expect(other.body.reportReasons[0].label).not.toBe(en.body.reportReasons[0].label);
+      expect(other.body.safetyNotice).not.toBe(en.body.safetyNotice);
+    }
+  });
+  it('gives captions for a recording only when the story has one', async () => {
+    const feed = await request(http).get(`${api}/stories`).expect(200);
+    const id = feed.body.items[0].id;
+    await request(http).get(`${api}/stories/${id}/media/00000000-0000-4000-8000-000000000000/captions?to=sw`).expect(404);
+    await request(http).get(`${api}/stories/${id}/media/not-an-id/captions`).expect(400);
   });
   it('lets anyone browse the trending feed, open a story and page through it', async () => {
     const a = await request(http).get(`${api}/stories?limit=5`).expect(200);

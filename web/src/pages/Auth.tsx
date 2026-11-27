@@ -180,7 +180,7 @@ export function ProfileSetup({ editing, onDone }: { editing?: boolean; onDone?: 
       )}
       {useProvider && <p className="row"><Avatar person={{ avatar: me.providerPicture || 'avatar:wave', name: me.providerName }} /> <b>{me.providerName}</b></p>}
       <div className="grid2">
-        <label className="field"><span>{t('Language')}</span><select value={language} onChange={(e) => { setLanguage(e.target.value); if (!editing) void save({ language: e.target.value }, true); }}>{config?.languages.filter((l) => l.launch).map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}</select></label>
+        <label className="field"><span>{t('Language')}</span><select value={language} onChange={(e) => { setLanguage(e.target.value); if (!editing) void save({ language: e.target.value }, true); }}>{config?.languages.filter((l) => l.launch).map((l) => <option key={l.code} value={l.code}>{l.nativeName ?? l.name}</option>)}</select></label>
         <label className="field"><span>{t('Theme')}</span><select value={theme} onChange={(e) => setTheme(e.target.value as Me['theme'])}><option value="auto">{t('Auto (follow my device)')}</option><option value="light">{t('Light')}</option><option value="dark">{t('Dark')}</option></select></label>
       </div>
       {!editing && (

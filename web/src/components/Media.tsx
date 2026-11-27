@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../lib/app';
+import { get } from '../lib/api';
 import { Icon } from './Icon';
 
 export interface MediaItem {
@@ -13,8 +14,22 @@ const mb = (n?: number) => (n ? `${(n / 1048576).toFixed(n > 10_485_760 ? 0 : 1)
  * One file of a story. Videos autoplay muted and pause when the STORIES page is blurred, when the story scrolls off screen
  * or while a priority notification is shown. In low-data mode nothing loads until tapped, and the size is shown first.
  */
-export function MediaView({ m, active, paused }: { m: MediaItem; active: boolean; paused: boolean }) {
-  const { t } = useTranslation();
+type Cue = { start: number | null; end: number | null; text: string };
+/** Times for captions that have none (a typed transcript), in proportion to their length. */
+export function spreadCues(cues: Cue[], duration: number): Array<{ start: number; end: number; text: string }> {
+  if (cues.every((c) => c.start !== null && c.end !== null)) return cues as Array<{ start: number; end: number; text: string }>;
+  const total = cues.reduce((n, c) => n + Math.max(1, c.text.length), 0) || 1;
+  let at = 0;
+  return cues.map((c) => { const len = (Math.max(1, c.text.length) / total) * Math.max(0, duration); const cue = { start: at, end: at + len, text: c.text }; at += len; return cue; });
+}
+const captionsWanted = () => { try { return localStorage.getItem('captions') !== 'off'; } catch { return true; } };
+
+export function MediaView({ m, active, paused, storyId }: { m: MediaItem; active: boolean; paused: boolean; storyId?: string }) {
+  const { t, i18n } = useTranslation();
+  const [cc, setCc] = useState(captionsWanted);
+  const [cues, setCues] = useState<Cue[] | null>(null);
+  const hasCaptions = !!(m.segments?.length || m.transcript);
+  const toggleCc = () => setCc((on) => { try { localStorage.setItem('captions', on ? 'off' : 'on'); } catch { /* not kept */ } return !on; });
   const { lowData } = useApp();
   const [load, setLoad] = useState(!lowData);
   const [captions, setCaptions] = useState('');
@@ -45,14 +60,30 @@ export function MediaView({ m, active, paused }: { m: MediaItem; active: boolean
     if (paused || !active) audio.current?.pause();
   }, [active, paused, load, lowData]);
 
-  // Captions from the transcript's timestamps.
+  // Captions: the transcript in the reader's language where the archive can translate it, otherwise as recorded.
+  useEffect(() => {
+    if (!cc || !hasCaptions || !load) return;
+    let stop = false;
+    const own: Cue[] = m.segments?.length ? m.segments : [];
+    setCues(own.length ? own : null);
+    if (storyId) void get<{ cues: Cue[] }>(`/stories/${storyId}/media/${m.id}/captions?to=${encodeURIComponent(i18n.language)}`).then((r) => { if (!stop && r.cues?.length) setCues(r.cues); }).catch(() => undefined);
+    return () => { stop = true; };
+  }, [cc, hasCaptions, load, storyId, m.id, m.segments, i18n.language]);
   useEffect(() => {
     const el = video.current ?? audio.current;
-    if (!el || !m.segments?.length) return;
-    const tick = () => setCaptions(m.segments!.find((s) => el.currentTime >= s.start && el.currentTime <= s.end)?.text ?? '');
+    if (!el || !cc || !cues?.length) { setCaptions(''); return; }
+    const tick = () => {
+      const timed = spreadCues(cues, Number.isFinite(el.duration) && el.duration > 0 ? el.duration : (m.durationSeconds ?? 0));
+      setCaptions(timed.find((s) => el.currentTime >= s.start && el.currentTime <= s.end)?.text ?? '');
+    };
     el.addEventListener('timeupdate', tick);
     return () => el.removeEventListener('timeupdate', tick);
-  }, [m.segments, load]);
+  }, [cues, cc, load, m.durationSeconds]);
+  const ccButton = (
+    <button type="button" className={`cc${cc && hasCaptions ? ' on' : ''}`} onClick={toggleCc} disabled={!hasCaptions} aria-pressed={cc && hasCaptions}
+      aria-label={!hasCaptions ? t('No captions for this recording yet') : cc ? t('Turn captions off') : t('Turn captions on')}
+      title={!hasCaptions ? t('No captions for this recording yet') : cc ? t('Turn captions off') : t('Turn captions on')}>CC</button>
+  );
 
   if (m.processing !== 'done' && m.kind !== 'document' && !Object.keys(m.urls).length) return <div className="media"><div className="placeholder"><span className="spinner" />{t('This file is still being prepared.')}</div></div>;
   if (!load && m.kind !== 'document') {
@@ -74,12 +105,13 @@ export function MediaView({ m, active, paused }: { m: MediaItem; active: boolean
     return (
       <div className="media">
         <video ref={video} poster={m.urls.poster} muted playsInline controls preload={lowData ? 'none' : 'metadata'} aria-label={m.altText || t('Video with this story')} />
-        {captions && <div style={{ position: 'absolute', bottom: 44, insetInline: 8, textAlign: 'center', pointerEvents: 'none' }}><span style={{ background: 'rgba(0,0,0,.75)', color: '#fff', padding: '2px 8px', borderRadius: 6 }}>{captions}</span></div>}
+        {ccButton}
+        {captions && <div className="captions" aria-live="off"><span>{captions}</span></div>}
       </div>
     );
   }
   if (m.kind === 'audio') {
-    return <div className="media" style={{ padding: '.6rem' }}><div className="row small dim" style={{ marginBottom: '.3rem' }}><Icon name="audio" size={18} />{m.name}</div><audio ref={audio} src={m.urls.web ?? m.urls.original} controls preload="none" />{captions && <p className="small" style={{ margin: '.3rem 0 0' }}>{captions}</p>}</div>;
+    return <div className="media" style={{ padding: '.6rem' }}><div className="row small dim" style={{ marginBottom: '.3rem' }}><Icon name="audio" size={18} />{m.name}</div><div className="audio-screen">{ccButton}<Icon name="audio" size={30} />{captions && <div className="captions" aria-live="off"><span>{captions}</span></div>}</div><audio ref={audio} src={m.urls.web ?? m.urls.original} controls preload="none" /></div>;
   }
   return (
     <div className="media">

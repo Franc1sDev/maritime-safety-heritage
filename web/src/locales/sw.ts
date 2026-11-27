@@ -1170,5 +1170,8 @@ const sw: Record<string, string> = {
   'Slowest queries on average': 'Hoja za polepole zaidi kwa wastani',
   'AI reviews within 3 minutes': 'Ukaguzi wa AI ndani ya dakika 3',
   'Average AI review time': 'Muda wa wastani wa ukaguzi wa AI',
+  'Turn captions on': 'Washa manukuu',
+  'Turn captions off': 'Zima manukuu',
+  'No captions for this recording yet': 'Rekodi hii bado haina manukuu',
 };
 export default sw;

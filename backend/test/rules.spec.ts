@@ -10,7 +10,7 @@ import { Approvals } from '../src/approvals/approvals.service';
 import { totp, verifyTotp, newTotpSecret, otpauthUrl } from '../src/auth/totp';
 import { dateParam, decodeCursor, encodeCursor, intParam, pageSize } from '../src/common/db';
 import { decryptField, encryptField, maskId, pseudonym } from '../src/common/field-crypto';
-import { hasMessage, text } from '../src/common/messages';
+import { hasMessage, text, readerLanguage } from '../src/common/messages';
 import { parseCsv, toDate, yes } from '../src/common/spreadsheet';
 import { detect } from '../src/media/file-type';
 import { watermarkSvg } from '../src/media/media.service';
@@ -160,7 +160,14 @@ describe('Paging and messages', () => {
   });
   it('gives each message in the reader’s language, and English when there is no translation', () => {
     expect(text('not_emergency', 'sw')).toBe('Hii si huduma ya dharura.');
-    expect(text('not_emergency', 'fr')).toBe('This is not an emergency service.');
+    expect(text('not_emergency', 'fr')).not.toBe('This is not an emergency service.');
+    expect(text('not_emergency', 'fr')).toMatch(/urgence/i);
+    // Dholuo is not translated yet: English is used.
+    expect(text('not_emergency', 'luo')).toBe('This is not an emergency service.');
+    expect(readerLanguage('fil')).toBe('fil');
+    expect(readerLanguage('pt-BR,pt;q=0.9')).toBe('pt');
+    expect(readerLanguage('xx')).toBe('en');
+    expect(readerLanguage(undefined)).toBe('en');
     expect(hasMessage('translation_unavailable')).toBe(true);
     expect(text('no_such_code')).toBe('no_such_code');
   });

@@ -1,0 +1,17 @@
+{
+ "fr": {"Turn captions on": "Activer les sous-titres", "Turn captions off": "Désactiver les sous-titres", "No captions for this recording yet": "Pas encore de sous-titres pour cet enregistrement"},
+ "es": {"Turn captions on": "Activar los subtítulos", "Turn captions off": "Desactivar los subtítulos", "No captions for this recording yet": "Esta grabación aún no tiene subtítulos"},
+ "pt": {"Turn captions on": "Ativar legendas", "Turn captions off": "Desativar legendas", "No captions for this recording yet": "Esta gravação ainda não tem legendas"},
+ "ar": {"Turn captions on": "تشغيل الترجمة النصية", "Turn captions off": "إيقاف الترجمة النصية", "No captions for this recording yet": "لا توجد ترجمة نصية لهذا التسجيل بعد"},
+ "zh": {"Turn captions on": "开启字幕", "Turn captions off": "关闭字幕", "No captions for this recording yet": "此录音暂无字幕"},
+ "ja": {"Turn captions on": "字幕をオンにする", "Turn captions off": "字幕をオフにする", "No captions for this recording yet": "この録音にはまだ字幕がありません"},
+ "ru": {"Turn captions on": "Включить субтитры", "Turn captions off": "Выключить субтитры", "No captions for this recording yet": "Для этой записи пока нет субтитров"},
+ "tr": {"Turn captions on": "Altyazıları aç", "Turn captions off": "Altyazıları kapat", "No captions for this recording yet": "Bu kayıt için henüz altyazı yok"},
+ "id": {"Turn captions on": "Aktifkan teks", "Turn captions off": "Nonaktifkan teks", "No captions for this recording yet": "Belum ada teks untuk rekaman ini"},
+ "hi": {"Turn captions on": "कैप्शन चालू करें", "Turn captions off": "कैप्शन बंद करें", "No captions for this recording yet": "इस रिकॉर्डिंग के लिए अभी कैप्शन नहीं हैं"},
+ "vi": {"Turn captions on": "Bật phụ đề", "Turn captions off": "Tắt phụ đề", "No captions for this recording yet": "Bản ghi này chưa có phụ đề"},
+ "el": {"Turn captions on": "Ενεργοποίηση υποτίτλων", "Turn captions off": "Απενεργοποίηση υποτίτλων", "No captions for this recording yet": "Δεν υπάρχουν ακόμη υπότιτλοι για αυτή την ηχογράφηση"},
+ "bn": {"Turn captions on": "ক্যাপশন চালু করুন", "Turn captions off": "ক্যাপশন বন্ধ করুন", "No captions for this recording yet": "এই রেকর্ডিংয়ের জন্য এখনও কোনো ক্যাপশন নেই"},
+ "fil": {"Turn captions on": "I-on ang mga caption", "Turn captions off": "I-off ang mga caption", "No captions for this recording yet": "Wala pang caption para sa recording na ito"},
+ "gu": {"Turn captions on": "કૅપ્શન ચાલુ કરો", "Turn captions off": "કૅપ્શન બંધ કરો", "No captions for this recording yet": "આ રેકોર્ડિંગ માટે હજી કૅપ્શન નથી"}
+}

@@ -5,7 +5,7 @@ import { Audit } from '../common/audit.service';
 import { Db, Row } from '../common/db';
 import { AuthUser, RequestMeta } from '../common/decorators';
 import { Jobs } from '../common/jobs.service';
-import { fail, longDate, REPORT_REASONS, text } from '../common/messages';
+import { fail, localise, longDate, REPORT_REASONS, text } from '../common/messages';
 import { Notify } from '../common/notify.service';
 import { Realtime } from '../common/realtime.gateway';
 import { Track } from '../common/track.service';
@@ -238,7 +238,7 @@ export class ModerationService implements OnModuleInit {
     const urgent = reasons.includes('privacy') || /\b(danger|urgent|threat|hatari|dharura)\b/i.test(description);
     const r = (await this.db.one(`INSERT INTO reports (reporter_id, target_type, target_id, reasons, description, urgent) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, created_at`, [user.id, dto.targetType, dto.targetId, reasons, description, urgent]))!;
     await this.track.event('report', this.track.actor(user), { metrics: ['reports'] });
-    const labels = reasons.map((k) => REPORT_REASONS.find((x) => x.key === k)![user.language === 'sw' ? 'sw' : 'en']);
+    const labels = reasons.map((k) => localise(REPORT_REASONS.find((x) => x.key === k)!, user.language));
     await this.inbox.system(user.id, `Report on ${target.label}`, 'report', `report:${dto.targetType}:${dto.targetId}`,
       user.language === 'sw' ? `Tumepokea ripoti yako kuhusu ${target.label}${labels.length ? ` (${labels.join('; ')})` : ''}. Wasimamizi wataikagua na utaarifiwa itakapotatuliwa.`
         : `We received your report on ${target.label}${labels.length ? ` (${labels.join('; ')})` : ''}. The admins will review it, and you will be told when it is resolved.`);

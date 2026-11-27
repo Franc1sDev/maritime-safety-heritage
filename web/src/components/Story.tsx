@@ -159,7 +159,7 @@ export function StoryFrame({ story: initial, active, paused, adminBar, onChanged
             {s.correction && <div className="note warn small" style={{ marginBottom: '.7rem' }}><b>{t('Safety note from the admins')}:</b> {s.correction.note} {s.correction.link && <a href={s.correction.link} target="_blank" rel="noopener noreferrer">{t('Official guidance')}</a>}</div>}
             {s.media.map((m, i) => (
               <div key={m.id}>
-                <MediaView m={m} active={active && i === 0} paused={paused || overlay !== null} />
+                <MediaView m={m} active={active && i === 0} paused={paused || overlay !== null} storyId={s.id} />
                 {m.transcript && <details className="transcript" open={i === 0}><summary><b>{t('Transcript')}</b></summary><p style={{ whiteSpace: 'pre-wrap', margin: '.4rem 0 0' }}>{m.transcript}</p></details>}
               </div>
             ))}

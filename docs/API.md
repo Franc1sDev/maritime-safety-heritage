@@ -12,7 +12,7 @@ Every route of the **Remembering the Waters** API. This page is generated from t
 - **Live updates:** a Socket.IO connection on the same address carries notifications, message and analytics updates.
 - **Interactive version:** `/api/docs` on a development or test server (it is off in production unless `API_DOCS=true`).
 
-175 routes in 11 groups.
+176 routes in 11 groups.
 
 **Who may call** — *Anyone*: no sign-in needed. *Signed in*: any signed-in person. *Admin*, *Super Admin*: that role only.
 
@@ -239,6 +239,7 @@ Every route of the **Remembering the Waters** API. This page is generated from t
 | POST | `/stories/{id}/comments` | Comment or reply, with text, a file, or both; tag people with @username | Contributor or Admin |
 | POST | `/stories/{id}/download` | Prepare a ZIP of the story’s content (where the contributor allows downloads) | Anyone |
 | PUT | `/stories/{id}/favourite` | Add to Favorites, or remove if it is already there | Contributor or Admin |
+| GET | `/stories/{id}/media/{mediaId}/captions` | Captions for a recording, in the reader’s language where translation is available | Anyone |
 | PUT | `/stories/{id}/reaction` | React with Heart, Heartbreak or Laugh; the same reaction again removes it | Contributor or Admin |
 | GET | `/stories/{id}/review` | Progress and outcome of the AI review | Signed in |
 | POST | `/stories/{id}/share` | Record a share, a copied link or a citation | Anyone |

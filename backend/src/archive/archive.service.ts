@@ -8,7 +8,7 @@ import { Jobs } from '../common/jobs.service';
 import { ZipWriter } from '../common/zip';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { DELETION_REASONS, EMERGENCY_NUMBERS, fail, LANGUAGE_NAMES, LANGUAGES, LAUNCH_LANGUAGES, MODERATION_NOTE, REPORT_REASONS, RULES, text } from '../common/messages';
+import { DELETION_REASONS, EMERGENCY_NUMBERS, fail, LANGUAGE_NAMES, LANGUAGES, LAUNCH_LANGUAGES, localise, MODERATION_NOTE, NATIVE_NAMES, REPORT_REASONS, RULES, text } from '../common/messages';
 import { Notify } from '../common/notify.service';
 import { Realtime } from '../common/realtime.gateway';
 import { Track } from '../common/track.service';
@@ -38,17 +38,16 @@ export class ArchiveService implements OnModuleInit {
 
   /** Lists and standard texts the website and apps need before anyone signs in. */
   publicConfig(lang: string) {
-    const l = lang === 'sw' ? 'sw' : 'en';
     return {
-      name: 'Remembering the Waters', siteUrl: config.siteUrl, languages: LANGUAGES.map((code) => ({ code, name: LANGUAGE_NAMES[code], launch: LAUNCH_LANGUAGES.includes(code), rtl: code === 'ar' })),
+      name: 'Remembering the Waters', siteUrl: config.siteUrl, languages: LANGUAGES.map((code) => ({ code, name: LANGUAGE_NAMES[code], nativeName: NATIVE_NAMES[code] ?? LANGUAGE_NAMES[code], launch: LAUNCH_LANGUAGES.includes(code), rtl: code === 'ar' })),
       categories: CATEGORIES, rights: RIGHTS, incidentTypes: INCIDENT_TYPES, resourceTypes: RESOURCE_TYPES, audiences: AUDIENCES, avatars: AVATARS,
-      reportReasons: REPORT_REASONS.map((r) => ({ key: r.key, label: r[l] })), deletionReasons: DELETION_REASONS.map((r) => ({ key: r.key, label: r[l] })),
-      rules: RULES.map((r) => r[l]), moderationNote: MODERATION_NOTE[l], emergencyNumbers: EMERGENCY_NUMBERS, safetyNotice: text('safety_notice', lang), sensitiveNotice: text('sensitive_notice', lang),
+      reportReasons: REPORT_REASONS.map((r) => ({ key: r.key, label: localise(r, lang) })), deletionReasons: DELETION_REASONS.map((r) => ({ key: r.key, label: localise(r, lang) })),
+      rules: RULES.map((r) => localise(r, lang)), moderationNote: localise(MODERATION_NOTE, lang), emergencyNumbers: EMERGENCY_NUMBERS, safetyNotice: text('safety_notice', lang), sensitiveNotice: text('sensitive_notice', lang),
       limits: { ...config.limits, text: 200_000 }, minAge: config.minAge, minAppVersion: config.minAppVersion, storyTypes: { community: 'Community story', testimony: 'Testimony collected by the project', record: 'Historical record' },
       aiReview: { greenUpTo: 20, redFrom: 70, maxMinutes: 3 }, turnstileSiteKey: process.env.TURNSTILE_SITE_KEY ?? null, vapidPublicKey: config.push.vapidPublic || null,
       mapsKey: process.env.GOOGLE_MAPS_BROWSER_KEY ?? null,
       // Where stories involve loss, the platform shows where to find support.
-      supportInfo: process.env.SUPPORT_INFO ?? (l === 'sw' ? 'Ikiwa hadithi hii imekugusa, zungumza na mtu unayemwamini. Kenya Red Cross hutoa ushauri nasaha bila malipo kupitia 1199.' : 'If this story has affected you, talk to someone you trust. The Kenya Red Cross offers free counselling on 1199.'),
+      supportInfo: process.env.SUPPORT_INFO ?? localise({ en: 'If this story has affected you, talk to someone you trust. The Kenya Red Cross offers free counselling on 1199.', sw: 'Ikiwa hadithi hii imekugusa, zungumza na mtu unayemwamini. Kenya Red Cross hutoa ushauri nasaha bila malipo kupitia 1199.' }, lang),
     };
   }
 

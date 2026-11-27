@@ -208,7 +208,15 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
                 if (s.isAdmin) _round(Icons.checklist, t('MY RESP.'), () => go(const ResponsibilitiesPage()), count: num0(s.counts['priority']))];
     return Scaffold(
       body: SafeArea(child: Column(children: [
-        Padding(padding: const EdgeInsets.fromLTRB(6, 6, 6, 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: icons)),
+        // The language choice is always at the top, for visitors as much as for signed-in people.
+        Align(alignment: AlignmentDirectional.centerEnd, child: Padding(padding: const EdgeInsetsDirectional.only(end: 8, top: 2), child: PopupMenuButton<String>(
+          tooltip: t('Language'), initialValue: I18n.code, onSelected: (v) => s.saveSettings({'language': v}),
+          itemBuilder: (_) => [for (final e in I18n.launch.entries) PopupMenuItem<String>(value: e.key, child: Text(e.value))],
+          child: Semantics(button: true, label: '${t('Language')}: ${I18n.launch[I18n.code] ?? 'English'}', child: ConstrainedBox(constraints: const BoxConstraints(minHeight: 40), child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.language, size: 20), const SizedBox(width: 6), ExcludeSemantics(child: Text(I18n.launch[I18n.code] ?? 'English', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))), const Icon(Icons.arrow_drop_down, size: 22),
+          ]))),
+        ))),
+        Padding(padding: const EdgeInsets.fromLTRB(6, 0, 6, 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.center, children: icons)),
         if (s.updateRequired) MaterialBanner(content: Text(t('Please update the app to continue.')), actions: [TextButton(onPressed: () => launchUrl(Uri.parse(s.api.base), mode: LaunchMode.externalApplication), child: Text(t('Update now')))]),
         if (!s.online) Container(width: double.infinity, color: C.yellow, padding: const EdgeInsets.all(6), child: Text(t('You are offline. Some features are unavailable.'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5))),
         if (s.priority.isNotEmpty) SizedBox(height: 34, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [

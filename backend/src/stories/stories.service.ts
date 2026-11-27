@@ -17,6 +17,7 @@ import { ZipWriter } from '../common/zip';
 import { config } from '../config/config';
 import { MediaService } from '../media/media.service';
 import { ANONYMOUS_PERSON, COMPANY_PERSON, personSql } from '../users/profile';
+import { captionLines, Cue, fromNumbered, numbered } from './captions';
 
 export const CATEGORIES = [
   'Ferry and passenger transport', 'Fishing life', 'Rescue and survival', 'Accidents and disasters', 'Storms and weather', 'Boat-building and vessels',
@@ -592,6 +593,28 @@ export class StoriesService implements OnModuleInit {
       const t = await this.ai.translate('story', s.id, source, to);
       return { language: to, from: s.language, fromName: s.languageName, machineTranslated: true, text: t.body, label: `Machine-translated from ${s.languageName}` };
     } catch (e) { if (e instanceof AiUnavailable) return fail(503, 'translation_unavailable'); throw e; }
+  }
+
+  /**
+   * Captions for one recording: the transcript in timed lines, translated into the reader's language where the
+   * translation service is set up (kept, so each recording is translated once per language). Without it, or when
+   * the recording is already in that language, the captions are in the recording's own language.
+   */
+  async captions(idOrCode: string, mediaId: string, to: string, viewer?: AuthUser | null) {
+    const s = await this.get(idOrCode, viewer);
+    const m = s.media.find((x: any) => x.id === mediaId && (x.kind === 'video' || x.kind === 'audio'));
+    if (!m) return fail(404, 'not_found');
+    const cues: Cue[] = m.segments?.length
+      ? m.segments.map((g: { start: number; end: number; text: string }) => ({ start: g.start, end: g.end, text: g.text }))
+      : captionLines(m.transcript ?? '').map((text) => ({ start: null, end: null, text }));
+    const base = { language: s.language, translated: false, timed: !!m.segments?.length, cues };
+    if (!cues.length || to === s.language) return base;
+    try {
+      const t = await this.ai.translate('captions', m.id, numbered(cues), to);
+      const lines = fromNumbered(t.body, cues.length);
+      if (!lines) return base;
+      return { language: to, translated: true, timed: base.timed, cues: cues.map((c, i) => ({ ...c, text: lines[i] })) };
+    } catch (e) { if (e instanceof AiUnavailable) return base; throw e; }
   }
 
   /** Download: a ZIP of all the story's content, prepared in the background. Shown only where the contributor's usage rights allow it. */

@@ -15,7 +15,7 @@ export interface Settings {
   notifications: Record<string, { inApp: boolean; push: boolean; email: boolean }>; quietHours: { from: string; to: string };
 }
 export interface Config {
-  name: string; siteUrl: string; languages: Array<{ code: string; name: string; launch: boolean; rtl: boolean }>; categories: string[]; rights: string[]; incidentTypes: string[];
+  name: string; siteUrl: string; languages: Array<{ code: string; name: string; nativeName?: string; launch: boolean; rtl: boolean }>; categories: string[]; rights: string[]; incidentTypes: string[];
   resourceTypes: Record<string, string>; audiences: string[]; avatars: string[]; reportReasons: Array<{ key: string; label: string }>; deletionReasons: Array<{ key: string; label: string }>;
   rules: string[]; moderationNote: string; emergencyNumbers: string[]; safetyNotice: string; sensitiveNotice: string; supportInfo: string;
   limits: { videoMb: number; videoMinutes: number; audioMb: number; imageMb: number; documentMb: number; images: number; documents: number };

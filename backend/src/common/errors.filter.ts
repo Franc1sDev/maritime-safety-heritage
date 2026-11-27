@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 import type { AuthedRequest } from './decorators';
 import { AppError, hasMessage, text } from './messages';
+import { readerLanguage } from './messages';
 
 /**
  * Every error has the same shape: { statusCode, code, message, details }. The message is in the reader's language.
@@ -17,7 +18,7 @@ export class ErrorsFilter implements ExceptionFilter {
     const http = host.switchToHttp();
     const res = http.getResponse<Response>();
     const req = http.getRequest<AuthedRequest>();
-    const lang = req.user?.language || String(req.headers['x-language'] ?? req.headers['accept-language'] ?? 'en').slice(0, 2).toLowerCase();
+    const lang = req.user?.language || readerLanguage(req.headers['x-language'] ?? req.headers['accept-language']);
     if (err instanceof AppError) {
       res.status(err.getStatus()).json({ statusCode: err.getStatus(), code: err.code, message: text(err.code, lang, err.vars), details: err.details });
       return;
