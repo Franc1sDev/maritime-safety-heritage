@@ -118,6 +118,9 @@ jobs:
 
   ios:
     name: iOS app (unsigned build)
+    # The repository is private, where Mac build minutes count ten times: this job runs only when started by hand
+    # (Actions › Checks and builds › Run workflow), before each iPhone release.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     defaults: { run: { working-directory: mobile-app } }
     steps:

@@ -47,9 +47,9 @@ The roles, the approval rules and the audit log give the structure for long-term
 
 ## What is automatic
 
-- **Tests on every change:** the automatic build on GitHub runs the server, website and app tests, the browser tests, the access test, Lighthouse and a load test, and builds the Android and iOS apps. A change that fails is not released.
+- **Tests on every change:** the automatic build on GitHub runs the server, website and app tests, the browser tests, the access test, Lighthouse and a load test, and builds the Android app (the iPhone build is started by hand before each release). A change that fails is not released.
 - **Dependency updates:** Dependabot proposes updates for the server, website, app and build tools.
-- **Code scanning:** CodeQL scans the code for security faults on every change and weekly.
+- **Security scanning:** every automatic build checks the dependencies for known vulnerabilities (`npm audit`) and scans the running site with OWASP ZAP. GitHub's CodeQL code scan ran while the repository was public (last clean run 25 November 2026); on a private repository it needs GitHub Advanced Security, so it is switched off. The iPhone build runs only when started by hand, because Mac build minutes are limited on a private repository.
 - **Backups:** nightly, encrypted, checked and copied off-site, kept for 30 days, 3 months and 1 year (once the production server is set up).
 - **Erasing:** deleted accounts and stories are erased after 30 days; stories removed by admins after 1 year.
 - **Monthly PDF report** on the first day of each month.
