@@ -24,6 +24,7 @@ What the project team receives at launch, and the steps to take full ownership, 
 | Maintenance, continuity and running costs | [MAINTENANCE.md](MAINTENANCE.md) |
 | Publishing the apps | [STORE-RELEASE.md](STORE-RELEASE.md), [IOS-RELEASE.md](IOS-RELEASE.md) |
 | What must be done before opening | [GO-LIVE.md](GO-LIVE.md) |
+| Drafts for launch: announcement, About page text, data protection preparation | [LAUNCH-ANNOUNCEMENT.md](LAUNCH-ANNOUNCEMENT.md), [ABOUT-PAGE.md](ABOUT-PAGE.md), [DATA-PROTECTION-PREP.md](DATA-PROTECTION-PREP.md) |
 | The master plan and its checklist | `Maritime Heritage Project - Development Master Plan.docx`; [MASTER-PLAN-CHECKLIST.md](MASTER-PLAN-CHECKLIST.md) and its Word copy |
 | Admin access | The team's own admin and Super Admin accounts on the live archive |
 
@@ -51,7 +52,7 @@ The full list is in [GO-LIVE.md](GO-LIVE.md), section 2. Each is owned by a shar
 | 4. Curating | Admins | Company stories and testimonies with consent and validation, collections, incidents, bulk import, resources, announcements, reports | [ADMIN-GUIDE.md](ADMIN-GUIDE.md) |
 | 5. Running the archive | Super Admins and the maintainer | Managing admins, overdue approvals, analytics, the audit log, Background work, backups, incidents, the maintenance calendar | [SUPER-ADMIN-GUIDE.md](SUPER-ADMIN-GUIDE.md), [MAINTENANCE.md](MAINTENANCE.md), [INCIDENT-RESPONSE.md](INCIDENT-RESPONSE.md) |
 
-Train on the test site, where nothing done affects the real archive.
+Train on the test site, where nothing done affects the real archive. The trainer's plan for each session, with timings, exercises and the before-and-after questions, is in [TRAINING.md](TRAINING.md).
 
 ## After launch
 
